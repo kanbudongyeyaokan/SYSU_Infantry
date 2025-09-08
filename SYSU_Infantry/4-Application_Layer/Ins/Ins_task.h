@@ -1,0 +1,8 @@
+//
+// Created by 26524 on 2025/8/27.
+//
+
+#ifndef SYSU_INFANTRY_INS_TASK_H
+#define SYSU_INFANTRY_INS_TASK_H
+
+#endif //SYSU_INFANTRY_INS_TASK_H
