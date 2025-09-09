@@ -20,5 +20,14 @@ typedef struct
 3.【motor_status】电机运动状态，里面只有ENABLED和STOPPED,目的是如果手动输入电机状态或者用一个函数来实现，就可以控制电机它能否运动。
 4.【motor_measure】电机自身运动信息，存储电机CAN回传的数据，解析出来的电机自身转速，编码器值等数据
 5.【motor_pid】电机自身的PID控制器，该结构体包含了电机的控制模式，电机的PID控制器一切参数
-6.【can_controller】电机自身的CAN管理者，这个非常重要，包含了电机CAN的发送/接收ID， 发送/接收缓冲区，在调用电机控制函数的时候，需要用到里面的信息，然后通过CAN发送出去
+6.【can_controller】电机自身的CAN管理者，这个非常重要，包含了电机CAN的发送/接收ID，接收缓冲区，在调用电机控制函数的时候，需要用到里面的信息，然后通过CAN发送出去
+    - 接收缓冲区需要自己写好准备
+
+Djimotor_device_t *yaw_motor;
+...初始化电机实例
+Djimotor_ctrl(yaw_motor,期望值)；
+
+使用说明：
+
+
 

@@ -7,6 +7,11 @@
 
 #define MAX_MOTOR_COUNT 16
 
+#define SPEED_SMOOTH_COEF 0.85f      // 最好大于0.85
+#define CURRENT_SMOOTH_COEF 0.9     // 必须大于0.9
+#define ECD_ANGLE_COEF_DJI 0.043945f // (360/8192),将编码器值转化为角度制
+
+
 /**DJI电机类型**/
 typedef enum
 {
@@ -34,11 +39,12 @@ typedef enum {
 #pragma pack(1)
 typedef struct
 {
-    uint16_t last_ecd;         //上一次记录的编码器值，编码器值（0-8191）
-    uint16_t current_ecd;      //当前编码器值
-    uint16_t angular_velocity; //电机转速，单位：【rpm】
-    uint16_t linear_velocity;  //电机线速度
-    uint16_t real_current;     //电机实际电流
+    uint16_t last_ecd;          //上一次记录的编码器值，编码器值（0-8191）
+    uint16_t current_ecd;       //当前编码器值
+    float current_angle;        //当前电机角度
+    float angular_velocity;     //电机转速，单位：【rpm】
+    float linear_velocity;      //电机线速度
+    int16_t real_current;       //电机实际电流
     uint8_t  motor_temperature;//电机实际温度
 }Djimotor_measure_t;
 #pragma pack()
@@ -76,7 +82,7 @@ typedef struct
     Djimotor_status_e motor_status;     //电机运动状态
     Djimotor_measure_t motor_measure;   //电机自身运动信息
     Djimotor_controller_t   motor_pid;  //电机自身的PID控制器
-    Can_controller_t can_controller;    //电机自身的CAN管理者
+    Can_controller_t *can_controller;    //电机自身的CAN管理者
 }Djimotor_device_t;
 #pragma pack()
 

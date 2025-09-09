@@ -25,7 +25,7 @@ static void Can_init()
 }
 
 /*添加CAN过滤器*/
-static void Can_filter_add(Can_controller_t *can_temp_controller)()
+static void Can_filter_add(Can_controller_t *can_temp_controller)
 {
     CAN_FilterTypeDef can_filter_conf;
     static uint8_t can1_filter_idx = 0, can2_filter_idx = 14; // 0-13给can1用,14-27给can2用
@@ -41,9 +41,11 @@ static void Can_filter_add(Can_controller_t *can_temp_controller)()
     HAL_CAN_ConfigFilter(can_temp_controller->can_handle, &can_filter_conf);
 }
 /*CAN管理者注册*/
-Can_controller_t *Can_device_register(Can_init_t *can_config)
+Can_controller_t* Can_device_init(Can_init_t *can_config)
 {
-    //首次调用
+
+    Can_controller_t* can_dev = NULL;
+    //首次调用,检查设备数量
     if (can_ix ==0)
         Can_init();
     else if (can_ix > CAN_MAX_COUNT)
@@ -55,26 +57,21 @@ Can_controller_t *Can_device_register(Can_init_t *can_config)
             return 0;
     }
     //若正常，则进行初始化
-    Can_controller_t *can_temp = (Can_controller_t*)malloc(sizeof(Can_controller_t));
-    memset(can_temp,0,sizeof(Can_controller_t));//初始化，防止野指针
-    can_temp->can_handle = can_config->can_handle;//CAN句柄
-    can_temp->can_id = can_config->can_id;//CAN 发送ID
-    can_temp->rx_id = can_config->rx_id;  //CAN 接收ID
-    can_temp->receive_callback = can_config->receive_callback;//接收函数
+    can_dev->can_handle = can_config->can_handle;//CAN句柄
+    can_dev->can_id = can_config->can_id;//CAN 发送ID
+    can_dev->rx_id = can_config->rx_id;  //CAN 接收ID
+    can_dev->receive_callback = can_config->receive_callback;//接收函数
     /*CAN发送配置*/
-    can_temp->tx_config.StdId = can_config->tx_config.StdId;//发送ID，比如大疆电机有0X1FF,0X200,0X2FF等等
-    can_temp->tx_config.IDE = CAN_ID_STD;//使用CAN标准帧（11位）
-    can_temp->tx_config.RTR = CAN_RTR_DATA;//发送数据帧
-    can_temp->tx_config.DLC = 0x08;//配置CAN发送长度为8，默认长度
+    can_dev->tx_config.StdId = can_config->tx_config.StdId;//发送ID，比如大疆电机有0X1FF,0X200,0X2FF等等
+    can_dev->tx_config.IDE = CAN_ID_STD;//使用CAN标准帧（11位）
+    can_dev->tx_config.RTR = CAN_RTR_DATA;//发送数据帧
+    can_dev->tx_config.DLC = 0x08;//配置CAN发送长度为8，默认长度
     /*配置对应的过滤器组*/
-    Can_filter_add(can_temp);
-    can_controller[can_ix] = can_temp;
-
-    /*返回*/
-    return can_temp;
+    Can_filter_add(can_dev);
+    can_controller[can_ix] = can_dev;
 }
 /*CAN发送数据*/
-uint8_t Can_send_data(Can_controller_t* Can_controller)
+uint8_t Can_send_data(Can_controller_t* Can_controller,uint8_t *tx_buff)
 {
     //获取开始时间
     float time_start = DWT_GetTimeline_ms();
@@ -86,7 +83,7 @@ uint8_t Can_send_data(Can_controller_t* Can_controller)
             return 0;
     }
     if (HAL_CAN_AddTxMessage(Can_controller->can_handle,&Can_controller->tx_config,
-        Can_controller->tx_buffer,&Can_controller->tx_mailbox) != HAL_OK )
+        tx_buff,&Can_controller->tx_mailbox) != HAL_OK )
     {
         return 0;
     }

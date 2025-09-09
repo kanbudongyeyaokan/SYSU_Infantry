@@ -6,6 +6,27 @@
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
 static uint8_t motor_count = 0;
 
+/**对应不同电机发送CAN-ID的8字节数组**/
+static uint8_t motor_
+
+
+
+//解译电机反馈回来的数据
+static void Decode_djimotor(Djimotor_device_t *djimotor)
+{
+    uint8_t *rxbuff = djimotor->can_controller->rx_buffer;
+    Djimotor_measure_t *measure = &(djimotor->motor_measure); // 保存了当前电机的所有信息
+
+    // 解析数据
+    measure->current_ecd = ((uint16_t)rxbuff[0]) << 8 | rxbuff[1];//当前电机编码器值
+    measure->current_angle = ECD_ANGLE_COEF_DJI * (float)measure->current_ecd;
+    measure->angular_velocity = (float)((int16_t)(rxbuff[2] << 8 | rxbuff[3]));//角速度
+    measure->real_current = ((int16_t)(rxbuff[4] << 8 | rxbuff[5]));
+    measure->motor_temperature = rxbuff[6];
+    measure->last_ecd = measure->current_ecd;
+
+}
+
 // 电机初始化函数
 Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
     // 超过最大电机支持数量
@@ -33,17 +54,11 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
     can_config.can_handle = config->can_init.can_handle;//CAN句柄
     can_config.can_id =  config->can_init.can_id;//电机的CAN-ID，值为1-8
     can_config.rx_id = config->can_init.rx_id;//电机的CAN接收ID，比如0X201
-    can_config.receive_callback =Djimotor_decoder;//这里放大疆电机的解析函数
-
-    // 初始化CAN发送配置
-    can_config.tx_config.StdId = DJI_Get_Tx_ID(config->type, config->id);
-    can_config.tx_config.IDE = CAN_ID_STD;
-    can_config.tx_config.RTR = CAN_RTR_DATA;
-    can_config.tx_config.DLC = 8;
+    config->can_init.receive_callback = Decode_djimotor(motor);//这里放大疆电机的解析函数
 
     // 注册CAN设备
-    motor->can_dev = Can_device_register(&can_config);
-    if (motor->can_dev == NULL) {
+    motor->can_controller = Can_device_register(&can_config);
+    if (motor->can_controller == NULL) {
         free(motor);
         return NULL;
     }
@@ -53,3 +68,5 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
 
     return motor;
 }
+
+
