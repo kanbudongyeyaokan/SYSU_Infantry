@@ -22,3 +22,4 @@ typedef struct
 5.【motor_pid】电机自身的PID控制器，该结构体包含了电机的控制模式，电机的PID控制器一切参数
 6.【can_controller】电机自身的CAN管理者，这个非常重要，包含了电机CAN的发送/接收ID， 发送/接收缓冲区，在调用电机控制函数的时候，需要用到里面的信息，然后通过CAN发送出去
 
+test
