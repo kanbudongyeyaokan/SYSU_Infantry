@@ -43,36 +43,49 @@ static void Can_filter_add(Can_controller_t *can_temp_controller)
 /*CAN管理者注册*/
 Can_controller_t* Can_device_init(Can_init_t *can_config)
 {
-
-    Can_controller_t* can_dev = NULL;
+    //初始化新的CAN实例
+    Can_controller_t* can_dev = (Can_controller_t*)malloc(sizeof(Can_controller_t));
+    memset(can_dev, 0, sizeof(Can_controller_t));
+    if (can_dev == NULL) return NULL;
     //首次调用,检查设备数量
     if (can_ix ==0)
         Can_init();
-    else if (can_ix > CAN_MAX_COUNT)
-        return 0;
+    else if (can_ix > CAN_MAX_COUNT) {
+        free(can_dev);
+        return NULL;
+    }
     //检查是否重复定义CAN
     for (int i=0;i<can_ix;i++)
     {
-        if (can_controller[i]->can_handle == can_config->can_handle && can_controller[i]->rx_id == can_config->rx_id)
-            return 0;
+        if (can_controller[i]->can_handle == can_config->can_handle && can_controller[i]->rx_id == can_config->rx_id) {
+            free(can_dev);
+            return NULL;
+        }
     }
     //若正常，则进行初始化
     can_dev->can_handle = can_config->can_handle;//CAN句柄
-    can_dev->can_id = can_config->can_id;//CAN 发送ID
+    can_dev->can_id = can_config->can_id;//CAN 总线ID
+    can_dev->tx_id  = can_config->tx_id; //CAN设备ID
     can_dev->rx_id = can_config->rx_id;  //CAN 接收ID
     can_dev->receive_callback = can_config->receive_callback;//接收函数
     /*CAN发送配置*/
-    can_dev->tx_config.StdId = can_config->tx_config.StdId;//发送ID，比如大疆电机有0X1FF,0X200,0X2FF等等
+    can_dev->tx_config.StdId = can_config->can_id;//发送ID，比如大疆电机有0X1FF,0X200,0X2FF等等
     can_dev->tx_config.IDE = CAN_ID_STD;//使用CAN标准帧（11位）
     can_dev->tx_config.RTR = CAN_RTR_DATA;//发送数据帧
     can_dev->tx_config.DLC = 0x08;//配置CAN发送长度为8，默认长度
     /*配置对应的过滤器组*/
     Can_filter_add(can_dev);
-    can_controller[can_ix] = can_dev;
+    can_controller[can_ix++] = can_dev;
+
+    return can_dev;
 }
 /*CAN发送数据*/
 uint8_t Can_send_data(Can_controller_t* Can_controller,uint8_t *tx_buff)
 {
+    //安全检查
+    if (tx_buff == NULL) {
+        return 0;
+    }
     //获取开始时间
     float time_start = DWT_GetTimeline_ms();
     //检查邮箱是否空闲
@@ -106,7 +119,7 @@ static void Can_fifo_callback(CAN_HandleTypeDef *hcan, uint32_t fifox)
                 if (can_controller[i]->receive_callback != NULL) // 回调函数不为空就调用
                 {
                     memcpy(can_controller[i]->rx_buffer, can_rx_buff, rxconf.DLC); // 消息拷贝到对应实例
-                    can_controller[i]->receive_callback(can_controller[i]);     // 触发回调进行数据解析和处理
+                    can_controller[i]->receive_callback(can_controller[i],can_controller[i]->context);     // 触发回调进行数据解析和处理
                 }
                 return;
             }

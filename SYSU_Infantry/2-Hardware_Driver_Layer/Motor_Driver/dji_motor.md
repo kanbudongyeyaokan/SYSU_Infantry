@@ -28,7 +28,30 @@ Djimotor_device_t *yaw_motor;
 Djimotor_ctrl(yaw_motor,期望值)；
 
 使用说明：
+1.初始化电机
+    // 创建电机初始化配置
+    Djimotor_init_config_t motor_config = {
+    .motor_name = "LeftFront",
+    .motor_type = M3508,
+    .motor_status = MOTOR_ENABLED,
+    
+        // PID配置
+        .motor_controller_init = {
+            .current_pid = {.kp = 0.8f, .ki = 0.05f, ...},
+            .angle_pid = {.kp = 5.0f, .ki = 0.1f, ...},
+            .speed_pid = {.kp = 0.5f, .ki = 0.01f, ...}
+        },
+        
+        // CAN配置
+        .can_init = {
+            .can_handle = &hcan1,
+            .can_id = 1,       // 电机ID
+            .tx_id = 0x200,   // 控制ID
+            .rx_id = 0x201    // 反馈ID
+        }
+    };
+    // 初始化电机
+    Djimotor_device_t *lf_motor = DJI_Motor_Init(&motor_config);
 
+2.电机接口使用
 
-
-test
