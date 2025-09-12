@@ -4,6 +4,11 @@
 #include "cmsis_os.h"
 #include "robot_task.h"
 
+// 测试任务头文件
+#include "bmi088_test_task.h"
+#include "can_motors_test_task.h"
+#include "rc_test_task.h"
+
 /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
 osThreadId gimbal_task_handle; //云台任务
@@ -12,6 +17,10 @@ osThreadId ins_task_handle;    //姿态解算任务
 osThreadId rc_task_handle;     //遥控器/键盘解析任务
 osThreadId referee_task_handle;//裁判系统通信任务
 osThreadId others_task_handle; //处理其他任务，比如与视觉通信，电量读取等琐碎任务，后续根据实际进行修改
+
+osThreadId bmi088_test_task_handle; //bmi088测试任务
+osThreadId can_motors_test_task_handle; // can电机测试任务
+osThreadId rc_test_task_handle; //单独遥控器测试任务
 
 /**机器人任务创建**/
 void Robot_task_init(void)
@@ -37,4 +46,14 @@ void Robot_task_init(void)
     //
     // osThreadDef(others_task, Others_task, osPriorityNormal, 0, 1024);
     // others_task_handle = osThreadCreate(osThread(others_task), NULL);
+
+    // 创建测试任务
+    osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
+    bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
+
+    osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
+    can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
+
+    osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
+    rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
 }
