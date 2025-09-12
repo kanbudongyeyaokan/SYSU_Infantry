@@ -62,10 +62,11 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Remote_Control/rc_task.h
         4-Application_Layer/Shoot/shoot_task.c
         4-Application_Layer/Shoot/shoot_task.h
-        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
-        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
+#        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
+#        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
-        0-Middleware_Layer/Pid_Controller/algorithm_pid.c)
+        0-Middleware_Layer/Pid_Controller/algorithm_pid.c
+)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
