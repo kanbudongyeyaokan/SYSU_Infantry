@@ -68,6 +68,16 @@ void MX_FREERTOS_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t mse[10] ="HELLO!";
+
+// 串口重定向到 Uart1
+
+int _write(int fd, char *ptr, int len)
+{
+  HAL_UART_Transmit(&huart1, (uint8_t*)ptr, len, 0xFFFF);
+  return len;
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -134,10 +144,6 @@ int main(void)
   {
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
-
-
-
-
   }
   /* USER CODE END 3 */
 }

@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usart.h"
+#include "robot_task.h"
 
 /* USER CODE END Includes */
 
@@ -111,6 +112,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  Robot_task_init();  // 初始化机器人任务
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -131,7 +133,6 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
     //HAL_UART_Transmit(&huart1,mse,6,100);
-    //HAL_Delay(500);
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
