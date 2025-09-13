@@ -1,7 +1,7 @@
 #include "dji_motor.h"
 #include "bsp_can.h"
 #include "stdlib.h"
-
+#include "bsp_usart.h"
 // 电机实例数组,用于管理已初始化的电机列表
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
 static uint8_t motor_count = 0;
@@ -14,6 +14,11 @@ static uint8_t djimotor_can2_0x1ff_tx[8]={0};
 static uint8_t djimotor_can2_0x200_tx[8]={0};
 static uint8_t djimotor_can2_0x2ff_tx[8]={0};
 /****************************************************/
+
+static int16_t current_motor = 0;
+static uint16_t current_motor_count = 0;
+
+extern UartInstance_t* uart_instance;
 
 // 缓冲区更新标志
 static uint8_t buffer_updated[6] = {0}; // 0:CAN1_0x1FF, 1:CAN1_0x200, 2:CAN1_0x2FF, 3:CAN2_0x1FF, 4:CAN2_0x200, 5:CAN2_0x2FF
@@ -116,7 +121,6 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
 // 设置目标值
 void Djimotor_set_target(Djimotor_device_t *motor, float target) {
     //安全检查
-    if (motor == NULL || motor->motor_status != MOTOR_ENABLED) return;
     motor->motor_pid.pid_target = target;
 }
 
@@ -142,9 +146,10 @@ void Djimotor_set_status(Djimotor_device_t *motor,Djimotor_status_e status) {
 
 // 计算控制输出
 static void Calculate_Motor_Output(Djimotor_device_t *motor) {
-    if (motor == NULL || motor->motor_status != MOTOR_ENABLED) return;
+     //  if ((motor == NULL || (motor->motor_status != MOTOR_ENABLED))) return;
 
     float output = 0.0f;
+
     Djimotor_measure_t *measure = &motor->motor_measure;
 
     // 获取角度反馈值
@@ -171,10 +176,12 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
     // 获取电流反馈值 (使用电机自身反馈)
     float current_feedback = measure->real_current; // mA转A
 
+  //  Uart_printf(uart_instance,"before sw\n");
     // 根据控制类型选择控制策略
     switch (motor->motor_pid.close_loop) {
         case OPEN_LOOP: // 开环控制
             output = motor->motor_pid.pid_target; // 直接使用目标值
+          //  Uart_printf(uart_instance,"open loop\r\n");
             break;
 
         case CURRENT_LOOP: // 电流环
@@ -224,16 +231,18 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
         }
 
         default: // 未知控制类型
-            output = 0.0f;
+            output = 1.0f;
             break;
     }
 
     // 转换为电流值
     int16_t current_val = (int16_t)(output);
+   // Uart_printf(uart_instance,"control output:%d\r\n",output);
+    current_motor = current_val;
 
     // 获取缓冲区指针
     uint8_t *buffer = Get_buffer_pointer(motor->can_controller->can_handle,
-                                        motor->can_controller->tx_config.StdId);
+                                        motor->can_controller->can_id);
     if (buffer == NULL) return;
 
     // 获取电机在缓冲区中的位置 (1-8对应0-7)
@@ -258,7 +267,7 @@ void Djimotor_control_all(void) {
     for (uint8_t i = 0; i < motor_count; i++) {
         Calculate_Motor_Output(motor_instances[i]);
     }
-
+    // Uart_printf(uart_instance,"all output\r\n");
     // 发送所有更新的缓冲区
     for (uint8_t i = 0; i < 6; i++) {
         if (buffer_updated[i]) {
@@ -285,7 +294,7 @@ void Djimotor_control_all(void) {
             temp_can.tx_config.DLC = 8;
 
             // 获取缓冲区数据
-            uint8_t *tx_data = Get_buffer_pointer(temp_can.can_handle, temp_can.can_id);
+            uint8_t *tx_data = Get_buffer_pointer(temp_can.can_handle, temp_can.tx_config.StdId);
 
             // 发送数据
             if (tx_data != NULL) {
