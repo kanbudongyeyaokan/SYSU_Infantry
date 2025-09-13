@@ -28,7 +28,7 @@ osThreadId rc_test_task_handle; //单独遥控器测试任务
 void Robot_task_init(void)
 {
     // 初始化调试串口
-    debug_uart = Uart_register(&huart1, NULL); // 使用UART1作为调试串口
+    // debug_uart = Uart_register(&huart1, NULL); // 使用UART1作为调试串口
     
     //osThreadDef中的形参分别为任务名，任务函数入口，任务优先级，保留参数，栈大小
     // osThreadDef(ins_task, Ins_task, osPriorityAboveNormal, 0, 1024);
