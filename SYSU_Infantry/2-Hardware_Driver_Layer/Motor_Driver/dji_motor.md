@@ -54,4 +54,41 @@ Djimotor_ctrl(yaw_motor,期望值)；
     Djimotor_device_t *lf_motor = DJI_Motor_Init(&motor_config);
 
 2.电机接口使用
-[](![img_1.png](img_1.png))
+1.初始化流程
+![img_2.png](img_2.png)
+代码：
+    Djimotor_init_config_t motor_config = {
+    .motor_name = "LF Wheel",
+    .motor_type = M3508,
+    .motor_status = MOTOR_ENABLED,
+    .motor_controller_init = {
+    .close_loop = ANGLE_AND_SPEED_LOOP,
+    .current_pid = {.kp = 0.5f, .ki = 0.01f, ...},
+    .angle_pid = {.kp = 5.0f, .ki = 0.1f, ...},
+    .speed_pid = {.kp = 0.8f, .ki = 0.05f, ...}
+    },
+    .can_init = {
+    .can_handle = &hcan1,
+    .can_id = 1,       // 电机ID (1-8)
+    .tx_id = 0x200,   // 发送ID
+    .rx_id = 0x201    // 接收ID
+    }
+    };
+    
+    Djimotor_device_t *lf_motor = DJI_Motor_Init(&motor_config);
+2.控制流程
+![img_3.png](img_3.png)
+代码：
+    // 设置目标角度(90度)
+    Djimotor_set_target(lf_motor, M_PI / 2);
+
+3.状态设置/获取：
+    // 停止电机
+    Djimotor_set_status(lf_motor, MOTOR_STOP);
+    // 获取电机状态
+    if (Djimotor_get_status(lf_motor) == MOTOR_ENABLED) {
+    // 获取测量数据
+    Djimotor_measure_t measure = Djimotor_get_measure(lf_motor);
+    printf("Angle: %.2f rad, Speed: %.2f RPM\n",
+    measure.current_angle, measure.angular_velocity);
+    }
