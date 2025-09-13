@@ -2,6 +2,7 @@
 1.每一个电机使用一个结构体涵括，结构体如下：
 （目的：该结构体描绘了DJI电机的一切信息，包含了电机的控制状态以及控制参数）
 /**DJI电机实例**/
+```c++
 #pragma pack(1)
 typedef struct
 {
@@ -13,7 +14,7 @@ typedef struct
     Can_controller_t can_controller;    //电机自身的CAN管理者
 }Djimotor_device_t;
 #pragma pack()
-
+```
 解释：
 1.【motor_name】其中每一个电机有一个名字motor_name（可选），这个可有可无，目的是明确该电机属于哪一个部分，但似乎可以通过变量名来表示。
 2.【motor_type】电机类型，需要选择该电机是大疆电机的哪一个款式，因为G3508,M2006,GM6020电机它们的CAN发送ID是不一样的，接收ID也是不一样的，本意是根据不同电机类型，需要进行不同的处理。
@@ -23,39 +24,11 @@ typedef struct
 6.【can_controller】电机自身的CAN管理者，这个非常重要，包含了电机CAN的发送/接收ID，接收缓冲区，在调用电机控制函数的时候，需要用到里面的信息，然后通过CAN发送出去
     - 接收缓冲区需要自己写好准备
 
-Djimotor_device_t *yaw_motor;
-...初始化电机实例
-Djimotor_ctrl(yaw_motor,期望值)；
-
-使用说明：
-1.初始化电机
-    // 创建电机初始化配置
-    Djimotor_init_config_t motor_config = {
-    .motor_name = "LeftFront",
-    .motor_type = M3508,
-    .motor_status = MOTOR_ENABLED,
-    
-        // PID配置
-        .motor_controller_init = {
-            .current_pid = {.kp = 0.8f, .ki = 0.05f, ...},
-            .angle_pid = {.kp = 5.0f, .ki = 0.1f, ...},
-            .speed_pid = {.kp = 0.5f, .ki = 0.01f, ...}
-        },
-        
-        // CAN配置
-        .can_init = {
-            .can_handle = &hcan1,
-            .can_id = 1,       // 电机ID
-            .tx_id = 0x200,   // 控制ID
-            .rx_id = 0x201    // 反馈ID
-        }
-    };
-    // 初始化电机
-    Djimotor_device_t *lf_motor = DJI_Motor_Init(&motor_config);
-
-2.电机接口使用
+电机接口使用说明：
 1.初始化流程
 ![img_2.png](img_2.png)
+
+``````c++
 代码：
     Djimotor_init_config_t motor_config = {
     .motor_name = "LF Wheel",
@@ -74,16 +47,21 @@ Djimotor_ctrl(yaw_motor,期望值)；
     .rx_id = 0x201    // 接收ID
     }
     };
-    
     Djimotor_device_t *lf_motor = DJI_Motor_Init(&motor_config);
+``````
 2.控制流程
 ![img_3.png](img_3.png)
 代码：
-    // 设置目标角度(90度)
+```c++
+ // 设置目标角度(90度)
     Djimotor_set_target(lf_motor, M_PI / 2);
+```
+   
 
 3.状态设置/获取：
-    // 停止电机
+代码：
+```c++
+ // 停止电机
     Djimotor_set_status(lf_motor, MOTOR_STOP);
     // 获取电机状态
     if (Djimotor_get_status(lf_motor) == MOTOR_ENABLED) {
@@ -92,3 +70,5 @@ Djimotor_ctrl(yaw_motor,期望值)；
     printf("Angle: %.2f rad, Speed: %.2f RPM\n",
     measure.current_angle, measure.angular_velocity);
     }
+```
+   
