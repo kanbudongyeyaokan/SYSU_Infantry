@@ -107,9 +107,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Message_Center
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
-<<<<<<< HEAD
+
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
-=======
+
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Chassis
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Gimbal
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Ins
@@ -118,7 +118,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Bmi088_Driver
->>>>>>> fb7756441a57a898f7765419e91137dc296cba42
+
 )
 
 # Add project symbols (macros)

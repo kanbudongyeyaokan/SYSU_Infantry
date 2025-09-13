@@ -9,12 +9,12 @@
  */
 
 #include "can_motors_test_task.h"
-// #include "dji_motor.h"
-// #include "bsp_log.h"
+ #include "dji_motor.h"
 #include "bsp_usart.h"
 #include <stdio.h>
 #include "bsp_usart.h"
-#include "dji_motor.h"
+#include "bsp_can.h"
+
 
 extern UartInstance_t* uart_instance;
 
@@ -46,7 +46,7 @@ void Can_motors_test_task(void const *argument)
     };
     Djimotor_device_t *test_motor = DJI_Motor_Init(&motor_config);
     static uint32_t test_counter = 0;
-    
+
     for (;;)
     {
         // TODO: 测试电机控制
@@ -55,14 +55,15 @@ void Can_motors_test_task(void const *argument)
         // 暂时输出测试信息
 
         //printf("CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
-        Djimotor_set_target(test_motor,5000);
+
        // Uart_printf(uart_instance, "nonononon:%d\r\n",6);
 
         Uart_printf(debug_uart, "CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
-
+        Djimotor_set_target(test_motor,10000);
         test_counter++;
         Djimotor_control_all();
         // 任务延时50ms，控制频率20Hz
         osDelay(50);
+
     }
 }
