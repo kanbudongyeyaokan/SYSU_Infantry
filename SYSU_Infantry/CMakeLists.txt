@@ -62,6 +62,11 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Remote_Control/rc_task.h
         4-Application_Layer/Shoot/shoot_task.c
         4-Application_Layer/Shoot/shoot_task.h
+
+        2-Hardware_Driver_Layer/Bmi088_Driver/bmi088.h
+        2-Hardware_Driver_Layer/Bmi088_Driver/bmi088.c
+        2-Hardware_Driver_Layer/Bmi088_Driver/bmi088_regNdef.h
+
 #        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
 #        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
@@ -88,6 +93,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+    ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task/robot_task.c
 )
 
 # Add include paths
@@ -98,9 +104,21 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_can
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Pid_Controller
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Message_Center
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
+<<<<<<< HEAD
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
+=======
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Chassis
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Gimbal
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Ins
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Others
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Referee
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Shoot
+        ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Bmi088_Driver
+>>>>>>> fb7756441a57a898f7765419e91137dc296cba42
 )
 
 # Add project symbols (macros)

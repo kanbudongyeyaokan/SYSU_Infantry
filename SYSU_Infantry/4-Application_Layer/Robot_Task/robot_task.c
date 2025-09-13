@@ -4,6 +4,10 @@
 #include "cmsis_os.h"
 #include "robot_task.h"
 #include "bsp_usart.h"
+<<<<<<< HEAD
+=======
+#include "usart.h"
+>>>>>>> fb7756441a57a898f7765419e91137dc296cba42
 
 // 测试任务头文件
 #include "bmi088_test_task.h"
@@ -30,6 +34,9 @@ UartInstance_t* uart_instance = {0};
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
+    // 初始化调试串口
+    // debug_uart = Uart_register(&huart1, NULL); // 使用UART1作为调试串口
+    
     //osThreadDef中的形参分别为任务名，任务函数入口，任务优先级，保留参数，栈大小
     // osThreadDef(ins_task, Ins_task, osPriorityAboveNormal, 0, 1024);
     // ins_task_handle = osThreadCreate(osThread(ins_task), NULL); // 由于是阻塞读取传感器,为姿态解算设置较高优先级,确保以1khz的频率执行
@@ -58,12 +65,17 @@ void Robot_task_init(void)
     osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
     bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
 
-    osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
-    can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
+    // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
+    // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
+<<<<<<< HEAD
     osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
     rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
 
 
 
+=======
+    // osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
+    // rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
+>>>>>>> fb7756441a57a898f7765419e91137dc296cba42
 }

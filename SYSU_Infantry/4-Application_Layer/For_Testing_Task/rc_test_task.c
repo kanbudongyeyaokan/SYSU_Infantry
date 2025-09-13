@@ -11,6 +11,7 @@
 #include "rc_test_task.h"
 // #include "remote_control.h"
 // #include "bsp_log.h"
+#include "bsp_usart.h"
 #include <stdio.h>
 
 /**
@@ -47,7 +48,7 @@ void Rc_test_task(void const *argument)
         // }
         
         // 暂时输出测试信息
-        printf("RC Test Task Running...\r\n");
+        Uart_printf(debug_uart, "RC Test Task Running...\r\n");
         
         // 任务延时20ms，50Hz频率
         osDelay(20);
