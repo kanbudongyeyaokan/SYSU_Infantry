@@ -3,6 +3,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "robot_task.h"
+#include "bsp_usart.h"
 
 // 测试任务头文件
 #include "bmi088_test_task.h"
@@ -21,6 +22,10 @@ osThreadId others_task_handle; //处理其他任务，比如与视觉通信，�
 osThreadId bmi088_test_task_handle; //bmi088测试任务
 osThreadId can_motors_test_task_handle; // can电机测试任务
 osThreadId rc_test_task_handle; //单独遥控器测试任务
+
+
+
+UartInstance_t* uart_instance = {0};
 
 /**机器人任务创建**/
 void Robot_task_init(void)
@@ -47,6 +52,8 @@ void Robot_task_init(void)
     // osThreadDef(others_task, Others_task, osPriorityNormal, 0, 1024);
     // others_task_handle = osThreadCreate(osThread(others_task), NULL);
 
+    uart_instance = Uart_register(&huart1,NULL);
+
     // 创建测试任务
     osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
     bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
@@ -56,4 +63,7 @@ void Robot_task_init(void)
 
     osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
     rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
+
+
+
 }

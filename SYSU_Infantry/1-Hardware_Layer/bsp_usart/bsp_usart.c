@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "stdbool.h"
+#include "bsp_dwt.h"
 
 //串口实例序号
 static uint8_t uart_ix = 0;
@@ -49,6 +50,11 @@ void Uart_printf(UartInstance_t *uart_instance,const char* fmt, ...) {
     va_start(args, fmt);
     int len = vsnprintf((char*)uart_instance->tx_buffer, TX_BUF_SIZE, fmt, args);
     va_end(args);
+
+    uint8_t wait_time = HAL_GetTick();
+    while (HAL_GetTick() - wait_time < 1) {
+    };
+
     //发送调试字符串信息
     if (len > 0) {
         HAL_UART_Transmit_DMA(uart_instance->uart_handle, uart_instance->tx_buffer, len);

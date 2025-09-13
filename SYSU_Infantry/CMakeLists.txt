@@ -73,6 +73,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/For_Testing_Task/can_motors_test_task.c
         4-Application_Layer/For_Testing_Task/rc_test_task.h
         4-Application_Layer/For_Testing_Task/rc_test_task.c
+        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
+        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
 )
 
 # Add STM32CubeMX generated sources
@@ -98,6 +100,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Pid_Controller
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
+        ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
 )
 
 # Add project symbols (macros)

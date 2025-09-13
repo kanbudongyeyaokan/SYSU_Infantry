@@ -37,3 +37,8 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf, RC_ctrl_t *rc_ctrl)
 
 }
 
+RC_ctrl_t *RC_Data_Get(RC_ctrl_t *rc_ctrl)
+{
+  
+
+}

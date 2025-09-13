@@ -17,7 +17,7 @@ typedef enum
 {
     M3508 = 0,
     M2006,
-    G3508
+    GM6020
 }Djimotor_type_e;
 
 /**DJI电机控制状态**/
@@ -81,6 +81,10 @@ typedef struct
 typedef struct
 {
     Djimotor_closeloop_e close_loop;       //电机模式
+    Djimotor_feedback_source_e angle_source;//电机角度反馈值来源
+    Djimotor_feedback_source_e speed_source;
+    float *other_angle_feedback_ptr; // 其他角度反馈数据指针
+    float *other_speed_feedback_ptr; // 其他速度反馈数据指针,单位为度/秒
     Pid_init_t current_pid;     //电流PID初始化
     Pid_init_t angle_pid;       //角度PID初始化
     Pid_init_t speed_pid;       //速度PID初始化

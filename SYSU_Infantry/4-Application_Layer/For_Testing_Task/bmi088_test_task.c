@@ -11,7 +11,10 @@
 #include "bmi088_test_task.h"
 // #include "bmi088.h"
 // #include "bsp_log.h"
+#include "bsp_usart.h"
 #include <stdio.h>
+
+extern UartInstance_t* uart_instance;
 
 /**
  * @brief BMI088测试任务函数
@@ -28,7 +31,9 @@ void Bmi088_test_task(void const *argument)
     //     // 配置参数需要根据实际硬件设置
     // };
     // bmi088_instance = Bmi088_register(&bmi088_config);
-    
+
+
+
     for (;;)
     {
         // TODO: 读取BMI088数据并输出
@@ -47,8 +52,9 @@ void Bmi088_test_task(void const *argument)
         // }
         
         // 暂时输出测试信息
-        printf("BMI088 Test Task Running...\r\n");
-        
+       // printf("BMI088 Test Task Running...\r\n");
+        Uart_printf(uart_instance,"Hello World\r\n");
+
         // 任务延时100ms
         osDelay(100);
     }

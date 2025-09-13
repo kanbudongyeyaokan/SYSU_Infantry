@@ -42,7 +42,7 @@ typedef struct
     },
     .can_init = {
     .can_handle = &hcan1,
-    .can_id = 1,       // 电机ID (1-8)
+    .can_id = 0X200,       // 电机ID (1-8)
     .tx_id = 0x200,   // 发送ID
     .rx_id = 0x201    // 接收ID
     }
