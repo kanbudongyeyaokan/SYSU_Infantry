@@ -87,19 +87,23 @@ uint8_t Can_send_data(Can_controller_t* Can_controller,uint8_t *tx_buff)
     //获取开始时间
     float time_start = DWT_GetTimeline_ms();
     //检查邮箱是否空闲
-    while (HAL_CAN_GetTxMailboxesFreeLevel(Can_controller->can_handle) == 0)
-    {
+   // if (HAL_CAN_GetTxMailboxesFreeLevel(Can_controller->can_handle) == 0)
+
         //超时保护，1ms如果还不发送就退出
+        /*
         if (DWT_GetTimeline_ms() - time_start > 1)
             return 0;
-    }
-    if (HAL_CAN_AddTxMessage(Can_controller->can_handle,&Can_controller->tx_config,
-        tx_buff,&Can_controller->tx_mailbox) != HAL_OK )
-    {
-        return 0;
-    }
-    //发送成功
-    return 1;
+        */
+   // HAL_CAN_AddTxMessage(Can_controller->can_handle,&Can_controller->tx_config,tx_buff,&Can_controller->tx_mailbox);
+        if (HAL_CAN_AddTxMessage(Can_controller->can_handle,&Can_controller->tx_config,
+            tx_buff,&Can_controller->tx_mailbox) != HAL_OK ) {
+            return 0;
+        }
+       // {
+       //     return 0;
+       // }
+
+
 }
 
 //接收处理函数，会被两个FIFO接收回调进行调用

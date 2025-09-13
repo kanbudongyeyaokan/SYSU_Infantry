@@ -55,7 +55,7 @@ void Can_motors_test_task(void const *argument)
         .can_id = 0x1ff
     };
     Can_controller_t *can_dev = Can_device_init(&can_config);
-    static uint8_t tx_buffer[8]={0,0,0xff,0xff,0,0,0,0};
+    static uint8_t tx_buffer[8]={0,0,0x30,0x30,0,0,0,0};
 
     static uint32_t test_counter = 0;
 
