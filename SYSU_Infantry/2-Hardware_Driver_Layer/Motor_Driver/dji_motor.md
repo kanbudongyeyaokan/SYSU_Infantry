@@ -54,4 +54,4 @@ Djimotor_ctrl(yaw_motor,期望值)；
     Djimotor_device_t *lf_motor = DJI_Motor_Init(&motor_config);
 
 2.电机接口使用
-
+[](![img_1.png](img_1.png))
