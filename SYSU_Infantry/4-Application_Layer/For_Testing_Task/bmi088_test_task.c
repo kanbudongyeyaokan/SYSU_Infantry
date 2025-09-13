@@ -9,8 +9,8 @@
  */
 
 #include "bmi088_test_task.h"
-// #include "bmi088.h"
-// #include "bsp_log.h"
+#include "bmi088.h"
+#include "bsp_usart.h"
 #include <stdio.h>
 
 /**
@@ -20,34 +20,36 @@
 void Bmi088_test_task(void const *argument)
 {
     // 初始化BMI088实例和数据结构
-    // static Bmi088_data_t bmi088_data;
+    static Bmi088_data_t bmi088_data;
+    static Acc_raw_data_t acc_data;
+    static Gyro_raw_data_t gyro_data;
+    static float temperature;
     
-    // TODO: 根据实际硬件配置初始化BMI088
-    // static Bmi088_instance_t *bmi088_instance;
-    // Bmi088_init_config_s bmi088_config = {
-    //     // 配置参数需要根据实际硬件设置
-    // };
-    // bmi088_instance = Bmi088_register(&bmi088_config);
+    // 初始化BMI088
+    Bmi088_error_e error = Bmi088_init();
+    if (error != NO_ERROR) {
+        Uart_printf(debug_uart, "BMI088 初始化失败，错误码：0x%02X\r\n", error);
+    } else {
+        Uart_printf(debug_uart, "BMI088 初始化成功\r\n");
+    }
     
     for (;;)
     {
-        // TODO: 读取BMI088数据并输出
-        // if (Bmi088_acquire(bmi088_instance, &bmi088_data))
-        // {
-        //     // 输出加速度计数据
-        //     printf("ACC: X=%.3f, Y=%.3f, Z=%.3f\r\n", 
-        //            bmi088_data.acc[0], bmi088_data.acc[1], bmi088_data.acc[2]);
-        //     
-        //     // 输出陀螺仪数据
-        //     printf("GYRO: X=%.3f, Y=%.3f, Z=%.3f\r\n", 
-        //            bmi088_data.gyro[0], bmi088_data.gyro[1], bmi088_data.gyro[2]);
-        //     
-        //     // 输出温度数据
-        //     printf("TEMP: %.2f°C\r\n", bmi088_data.temperature);
-        // }
+        // 读取BMI088数据并输出
+        Read_acc_data(&acc_data);
+        Read_gyro_data(&gyro_data);
+        Read_acc_temperature(&temperature);
         
-        // 暂时输出测试信息
-        printf("BMI088 Test Task Running...\r\n");
+        // 输出加速度计数据
+        Uart_printf(debug_uart, "ACC: X=%.3f, Y=%.3f, Z=%.3f\r\n", 
+               acc_data.x, acc_data.y, acc_data.z);
+        
+        // 输出陀螺仪数据
+        Uart_printf(debug_uart, "GYRO: Roll=%.3f, Pitch=%.3f, Yaw=%.3f\r\n", 
+               gyro_data.roll, gyro_data.pitch, gyro_data.yaw);
+        
+        // 输出温度数据
+        Uart_printf(debug_uart, "TEMP: %.2f°C\r\n", temperature);
         
         // 任务延时100ms
         osDelay(100);

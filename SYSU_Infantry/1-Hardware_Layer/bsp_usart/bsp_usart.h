@@ -32,5 +32,8 @@ void Uart_printf(UartInstance_t *uart_instance,const char* fmt, ...);
 //发送数据/数据包
 void Uart_sendData(UartInstance_t *uart_instance,uint8_t* data,uint16_t length);
 
+// 全局调试串口实例
+extern UartInstance_t* debug_uart;
+
 
 #endif //_BSP_USART_H

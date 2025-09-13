@@ -11,6 +11,7 @@
 #include "can_motors_test_task.h"
 // #include "dji_motor.h"
 // #include "bsp_log.h"
+#include "bsp_usart.h"
 #include <stdio.h>
 
 /**
@@ -34,7 +35,7 @@ void Can_motors_test_task(void const *argument)
         // 可以实现简单的电机转动测试，如正弦波控制等
         
         // 暂时输出测试信息
-        printf("CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
+        Uart_printf(debug_uart, "CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
         test_counter++;
         
         // 任务延时50ms，控制频率20Hz

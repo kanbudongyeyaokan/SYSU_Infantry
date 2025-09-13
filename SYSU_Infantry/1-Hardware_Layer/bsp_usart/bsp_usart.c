@@ -9,6 +9,9 @@
 static uint8_t uart_ix = 0;
 static UartInstance_t* uart_instance[UART_MAX_COUNT] = {0};
 
+// 全局调试串口实例
+UartInstance_t* debug_uart = NULL;
+
 //初始化串口实例
 static void Uart_init(UartInstance_t* instance,UART_HandleTypeDef *huart) {
     //安全检查
