@@ -18,7 +18,7 @@
 #include "bsp_usart.h"
 #include <stdio.h>
 
-extern UartInstance_t* uart_instance;
+//extern UartInstance_t* uart_instance;
 
 /**
  * @brief BMI088测试任务函数
@@ -26,6 +26,7 @@ extern UartInstance_t* uart_instance;
  */
 void Bmi088_test_task(void const *argument)
 {
+    
     // 初始化BMI088实例和数据结构
     static Bmi088_data_t bmi088_data;
     static Acc_raw_data_t acc_data;
@@ -52,10 +53,11 @@ void Bmi088_test_task(void const *argument)
         // Uart_printf(debug_uart, "BMI088 初始化成功\r\n");
         printf("BMI088 初始化成功\r\n");
     }
-    
+
 
     for (;;)
     {
+
         // 读取BMI088数据并输出
         Read_acc_data(&acc_data);
         Read_gyro_data(&gyro_data);
@@ -64,7 +66,7 @@ void Bmi088_test_task(void const *argument)
 
         // 暂时输出测试信息
        // printf("BMI088 Test Task Running...\r\n");
-        Uart_printf(uart_instance,"Hello World\r\n");
+      //  Uart_printf(uart_instance,"Hello World\r\n");
 
 
         // 输出加速度计数据
@@ -87,4 +89,5 @@ void Bmi088_test_task(void const *argument)
         // 任务延时100ms
         osDelay(100);
     }
+
 }

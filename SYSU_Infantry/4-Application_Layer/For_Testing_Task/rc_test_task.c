@@ -13,6 +13,9 @@
 // #include "bsp_log.h"
 #include "bsp_usart.h"
 #include <stdio.h>
+#include "bsp_can.h"
+
+//extern UartInstance_t *uart_instance;
 
 /**
  * @brief 遥控器测试任务函数
@@ -26,7 +29,19 @@ void Rc_test_task(void const *argument)
     //     // 配置参数需要根据实际硬件设置
     // };
     // rc_instance = RemoteControlInit(&rc_config);
-    
+    //定义CAN设备初始化结构体
+    Can_init_t can_config =
+    {
+        .can_handle = &hcan1,
+        .can_id     = 0x1FF,
+        .tx_id      = 2,
+        .rx_id      = 0x206
+    };
+    //定义CAN设备结构体
+   // Can_controller_t *can_dev = Can_device_init(&can_config);
+   // uint8_t tx_0x1ff_buffer[8]={0x11,0x32,0xff,0x10,0,0,0,0};//只有前两个字节有用
+
+
     for (;;)
     {
         // TODO: 读取遥控器数据并输出
@@ -48,8 +63,9 @@ void Rc_test_task(void const *argument)
         // }
         
         // 暂时输出测试信息
-        Uart_printf(debug_uart, "RC Test Task Running...\r\n");
-        
+       // Uart_printf(uart_instance,"Hello World\r\n");
+        //调用发送函数
+      //  Can_send_data(can_dev,tx_0x1ff_buffer);
         // 任务延时20ms，50Hz频率
         osDelay(20);
     }

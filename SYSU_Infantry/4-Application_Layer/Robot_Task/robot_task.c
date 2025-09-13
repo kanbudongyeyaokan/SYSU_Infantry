@@ -28,7 +28,7 @@ osThreadId rc_test_task_handle; //单独遥控器测试任务
 
 
 
-UartInstance_t* uart_instance = {0};
+//UartInstance_t* uart_instance = {0};
 
 /**机器人任务创建**/
 void Robot_task_init(void)
@@ -58,18 +58,18 @@ void Robot_task_init(void)
     // osThreadDef(others_task, Others_task, osPriorityNormal, 0, 1024);
     // others_task_handle = osThreadCreate(osThread(others_task), NULL);
 
-    uart_instance = Uart_register(&huart1,NULL);
+  //  uart_instance = Uart_register(&huart1,NULL);
 
     // 创建测试任务
     osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
     bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
 
-     osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
-     can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
+     //osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
+     //can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
 
-    osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
-    rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
+    //osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
+    //rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
 
 
 

@@ -16,7 +16,7 @@
 #include "bsp_can.h"
 
 
-extern UartInstance_t* uart_instance;
+
 
 /**
  * @brief CAN电机测试任务函数
@@ -30,6 +30,10 @@ void Can_motors_test_task(void const *argument)
     //     // 配置参数需要根据实际硬件设置
     // };
     // test_motor = DJIMotorInit(&motor_config);
+    static UartInstance_t* uart_instance = {0};
+    uart_instance = Uart_register(&huart1,NULL);
+
+
     Djimotor_init_config_t motor_config = {
         .motor_name = "TSET_MOTOR",
         .motor_type = GM6020,
@@ -56,10 +60,11 @@ void Can_motors_test_task(void const *argument)
 
         //printf("CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
 
-       // Uart_printf(uart_instance, "nonononon:%d\r\n",6);
+        Uart_printf(uart_instance, "nonononon:%d\r\n",6);
 
-        Uart_printf(debug_uart, "CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
+       // Uart_printf(debug_uart, "CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
         Djimotor_set_target(test_motor,10000);
+
         test_counter++;
         Djimotor_control_all();
         // 任务延时50ms，控制频率20Hz
