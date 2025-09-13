@@ -51,8 +51,6 @@ static uint8_t Get_buffer_index(CAN_HandleTypeDef *hcan, uint32_t can_id) {
     return 0xFF; // 无效索引
 }
 
-
-
 //解译电机反馈回来的数据
 static void Decode_djimotor(Can_controller_t* can_dev,void *context)
 {
@@ -174,7 +172,7 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
     }
 
     // 获取电流反馈值 (使用电机自身反馈)
-    float current_feedback = measure->real_current; // mA转A
+    float current_feedback = measure->real_current;
 
   //  Uart_printf(uart_instance,"before sw\n");
     // 根据控制类型选择控制策略
@@ -267,7 +265,6 @@ void Djimotor_control_all(void) {
     for (uint8_t i = 0; i < motor_count; i++) {
         Calculate_Motor_Output(motor_instances[i]);
     }
-    // Uart_printf(uart_instance,"all output\r\n");
     // 发送所有更新的缓冲区
     for (uint8_t i = 0; i < 6; i++) {
             // 准备发送数据
@@ -297,9 +294,8 @@ void Djimotor_control_all(void) {
 
             // 发送数据
             if (tx_data != NULL) {
-                Can_send_data(&temp_can, tx_data);
+                Can_send_data(&temp_can,tx_data);
             }
-
     }
 }
 

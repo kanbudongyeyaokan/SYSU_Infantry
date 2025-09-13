@@ -14,8 +14,10 @@
 #include <stdio.h>
 #include "bsp_can.h"
 
+
 UartInstance_t* uart_instance;
 
+static Djimotor_measure_t test_measure;
 
 /**
  * @brief CAN电机测试任务函数
@@ -33,16 +35,17 @@ void Can_motors_test_task(void const *argument)
 
     Djimotor_init_config_t motor_config = {
         .motor_name = "TSET_MOTOR",
-        .motor_type = GM6020,
+        .motor_type = M3508,
         .motor_status = MOTOR_ENABLED,
         .motor_controller_init = {
             .close_loop = OPEN_LOOP,
         },
         .can_init = {
             .can_handle = &hcan1,
-            .can_id = 0X1FF,       // 电机ID (1-8)
-            .tx_id = 2,   // 发送ID
-            .rx_id = 0x206    // 接收ID
+            .can_id = 0X200,       // 电机ID (1-8)
+            .tx_id = 1,   // 发送ID
+            .rx_id = 0x206
+            // 接收ID
             }
     };
     Djimotor_device_t *test_motor = DJI_Motor_Init(&motor_config);
@@ -58,6 +61,7 @@ void Can_motors_test_task(void const *argument)
 */
     static uint32_t test_counter = 0;
 
+
     for (;;)
     {
         // TODO: 测试电机控制
@@ -70,14 +74,16 @@ void Can_motors_test_task(void const *argument)
 
 
        // Uart_printf(debug_uart, "CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
-        Djimotor_set_target(test_motor,10000.0);
-        float temp = test_motor->motor_pid.pid_target;
+        Djimotor_set_target(test_motor,500.0);
+
+        test_measure = Djimotor_get_measure(test_motor);
+
+
+
         // Uart_printf(uart_instance, "pid:%.2f\r\n",temp);
-
-
         Djimotor_control_all();
-        // 任务延时50ms，控制频率20Hz
-        osDelay(50);
+        // 任务延时50ms，控制频率200Hz
+        osDelay(5);
 
     }
 }

@@ -66,6 +66,7 @@ Can_controller_t* Can_device_init(Can_init_t *can_config)
     can_dev->tx_id  = can_config->tx_id; //CAN设备ID
     can_dev->rx_id = can_config->rx_id;  //CAN 接收ID
     can_dev->receive_callback = can_config->receive_callback;//接收函数
+    can_dev->context = can_config->context;//上下文
     /*CAN发送配置*/
     can_dev->tx_config.StdId = can_config->can_id;//发送ID，比如大疆电机有0X1FF,0X200,0X2FF等等
     can_dev->tx_config.IDE = CAN_ID_STD;//使用CAN标准帧（11位）
