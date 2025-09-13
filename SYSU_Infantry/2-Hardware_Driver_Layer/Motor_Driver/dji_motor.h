@@ -23,7 +23,7 @@ typedef enum
 /**DJI电机控制状态**/
 typedef enum
 {
-    MOTOR_ENBALED = 0,
+    MOTOR_ENABLED = 0,
     MOTOR_STOP
 }Djimotor_status_e;
 
@@ -36,8 +36,13 @@ typedef enum
     ANGLE_LOOP = 0b0100,            //角度环
     SPEED_AND_CURRENT_LOOP = 0b0011,
     ANGLE_AND_SPEED_LOOP = 0b0110,
-    ALL_THREE_LOOP = 0b0111,
 } Djimotor_closeloop_e;
+
+typedef enum
+{
+    MOTOR_FEEDBACK =0,
+    OTHER_FEEDBACK
+}Djimotor_feedback_source_e;
 
 /**DJI电机反馈信息**/
 #pragma pack(1)
@@ -58,7 +63,12 @@ typedef struct
 typedef struct
 {
     Djimotor_closeloop_e close_loop;       //电机模式
-    Pid_instance_t current_pid; //电流环
+    Djimotor_feedback_source_e angle_source;//电机角度反馈值来源
+    Djimotor_feedback_source_e speed_source;
+    float *other_angle_feedback_ptr; // 其他角度反馈数据指针
+    float *other_speed_feedback_ptr; // 其他速度反馈数据指针,单位为度/秒
+
+    Pid_instance_t current_pid; //电流环pid实例
     Pid_instance_t angle_pid;   //角度环
     Pid_instance_t speed_pid;   //速度环
 
@@ -116,6 +126,9 @@ Djimotor_status_e Djimotor_get_status(Djimotor_device_t *motor) ;
 
 // 获取电机测量数据
 Djimotor_measure_t Djimotor_get_measure(Djimotor_device_t *motor);
+
+//设置电机状态
+void Djimotor_set_status(Djimotor_device_t *motor,Djimotor_status_e status);
 
 
 
