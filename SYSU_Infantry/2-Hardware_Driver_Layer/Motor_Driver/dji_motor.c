@@ -270,7 +270,6 @@ void Djimotor_control_all(void) {
     // Uart_printf(uart_instance,"all output\r\n");
     // 发送所有更新的缓冲区
     for (uint8_t i = 0; i < 6; i++) {
-        if (buffer_updated[i]) {
             // 准备发送数据
             Can_controller_t temp_can;
             memset(&temp_can, 0, sizeof(Can_controller_t));
@@ -301,9 +300,6 @@ void Djimotor_control_all(void) {
                 Can_send_data(&temp_can, tx_data);
             }
 
-            // 清除更新标志
-            buffer_updated[i] = 0;
-        }
     }
 }
 

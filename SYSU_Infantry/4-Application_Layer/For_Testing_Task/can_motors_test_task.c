@@ -70,7 +70,7 @@ void Can_motors_test_task(void const *argument)
 
 
        // Uart_printf(debug_uart, "CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
-        Djimotor_set_target(test_motor,5000.0);
+        Djimotor_set_target(test_motor,10000.0);
         float temp = test_motor->motor_pid.pid_target;
         // Uart_printf(uart_instance, "pid:%.2f\r\n",temp);
 
