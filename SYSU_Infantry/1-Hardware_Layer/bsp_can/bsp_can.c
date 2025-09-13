@@ -14,7 +14,7 @@ static uint8_t can_ix; // 全局CAN实例索引,每次有新的模块注册会�
  * @note 此函数会启动CAN1和CAN2,开启CAN1和CAN2的FIFO0 & FIFO1溢出通知
  *
  */
-static void Can_init()
+void Can_init()
 {
     HAL_CAN_Start(&hcan1);
     HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
@@ -48,9 +48,7 @@ Can_controller_t* Can_device_init(Can_init_t *can_config)
     memset(can_dev, 0, sizeof(Can_controller_t));
     if (can_dev == NULL) return NULL;
     //首次调用,检查设备数量
-    if (can_ix ==0)
-        Can_init();
-    else if (can_ix > CAN_MAX_COUNT) {
+    if (can_ix > CAN_MAX_COUNT) {
         free(can_dev);
         return NULL;
     }

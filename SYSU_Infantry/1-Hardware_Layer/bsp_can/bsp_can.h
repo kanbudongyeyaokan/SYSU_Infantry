@@ -49,6 +49,7 @@ Can_controller_t *Can_device_init(Can_init_t *can_config);
 /**CAN发送数据**/
 uint8_t Can_send_data(Can_controller_t* Can_dev,uint8_t* tx_buff);
 
-
+/**CAN初始化**/
+void Can_init();
 
 #endif //_BSP_CAN_H

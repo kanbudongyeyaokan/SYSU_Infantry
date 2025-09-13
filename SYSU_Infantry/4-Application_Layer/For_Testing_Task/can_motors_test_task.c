@@ -12,7 +12,6 @@
  #include "dji_motor.h"
 #include "bsp_usart.h"
 #include <stdio.h>
-#include "bsp_usart.h"
 #include "bsp_can.h"
 
 
@@ -30,10 +29,9 @@ void Can_motors_test_task(void const *argument)
     //     // 配置参数需要根据实际硬件设置
     // };
     // test_motor = DJIMotorInit(&motor_config);
-    static UartInstance_t* uart_instance = {0};
-    uart_instance = Uart_register(&huart1,NULL);
+    UartInstance_t* uart_instance = Uart_register(&huart1,NULL);
 
-
+/*
     Djimotor_init_config_t motor_config = {
         .motor_name = "TSET_MOTOR",
         .motor_type = GM6020,
@@ -49,6 +47,16 @@ void Can_motors_test_task(void const *argument)
             }
     };
     Djimotor_device_t *test_motor = DJI_Motor_Init(&motor_config);
+    */
+    Can_init_t can_config={
+        .can_handle = &hcan1,
+        .tx_id = 2,
+        .rx_id = 0x206,
+        .can_id = 0x1ff
+    };
+    Can_controller_t *can_dev = Can_device_init(&can_config);
+    static uint8_t tx_buffer[8]={0,0,0xff,0xff,0,0,0,0};
+
     static uint32_t test_counter = 0;
 
     for (;;)
@@ -59,11 +67,15 @@ void Can_motors_test_task(void const *argument)
         // 暂时输出测试信息
 
         //printf("CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
+        Can_send_data(can_dev,tx_buffer);
+
+
+
 
         Uart_printf(uart_instance, "nonononon:%d\r\n",6);
 
        // Uart_printf(debug_uart, "CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
-        Djimotor_set_target(test_motor,10000);
+        //Djimotor_set_target(test_motor,10000);
 
         test_counter++;
         Djimotor_control_all();
