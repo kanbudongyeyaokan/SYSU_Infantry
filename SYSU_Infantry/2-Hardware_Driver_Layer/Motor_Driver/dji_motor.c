@@ -247,7 +247,7 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
     buffer[motor_num * 2 + 1] = (uint8_t)(current_val & 0xFF);
     // 标记缓冲区更新
     uint8_t buf_idx = Get_buffer_index(motor->can_controller->can_handle,
-                                      motor->can_controller->tx_config.StdId);
+                                      motor->can_controller->can_id);
     if (buf_idx != 0xFF) {
         buffer_updated[buf_idx] = 1;
     }
@@ -285,7 +285,7 @@ void Djimotor_control_all(void) {
             temp_can.tx_config.DLC = 8;
 
             // 获取缓冲区数据
-            uint8_t *tx_data = Get_buffer_pointer(temp_can.can_handle, temp_can.tx_config.StdId);
+            uint8_t *tx_data = Get_buffer_pointer(temp_can.can_handle, temp_can.can_id);
 
             // 发送数据
             if (tx_data != NULL) {

@@ -9,12 +9,12 @@
  */
 
 #include "bmi088_test_task.h"
-<<<<<<< HEAD
+
 // #include "bmi088.h"
 // #include "bsp_log.h"
-=======
+
 #include "bmi088.h"
->>>>>>> fb7756441a57a898f7765419e91137dc296cba42
+
 #include "bsp_usart.h"
 #include <stdio.h>
 
@@ -32,7 +32,7 @@ void Bmi088_test_task(void const *argument)
     static Gyro_raw_data_t gyro_data;
     static float temperature;
     
-<<<<<<< HEAD
+
     // TODO: 根据实际硬件配置初始化BMI088
     // static Bmi088_instance_t *bmi088_instance;
     // Bmi088_init_config_s bmi088_config = {
@@ -42,7 +42,7 @@ void Bmi088_test_task(void const *argument)
 
 
 
-=======
+
     // 初始化BMI088
     Bmi088_error_e error = Bmi088_init();
     if (error != NO_ERROR) {
@@ -53,7 +53,7 @@ void Bmi088_test_task(void const *argument)
         printf("BMI088 初始化成功\r\n");
     }
     
->>>>>>> fb7756441a57a898f7765419e91137dc296cba42
+
     for (;;)
     {
         // 读取BMI088数据并输出
@@ -61,12 +61,12 @@ void Bmi088_test_task(void const *argument)
         Read_gyro_data(&gyro_data);
         Read_acc_temperature(&temperature);
         
-<<<<<<< HEAD
+
         // 暂时输出测试信息
        // printf("BMI088 Test Task Running...\r\n");
         Uart_printf(uart_instance,"Hello World\r\n");
 
-=======
+
         // 输出加速度计数据
         // Uart_printf(debug_uart, "ACC: X=%.3f, Y=%.3f, Z=%.3f\r\n", 
         //        acc_data.x, acc_data.y, acc_data.z);
@@ -83,7 +83,7 @@ void Bmi088_test_task(void const *argument)
         // Uart_printf(debug_uart, "TEMP: %.2f°C\r\n", temperature);
         printf("TEMP: %.2f°C\r\n", temperature);
         
->>>>>>> fb7756441a57a898f7765419e91137dc296cba42
+
         // 任务延时100ms
         osDelay(100);
     }

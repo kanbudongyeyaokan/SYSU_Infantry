@@ -4,10 +4,9 @@
 #include "cmsis_os.h"
 #include "robot_task.h"
 #include "bsp_usart.h"
-<<<<<<< HEAD
-=======
+
 #include "usart.h"
->>>>>>> fb7756441a57a898f7765419e91137dc296cba42
+
 
 // 测试任务头文件
 #include "bmi088_test_task.h"
@@ -68,14 +67,13 @@ void Robot_task_init(void)
     // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
     // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
-<<<<<<< HEAD
+
     osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
     rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
 
 
 
-=======
+
     // osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
     // rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
->>>>>>> fb7756441a57a898f7765419e91137dc296cba42
 }
