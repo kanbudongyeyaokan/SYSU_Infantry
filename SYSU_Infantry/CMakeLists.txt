@@ -67,8 +67,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         2-Hardware_Driver_Layer/Bmi088_Driver/bmi088.c
         2-Hardware_Driver_Layer/Bmi088_Driver/bmi088_regNdef.h
 
-#        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
-#        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
+        #        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
+        #        2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
         0-Middleware_Layer/Pid_Controller/algorithm_pid.c
 
@@ -87,18 +87,18 @@ add_subdirectory(cmake/stm32cubemx)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined library search paths
+        # Add user defined library search paths
 )
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
-    ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task/robot_task.c
+        # Add user sources here
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task/robot_task.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+        # Add user defined include paths
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usart
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_dwt
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
@@ -123,12 +123,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
+        # Add user defined symbols
 )
 
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
-    stm32cubemx
+        stm32cubemx
 
-    # Add user defined libraries
+        # Add user defined libraries
 )

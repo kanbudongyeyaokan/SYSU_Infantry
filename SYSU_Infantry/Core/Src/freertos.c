@@ -108,8 +108,6 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-
-
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   Robot_task_init();  // 初始化机器人任务

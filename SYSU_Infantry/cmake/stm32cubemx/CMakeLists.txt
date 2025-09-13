@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 project(stm32cubemx)
-add_library(stm32cubemx INTERFACE
-		../../1-Hardware_Layer/bsp_usart/bsp_usart.c)
+add_library(stm32cubemx INTERFACE)
 
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)

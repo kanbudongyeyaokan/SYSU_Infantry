@@ -44,7 +44,7 @@ void Can_motors_test_task(void const *argument)
             .can_handle = &hcan1,
             .can_id = 0X200,       // 电机ID (1-8)
             .tx_id = 1,   // 发送ID
-            .rx_id = 0x206
+            .rx_id = 0x201
             // 接收ID
             }
     };

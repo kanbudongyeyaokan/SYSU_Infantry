@@ -101,8 +101,8 @@ static void Can_fifo_callback(CAN_HandleTypeDef *hcan, uint32_t fifox)
 {
     static CAN_RxHeaderTypeDef rxconf;
     uint8_t can_rx_buff[8]; //新定义一个数组用于存储CAN接收到的信息
-    while (HAL_CAN_GetRxFifoFillLevel(hcan, fifox)) // FIFO不为空,有可能在其他中断时有多帧数据进入
-    {
+   // while (HAL_CAN_GetRxFifoFillLevel(hcan, fifox)) // FIFO不为空,有可能在其他中断时有多帧数据进入
+   // {
         HAL_CAN_GetRxMessage(hcan, fifox, &rxconf, can_rx_buff); // 从FIFO中获取数据
         for (size_t i = 0; i < can_ix; ++i)
         { // 两者相等说明这是要找的实例
@@ -116,7 +116,7 @@ static void Can_fifo_callback(CAN_HandleTypeDef *hcan, uint32_t fifox)
                 return;
             }
         }
-    }
+   // }
 }
 
 /**
