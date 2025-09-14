@@ -58,9 +58,9 @@ void Bmi088_test_task(void const *argument)
     {
         if (bmi088 != NULL) {
             // 读取BMI088数据并输出
-            Read_acc_data(bmi088, &acc_data);
-            Read_gyro_data(bmi088, &gyro_data);
-            Read_acc_temperature(bmi088, &temperature);
+            Acc_raw_data_t *acc_data_ptr = Read_acc_data(bmi088);
+            Gyro_raw_data_t *gyro_data_ptr = Read_gyro_data(bmi088);
+            float *temp_ptr = Read_acc_temperature(bmi088);
             
             // 暂时输出测试信息
             printf("BMI088 Test Task Running...\r\n");
@@ -68,14 +68,14 @@ void Bmi088_test_task(void const *argument)
 
             // 输出加速度计数据
             printf("ACC: X=%.3f, Y=%.3f, Z=%.3f\r\n", 
-                acc_data.x, acc_data.y, acc_data.z);
+                acc_data_ptr->x, acc_data_ptr->y, acc_data_ptr->z);
 
             // 输出陀螺仪数据
             printf("GYRO: Roll=%.3f, Pitch=%.3f, Yaw=%.3f\r\n", 
-                gyro_data.roll, gyro_data.pitch, gyro_data.yaw);
+                gyro_data_ptr->roll, gyro_data_ptr->pitch, gyro_data_ptr->yaw);
 
             // 输出温度数据
-            printf("TEMP: %.2f°C\r\n", temperature);
+            printf("TEMP: %.2f°C\r\n", *temp_ptr);
         }
         
         // 任务延时100ms

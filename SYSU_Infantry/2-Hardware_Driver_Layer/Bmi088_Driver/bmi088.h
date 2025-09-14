@@ -93,10 +93,37 @@ static Bmi088_error_e Bmi088_init(Bmi088_device_t* bmi088);
 static void Bmi088_conf_init(Bmi088_device_t* bmi088);
 
 // 功能函数 (外部使用)
-void Read_acc_data(Bmi088_device_t* bmi088, Acc_raw_data_t *data);
-void Read_gyro_data(Bmi088_device_t* bmi088, Gyro_raw_data_t *data);
-void Read_acc_sensor_time(Bmi088_device_t* bmi088, float *time);
-void Read_acc_temperature(Bmi088_device_t* bmi088, float *temp);
+/**
+ * @brief 读取加速度计数据
+ * @param bmi088 BMI088设备结构体指针
+ * @return 加速度计数据指针，指向设备内部存储的数据，不需要释放
+ * @note 返回值指向设备内部存储，每次调用都会更新，用户无需释放内存
+ */
+Acc_raw_data_t* Read_acc_data(Bmi088_device_t* bmi088);
+
+/**
+ * @brief 读取陀螺仪数据
+ * @param bmi088 BMI088设备结构体指针
+ * @return 陀螺仪数据指针，指向设备内部存储的数据，不需要释放
+ * @note 返回值指向设备内部存储，每次调用都会更新，用户无需释放内存
+ */
+Gyro_raw_data_t* Read_gyro_data(Bmi088_device_t* bmi088);
+
+/**
+ * @brief 读取加速度计传感器时间
+ * @param bmi088 BMI088设备结构体指针
+ * @return 传感器时间指针，指向设备内部存储的数据，不需要释放
+ * @note 返回值指向设备内部存储，每次调用都会更新，用户无需释放内存
+ */
+float* Read_acc_sensor_time(Bmi088_device_t* bmi088);
+
+/**
+ * @brief 读取加速度计温度数据
+ * @param bmi088 BMI088设备结构体指针
+ * @return 温度数据指针，指向设备内部存储的数据，不需要释放
+ * @note 返回值指向设备内部存储，每次调用都会更新，用户无需释放内存
+ */
+float* Read_acc_temperature(Bmi088_device_t* bmi088);
 
 // 校验函数 (内部使用)
 static Bmi088_error_e Verify_acc_chip_id(Bmi088_device_t* bmi088);

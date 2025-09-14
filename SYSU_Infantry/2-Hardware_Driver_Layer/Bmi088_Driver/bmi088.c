@@ -203,15 +203,21 @@ static Bmi088_error_e Verify_gyro_chip_id(Bmi088_device_t* bmi088) {
 
 static Bmi088_error_e Verify_acc_self_test(Bmi088_device_t* bmi088) {
     Acc_raw_data_t pos_data, neg_data;
+    Acc_raw_data_t *data_ptr;
+    
     Write_data_to_acc(bmi088, ACC_RANGE_ADDR, ACC_RANGE_24G);
     Write_data_to_acc(bmi088, ACC_CONF_ADDR, 0xA7);
     HAL_Delay(10);
     Write_data_to_acc(bmi088, ACC_SELF_TEST_ADDR, ACC_SELF_TEST_POS);
     HAL_Delay(100);
-    Read_acc_data(bmi088, &pos_data);
+    data_ptr = Read_acc_data(bmi088);
+    pos_data = *data_ptr;  // 复制数据，避免指针被后续调用覆盖
+    
     Write_data_to_acc(bmi088, ACC_SELF_TEST_ADDR, ACC_SELF_TEST_NEG);
     HAL_Delay(100);
-    Read_acc_data(bmi088, &neg_data);
+    data_ptr = Read_acc_data(bmi088);
+    neg_data = *data_ptr;  // 复制数据，避免指针被后续调用覆盖
+    
     Write_data_to_acc(bmi088, ACC_SELF_TEST_ADDR, ACC_SELF_TEST_OFF);
     HAL_Delay(100);
     if ((fabs(pos_data.x - neg_data.x) > 0.1f) || (fabs(pos_data.y - neg_data.y) > 0.1f) || (fabs(pos_data.z - neg_data.z) > 0.1f)) {
@@ -242,23 +248,33 @@ static Bmi088_error_e Verify_gyro_self_test(Bmi088_device_t* bmi088) {
     }
 }
 
-void Read_acc_data(Bmi088_device_t* bmi088, Acc_raw_data_t *data) {
+Acc_raw_data_t* Read_acc_data(Bmi088_device_t* bmi088) {
+    static Acc_raw_data_t acc_data;  // 静态变量，确保返回值持久有效
     uint8_t buf[ACC_XYZ_LEN], range;
     int16_t acc[3];
+    
     Read_single_data_from_acc(bmi088, ACC_RANGE_ADDR, &range);
     Read_multi_data_from_acc(bmi088, ACC_X_LSB_ADDR, ACC_XYZ_LEN, buf);
     acc[0] = ((int16_t)buf[1] << 8) + (int16_t)buf[0];
     acc[1] = ((int16_t)buf[3] << 8) + (int16_t)buf[2];
     acc[2] = ((int16_t)buf[5] << 8) + (int16_t)buf[4];
-    data->x = (float)acc[0] * BMI088_ACCEL_3G_SEN;
-    data->y = (float)acc[1] * BMI088_ACCEL_3G_SEN;
-    data->z = (float)acc[2] * BMI088_ACCEL_3G_SEN;
+    
+    acc_data.x = (float)acc[0] * BMI088_ACCEL_3G_SEN;
+    acc_data.y = (float)acc[1] * BMI088_ACCEL_3G_SEN;
+    acc_data.z = (float)acc[2] * BMI088_ACCEL_3G_SEN;
+    
+    // 同时更新设备数据结构中的数据（可选）
+    bmi088->data.acc_data.acc_raw_data = acc_data;
+    
+    return &acc_data;
 }
 
-void Read_gyro_data(Bmi088_device_t* bmi088, Gyro_raw_data_t *data) {
+Gyro_raw_data_t* Read_gyro_data(Bmi088_device_t* bmi088) {
+    static Gyro_raw_data_t gyro_data;  // 静态变量，确保返回值持久有效
     uint8_t buf[GYRO_XYZ_LEN], range;
     int16_t gyro[3];
     float unit;
+    
     Read_single_data_from_gyro(bmi088, GYRO_RANGE_ADDR, &range);
     switch (range) {
         case 0x00:
@@ -284,19 +300,34 @@ void Read_gyro_data(Bmi088_device_t* bmi088, Gyro_raw_data_t *data) {
     gyro[0] = ((int16_t)buf[1] << 8) + (int16_t)buf[0];
     gyro[1] = ((int16_t)buf[3] << 8) + (int16_t)buf[2];
     gyro[2] = ((int16_t)buf[5] << 8) + (int16_t)buf[4];
-    data->roll = (float)gyro[0] / unit * DEG2SEC;
-    data->pitch = (float)gyro[1] / unit * DEG2SEC;
-    data->yaw = (float)gyro[2] / unit * DEG2SEC;
+    
+    gyro_data.roll = (float)gyro[0] / unit * DEG2SEC;
+    gyro_data.pitch = (float)gyro[1] / unit * DEG2SEC;
+    gyro_data.yaw = (float)gyro[2] / unit * DEG2SEC;
+    
+    // 同时更新设备数据结构中的数据（可选）
+    bmi088->data.acc_data.acc_raw_data = bmi088->data.acc_data.acc_raw_data;
+    
+    return &gyro_data;
 }
 
-void Read_acc_sensor_time(Bmi088_device_t* bmi088, float *time) {
+float* Read_acc_sensor_time(Bmi088_device_t* bmi088) {
+    static float sensor_time;  // 静态变量，确保返回值持久有效
     uint8_t buf[SENSORTIME_LEN];
+    
     Read_multi_data_from_acc(bmi088, SENSORTIME_0_ADDR, SENSORTIME_LEN, buf);
-    *time = buf[0] * SENSORTIME_0_UNIT + buf[1] * SENSORTIME_1_UNIT + buf[2] * SENSORTIME_2_UNIT;
+    sensor_time = buf[0] * SENSORTIME_0_UNIT + buf[1] * SENSORTIME_1_UNIT + buf[2] * SENSORTIME_2_UNIT;
+    
+    // 同时更新设备数据结构中的数据（可选）
+    bmi088->data.acc_data.sensor_time = sensor_time;
+    
+    return &sensor_time;
 }
 
-void Read_acc_temperature(Bmi088_device_t* bmi088, float *temp) {
+float* Read_acc_temperature(Bmi088_device_t* bmi088) {
+    static float temperature;  // 静态变量，确保返回值持久有效
     uint8_t buf[TEMP_LEN];
+    
     Read_multi_data_from_acc(bmi088, TEMP_MSB_ADDR, TEMP_LEN, buf);
     uint16_t temp_uint11 = (buf[0] << 3) + (buf[1] >> 5);
     int16_t temp_int11;
@@ -305,6 +336,11 @@ void Read_acc_temperature(Bmi088_device_t* bmi088, float *temp) {
     } else {
         temp_int11 = (int16_t)temp_uint11;
     }
-    *temp = temp_int11 * TEMP_UNIT + TEMP_BIAS;
+    temperature = temp_int11 * TEMP_UNIT + TEMP_BIAS;
+    
+    // 同时更新设备数据结构中的数据（可选）
+    bmi088->data.acc_data.temperature = temperature;
+    
+    return &temperature;
 }
 
