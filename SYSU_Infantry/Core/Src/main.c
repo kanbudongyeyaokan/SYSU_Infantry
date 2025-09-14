@@ -69,7 +69,7 @@ void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN 0 */
 uint8_t mse[10] ="HELLO!";
 
-// 串口重定向到 Uart6
+// 串口重定向到 Uart1
 
 int _write(int fd, char *ptr, int len)
 {

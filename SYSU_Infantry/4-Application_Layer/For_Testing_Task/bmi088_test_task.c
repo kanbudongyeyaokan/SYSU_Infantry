@@ -32,60 +32,52 @@ void Bmi088_test_task(void const *argument)
     static Acc_raw_data_t acc_data;
     static Gyro_raw_data_t gyro_data;
     static float temperature;
+
+    // 创建BMI088配置
+    Bmi088_config_t bmi088_config = {
+        .spi_handle = &hspi1,
+        .accel_cs_gpio_port = GPIOA,
+        .accel_cs_gpio_pin = GPIO_PIN_4,
+        .gyro_cs_gpio_port = GPIOB,
+        .gyro_cs_gpio_pin = GPIO_PIN_0,
+        .enable_accel_self_test = true,
+        .enable_gyro_self_test = true
+    };
     
-
-    // TODO: 根据实际硬件配置初始化BMI088
-    // static Bmi088_instance_t *bmi088_instance;
-    // Bmi088_init_config_s bmi088_config = {
-    //     // 配置参数需要根据实际硬件设置
-    // };
-    // bmi088_instance = Bmi088_register(&bmi088_config);
-
-
-
-
-    // 初始化BMI088
-    Bmi088_error_e error = Bmi088_init();
-    if (error != NO_ERROR) {
-        // Uart_printf(debug_uart, "BMI088 初始化失败，错误码：0x%02X\r\n", error);
-        printf("BMI088 初始化失败，错误码：0x%02X\r\n", error);
+    // 初始化BMI088设备
+    Bmi088_device_t* bmi088 = Bmi088_device_init(&bmi088_config);
+    if (bmi088 == NULL || bmi088->last_error != NO_ERROR) {
+        printf("BMI088 初始化失败，错误码：0x%02X\r\n", 
+               bmi088 ? bmi088->last_error : 0xFF);
     } else {
-        // Uart_printf(debug_uart, "BMI088 初始化成功\r\n");
         printf("BMI088 初始化成功\r\n");
     }
 
 
     for (;;)
     {
+        if (bmi088 != NULL) {
+            // 读取BMI088数据并输出
+            Read_acc_data(bmi088, &acc_data);
+            Read_gyro_data(bmi088, &gyro_data);
+            Read_acc_temperature(bmi088, &temperature);
+            
+            // 暂时输出测试信息
+            printf("BMI088 Test Task Running...\r\n");
+            //  Uart_printf(uart_instance,"Hello World\r\n");
 
-        // 读取BMI088数据并输出
-        Read_acc_data(&acc_data);
-        Read_gyro_data(&gyro_data);
-        Read_acc_temperature(&temperature);
+            // 输出加速度计数据
+            printf("ACC: X=%.3f, Y=%.3f, Z=%.3f\r\n", 
+                acc_data.x, acc_data.y, acc_data.z);
+
+            // 输出陀螺仪数据
+            printf("GYRO: Roll=%.3f, Pitch=%.3f, Yaw=%.3f\r\n", 
+                gyro_data.roll, gyro_data.pitch, gyro_data.yaw);
+
+            // 输出温度数据
+            printf("TEMP: %.2f°C\r\n", temperature);
+        }
         
-
-        // 暂时输出测试信息
-       // printf("BMI088 Test Task Running...\r\n");
-      //  Uart_printf(uart_instance,"Hello World\r\n");
-
-
-        // 输出加速度计数据
-        // Uart_printf(debug_uart, "ACC: X=%.3f, Y=%.3f, Z=%.3f\r\n", 
-        //        acc_data.x, acc_data.y, acc_data.z);
-        printf("ACC: X=%.3f, Y=%.3f, Z=%.3f\r\n", 
-               acc_data.x, acc_data.y, acc_data.z);
-
-        // // 输出陀螺仪数据
-        // Uart_printf(debug_uart, "GYRO: Roll=%.3f, Pitch=%.3f, Yaw=%.3f\r\n", 
-        //        gyro_data.roll, gyro_data.pitch, gyro_data.yaw);
-        printf("GYRO: Roll=%.3f, Pitch=%.3f, Yaw=%.3f\r\n", 
-               gyro_data.roll, gyro_data.pitch, gyro_data.yaw);
-
-        // // 输出温度数据
-        // Uart_printf(debug_uart, "TEMP: %.2f°C\r\n", temperature);
-        printf("TEMP: %.2f°C\r\n", temperature);
-        
-
         // 任务延时100ms
         osDelay(100);
     }
