@@ -39,6 +39,52 @@ typedef struct {
     float yaw;
 } Gyro_raw_data_t;
 
+/**
+ * @brief 四元数结构体
+ */
+typedef struct {
+    float q0; /*!< 四元数实部 */
+    float q1; /*!< 四元数虚部i */
+    float q2; /*!< 四元数虚部j */
+    float q3; /*!< 四元数虚部k */
+} Quaternion_t;
+
+/**
+ * @brief 欧拉角结构体（单位：度）
+ */
+typedef struct {
+    float roll;  /*!< 横滚角 */
+    float pitch; /*!< 俯仰角 */
+    float yaw;   /*!< 偏航角 */
+} Euler_angles_t;
+
+/**
+ * @brief EKF配置参数结构体
+ */
+typedef struct {
+    float process_noise_q;      /*!< 过程噪声协方差 */
+    float measurement_noise_r;  /*!< 测量噪声协方差 */
+    float gyro_bias_noise;      /*!< 陀螺仪零偏噪声 */
+    float dt;                   /*!< 采样周期(s) */
+    bool enable_bias_correction;/*!< 启用零偏校正 */
+    float static_threshold;     /*!< 静态检测阈值 */
+} Ekf_config_t;
+
+/**
+ * @brief EKF状态结构体
+ */
+typedef struct {
+    Quaternion_t quaternion;     /*!< 姿态四元数 */
+    Euler_angles_t euler;        /*!< 欧拉角 */
+    float gyro_bias[3];          /*!< 陀螺仪零偏 [x,y,z] */
+    float P[7][7];               /*!< 协方差矩阵 7x7 (四元数4 + 零偏3) */
+    float Q[7][7];               /*!< 过程噪声协方差矩阵 */
+    float R[3][3];               /*!< 测量噪声协方差矩阵 */
+    bool is_initialized;         /*!< 初始化标志 */
+    uint16_t static_count;       /*!< 静态计数器 */
+    bool is_static;              /*!< 静态状态标志 */
+} Ekf_state_t;
+
 typedef struct {
     Acc_raw_data_t acc_raw_data;
     float sensor_time;
@@ -61,6 +107,8 @@ typedef enum {
 
 typedef struct {
     Acc_data_t acc_data;
+    Gyro_data_t gyro_data;      /*!< 陀螺仪数据 */
+    Ekf_state_t ekf_state;      /*!< EKF状态 */
     Bmi088_error_e bmi088_error;
 } Bmi088_data_t;
 
@@ -124,6 +172,36 @@ float* Read_acc_sensor_time(Bmi088_device_t* bmi088);
  * @note 返回值指向设备内部存储，每次调用都会更新，用户无需释放内存
  */
 float* Read_acc_temperature(Bmi088_device_t* bmi088);
+
+// EKF相关函数
+/**
+ * @brief 初始化EKF参数和状态
+ * @param bmi088 BMI088设备结构体指针
+ * @param ekf_config EKF配置参数指针
+ * @return 错误代码
+ */
+Bmi088_error_e Bmi088_ekf_init(Bmi088_device_t* bmi088, Ekf_config_t* ekf_config);
+
+/**
+ * @brief 使用新的传感器数据更新EKF
+ * @param bmi088 BMI088设备结构体指针
+ * @return 错误代码
+ */
+Bmi088_error_e Bmi088_ekf_update(Bmi088_device_t* bmi088);
+
+/**
+ * @brief 获取当前姿态四元数
+ * @param bmi088 BMI088设备结构体指针
+ * @return 四元数指针，指向设备内部存储的数据，不需要释放
+ */
+Quaternion_t* Bmi088_get_quaternion(Bmi088_device_t* bmi088);
+
+/**
+ * @brief 获取当前欧拉角（单位：度）
+ * @param bmi088 BMI088设备结构体指针
+ * @return 欧拉角指针，指向设备内部存储的数据，不需要释放
+ */
+Euler_angles_t* Bmi088_get_euler_angles(Bmi088_device_t* bmi088);
 
 // 校验函数 (内部使用)
 static Bmi088_error_e Verify_acc_chip_id(Bmi088_device_t* bmi088);
