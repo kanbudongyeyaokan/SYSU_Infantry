@@ -48,20 +48,20 @@ add_executable(${CMAKE_PROJECT_NAME}
         1-Hardware_Layer/bsp_can/bsp_can.h
         4-Application_Layer/Robot_Task/robot_task.h
         4-Application_Layer/Robot_Task/robot_task.c
-        4-Application_Layer/Chassis/Chassis_task.h
-        4-Application_Layer/Chassis/Chassis_task.c
-        4-Application_Layer/Gimbal/Gimbal_task.c
-        4-Application_Layer/Gimbal/Gimbal_task.h
-        4-Application_Layer/Ins/Ins_task.c
-        4-Application_Layer/Ins/Ins_task.h
+        4-Application_Layer/Execution/Chassis/Chassis_task.h
+        4-Application_Layer/Execution/Chassis/Chassis_task.c
+        4-Application_Layer/Execution/Gimbal/Gimbal_task.c
+        4-Application_Layer/Execution/Gimbal/Gimbal_task.h
+        4-Application_Layer/Perception/Ins/Ins_task.c
+        4-Application_Layer/Perception/Ins/Ins_task.h
         4-Application_Layer/Others/Others_task.c
         4-Application_Layer/Others/Others_task.h
-        4-Application_Layer/Referee/Referee_task.c
-        4-Application_Layer/Referee/Referee_task.h
+        4-Application_Layer/Perception/Referee/Referee_task.c
+        4-Application_Layer/Perception/Referee/Referee_task.h
         4-Application_Layer/Remote_Control/rc_task.c
         4-Application_Layer/Remote_Control/rc_task.h
-        4-Application_Layer/Shoot/shoot_task.c
-        4-Application_Layer/Shoot/shoot_task.h
+        4-Application_Layer/Execution/Shoot/shoot_task.c
+        4-Application_Layer/Execution/Shoot/shoot_task.h
 
         2-Hardware_Driver_Layer/Bmi088_Driver/bmi088.h
         2-Hardware_Driver_Layer/Bmi088_Driver/bmi088.c
@@ -110,13 +110,13 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
 
-        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Chassis
-        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Gimbal
-        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Ins
+        4-Application_Layer/Execution/Chassis
+        4-Application_Layer/Execution/Gimbal
+        4-Application_Layer/Perception/Ins
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Others
-        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Referee
+        4-Application_Layer/Perception/Referee
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
-        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Shoot
+        4-Application_Layer/Execution/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Bmi088_Driver
 
 )
