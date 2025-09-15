@@ -80,6 +80,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/For_Testing_Task/rc_test_task.c
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
+        4-Application_Layer/Decision_Making/Decision_making_task.c
+        4-Application_Layer/Decision_Making/Decision_making_task.h
+        3-Function_Module_Layer/Robot_Definitions/robot_definitions.h
 )
 
 # Add STM32CubeMX generated sources
@@ -110,15 +113,15 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
 
-        4-Application_Layer/Execution/Chassis
-        4-Application_Layer/Execution/Gimbal
-        4-Application_Layer/Perception/Ins
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Gimbal
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Ins
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Others
-        4-Application_Layer/Perception/Referee
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Referee
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
-        4-Application_Layer/Execution/Shoot
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Bmi088_Driver
-
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making
 )
 
 # Add project symbols (macros)

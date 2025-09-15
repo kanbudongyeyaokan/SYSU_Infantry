@@ -1,0 +1,44 @@
+#ifndef _ROBOT_DEFINITIONS_H
+#define _ROBOT_DEFINITIONS_H
+
+/**************************Robot_physical parameters*******************************/
+
+/******************************Robot_state_machine*********************************/
+/********云台GIMBAL************/
+// 云台模式设置
+typedef enum
+{
+    GIMBAL_ZERO_FORCE = 0, // 电流零输入
+    GIMBAL_FREE_MODE,      // 云台自由运动模式,即与底盘分离(底盘此时应为NO_FOLLOW)
+    GIMBAL_GYRO_MODE,      // 云台陀螺仪反馈模式,反馈值为陀螺仪pitch,total_yaw_angle,底盘可以为小陀螺和跟随模式
+    GIMBAL_VISION_MODE,    //云台视觉模式，根据视觉给的控制量移动
+} gimbal_mode_e;
+
+/********底盘CHASSIS************/
+//底盘运动模式设置
+typedef enum
+{
+    CHASSIS_ZERO_FORCE = 0,    // 电流零输入
+    CHASSIS_NO_FOLLOW,         // 不跟随，允许全向平移
+    CHASSIS_FOLLOW_GIMBAL_YAW, // 跟随模式，底盘叠加角度环控制
+    CHASSIS_ROTATE,            // 匀速小陀螺模式
+} chassis_mode_e;
+
+/********发射机构SHOOT**********/
+// 发射模式设置
+typedef enum
+{
+    SHOOT_OFF = 0,      //停止射击，此时摩擦轮不会转动
+    SHOOT_ON,           //开始设计，此时摩擦轮会转动
+} shoot_mode_e;
+//拨弹盘模式
+typedef enum
+{
+    LOAD_STOP = 0,  // 停止发射
+    LOAD_REVERSE,   // 反转
+    LOAD_1_BULLET,  // 单发
+    LOAD_BURSTFIRE, // 连发
+} loader_mode_e;
+
+
+#endif _ROBOT_DEFINITIONS_H
