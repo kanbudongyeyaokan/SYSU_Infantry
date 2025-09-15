@@ -15,7 +15,7 @@
 #include "bsp_can.h"
 
 
-UartInstance_t* uart_instance;
+Uart_instance_t* uart_instance;
 
 static Djimotor_measure_t test_measure;
 
@@ -32,6 +32,8 @@ void Can_motors_test_task(void const *argument)
     // };
     // test_motor = DJIMotorInit(&motor_config);
     uart_instance = Uart_register(&huart1,NULL);
+
+
 
     Djimotor_init_config_t motor_config = {
         .motor_name = "TSET_MOTOR",
@@ -61,7 +63,6 @@ void Can_motors_test_task(void const *argument)
 */
     static uint32_t test_counter = 0;
 
-
     for (;;)
     {
         // TODO: 测试电机控制
@@ -72,12 +73,12 @@ void Can_motors_test_task(void const *argument)
         //printf("CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
        // Can_send_data(can_dev,tx_buffer);
 
-
        // Uart_printf(debug_uart, "CAN Motors Test Task Running... Counter: %lu\r\n", test_counter);
         Djimotor_set_target(test_motor,500.0);
 
-        test_measure = Djimotor_get_measure(test_motor);
 
+
+        test_measure = Djimotor_get_measure(test_motor);
 
 
         // Uart_printf(uart_instance, "pid:%.2f\r\n",temp);

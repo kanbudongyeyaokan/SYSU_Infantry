@@ -21,19 +21,19 @@ typedef struct {
     uint8_t rx_buffer[RX_BUF_SIZE];
     uint16_t rx_buf_length;//接收缓冲区长度
     uart_receive_callback receive_callback;
-}UartInstance_t;
+}Uart_instance_t;
 
 //串口注册
-UartInstance_t* Uart_register(UART_HandleTypeDef *register_huart,uart_receive_callback receive_callback);
+Uart_instance_t* Uart_register(UART_HandleTypeDef *register_huart,uart_receive_callback receive_callback);
 
 //打印调试信息
-void Uart_printf(UartInstance_t *uart_instance,const char* fmt, ...);
+void Uart_printf(Uart_instance_t *uart_instance,const char* fmt, ...);
 
 //发送数据/数据包
-void Uart_sendData(UartInstance_t *uart_instance,uint8_t* data,uint16_t length);
+void Uart_sendData(Uart_instance_t *uart_instance,uint8_t* data,uint16_t length);
 
 // 全局调试串口实例
-extern UartInstance_t* debug_uart;
+extern Uart_instance_t* debug_uart;
 
 
 #endif //_BSP_USART_H

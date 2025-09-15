@@ -9,19 +9,19 @@
 
 //串口实例序号
 static uint8_t uart_ix = 0;
-static UartInstance_t* uart_instance[UART_MAX_COUNT] = {0};
+static Uart_instance_t* uart_instance[UART_MAX_COUNT] = {0};
 
 // 全局调试串口实例
-UartInstance_t* debug_uart = NULL;
+Uart_instance_t* debug_uart = NULL;
 
 //初始化串口实例
-static void Uart_init(UartInstance_t* instance,UART_HandleTypeDef *huart) {
+static void Uart_init(Uart_instance_t* instance,UART_HandleTypeDef *huart) {
     //安全检查
     if (instance == NULL || huart == NULL) {
         return;
     }
     //正常初始化
-    memset(instance,0,sizeof(UartInstance_t));
+    memset(instance,0,sizeof(Uart_instance_t));
     instance->uart_handle = huart;
     instance->rx_buf_length = RX_BUF_SIZE;
     //接收初始化
@@ -30,7 +30,7 @@ static void Uart_init(UartInstance_t* instance,UART_HandleTypeDef *huart) {
     __HAL_DMA_DISABLE_IT(instance->uart_handle->hdmarx, DMA_IT_HT);
 }
 //串口注册
-UartInstance_t* Uart_register(UART_HandleTypeDef *register_huart,uart_receive_callback receive_callback)
+Uart_instance_t* Uart_register(UART_HandleTypeDef *register_huart,uart_receive_callback receive_callback)
 {
     //安全检查
     if (uart_ix >= UART_MAX_COUNT) // 超过最大实例数
@@ -39,8 +39,8 @@ UartInstance_t* Uart_register(UART_HandleTypeDef *register_huart,uart_receive_ca
         if (uart_instance[i]->uart_handle == register_huart)
             return NULL;
     //正常，进行注册
-    UartInstance_t *instance = (UartInstance_t *)malloc(sizeof(UartInstance_t));
-    memset(instance, 0, sizeof(UartInstance_t));
+    Uart_instance_t *instance = (Uart_instance_t *)malloc(sizeof(Uart_instance_t));
+    memset(instance, 0, sizeof(Uart_instance_t));
     Uart_init(instance,register_huart);
     instance->receive_callback = receive_callback;
     //记录该串口实例
@@ -49,7 +49,7 @@ UartInstance_t* Uart_register(UART_HandleTypeDef *register_huart,uart_receive_ca
 }
 
 //打印调试信息
-void Uart_printf(UartInstance_t *uart_instance,const char* fmt, ...) {
+void Uart_printf(Uart_instance_t *uart_instance,const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
     int len = vsnprintf((char*)uart_instance->tx_buffer, TX_BUF_SIZE, fmt, args);
@@ -63,7 +63,7 @@ void Uart_printf(UartInstance_t *uart_instance,const char* fmt, ...) {
 }
 
 //发送数据/数据包
-void Uart_sendData(UartInstance_t *uart_instance,uint8_t* data,uint16_t length) {
+void Uart_sendData(Uart_instance_t *uart_instance,uint8_t* data,uint16_t length) {
     // 长度限制
     length = (length > TX_BUF_SIZE) ? TX_BUF_SIZE : length;
     //发送数据

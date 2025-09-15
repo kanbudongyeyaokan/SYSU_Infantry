@@ -18,7 +18,7 @@ static uint8_t djimotor_can2_0x2ff_tx[8]={0};
 static int16_t current_motor = 0;
 static uint16_t current_motor_count = 0;
 
-extern UartInstance_t* uart_instance;
+extern Uart_instance_t* uart_instance;
 
 // 缓冲区更新标志
 static uint8_t buffer_updated[6] = {0}; // 0:CAN1_0x1FF, 1:CAN1_0x200, 2:CAN1_0x2FF, 3:CAN2_0x1FF, 4:CAN2_0x200, 5:CAN2_0x2FF

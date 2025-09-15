@@ -106,6 +106,11 @@
 /*遥控器数据处理宏*/
 #define RC_CH_VALUE_OFFSET      ((uint16_t)1024)
 
+// 用于遥控器数据读取,遥控器数据是一个大小为2的结构体数组，分为当前数据和上一次数据
+#define CURRNET 0
+#define LAST 1
+
+
 
 //键盘按键状态
 typedef union
@@ -162,7 +167,7 @@ typedef struct
 
 /**遥控器协议解析**/
 //获取遥控器数据
-RC_ctrl_t *RC_Data_Get(RC_ctrl_t *rc_ctrl);
+RC_ctrl_t *RC_Data_Get(UART_HandleTypeDef *rc_uart_handle);
 
 #pragma pack(pop)       // 恢复原始对齐
 
