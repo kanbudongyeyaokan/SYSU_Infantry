@@ -106,6 +106,11 @@
 /*遥控器数据处理宏*/
 #define RC_CH_VALUE_OFFSET      ((uint16_t)1024)
 
+/* ----------------------- 遥控器左/右开关值----------------------------- */
+#define SWITCH_IS_UP ((uint16_t)1)   // 开关向上时的值
+#define SWITCH_IS_MID ((uint16_t)3)  // 开关中间时的值
+#define SWITCH_IS_DOWN ((uint16_t)2) // 开关向下时的值
+
 // 用于遥控器数据读取,遥控器数据是一个大小为2的结构体数组，分为当前数据和上一次数据
 #define CURRNET 0
 #define LAST 1

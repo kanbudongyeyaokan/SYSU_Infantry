@@ -83,6 +83,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Decision_Making/Decision_making_task.c
         4-Application_Layer/Decision_Making/Decision_making_task.h
         3-Function_Module_Layer/Robot_Definitions/robot_definitions.h
+        3-Function_Module_Layer/Decision_Making/decision_making.h
 )
 
 # Add STM32CubeMX generated sources
