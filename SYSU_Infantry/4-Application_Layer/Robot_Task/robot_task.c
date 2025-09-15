@@ -18,7 +18,7 @@ osThreadId chassis_task_handle;//底盘任务
 osThreadId gimbal_task_handle; //云台任务
 osThreadId shoot_task_handle;  //发射任务
 osThreadId ins_task_handle;    //姿态解算任务
-osThreadId rc_task_handle;     //遥控器/键盘解析任务
+osThreadId decision_making_task_handle;     //决策任务
 osThreadId referee_task_handle;//裁判系统通信任务
 osThreadId others_task_handle; //处理其他任务，比如与视觉通信，电量读取等琐碎任务，后续根据实际进行修改
 
@@ -52,8 +52,8 @@ void Robot_task_init(void)
     // osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 1024);
     // referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
     //
-    // osThreadDef(rc_task, Rc_task, osPriorityNormal, 0, 1024);
-    // rc_task_handle = osThreadCreate(osThread(rc_task), NULL);
+     osThreadDef(decision_making_task, Decision_making_task, osPriorityNormal, 0, 1024);
+     decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
     //
     // osThreadDef(others_task, Others_task, osPriorityNormal, 0, 1024);
     // others_task_handle = osThreadCreate(osThread(others_task), NULL);
