@@ -61,11 +61,11 @@ void Robot_task_init(void)
   //  uart_instance = Uart_register(&huart1,NULL);
 
     // 创建测试任务
-  //  osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
-  //  bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
+   osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
+   bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
 
-    osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
-    can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
+    // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
+    // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
 
     //osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);

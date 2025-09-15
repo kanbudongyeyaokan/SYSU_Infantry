@@ -50,7 +50,7 @@ void Can_motors_test_task(void const *argument)
             // 接收ID
             }
     };
-    Djimotor_device_t *test_motor = DJI_Motor_Init(&motor_config);
+    Djimotor_device_t *test_motor = DJI_Mobtor_Init(&motor_config);
     /*
     Can_init_t can_config={
         .can_handle = &hcan1,
