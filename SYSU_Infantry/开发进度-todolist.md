@@ -12,7 +12,7 @@
 
 ## 模块（Function_Module层）：
 **未完成**：
-            Chassis
+            Chassis(包含功率控制)
             Gimbal
             Ins
             Others(这个仅作补充)
@@ -23,4 +23,15 @@
 
 **已完成**：
 
-
+## 任务（Application层）
+**未完成**：
+            Chassis
+            Gimbal
+            Ins
+            Others(这个仅作补充)
+            Referee
+            Shoot
+**待测试**：
+        
+    
+**已完成**：
