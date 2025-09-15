@@ -1,0 +1,8 @@
+//
+// Created by 26524 on 2025/9/16.
+//
+
+#ifndef SYSU_INFANTRY_REFEREE_H
+#define SYSU_INFANTRY_REFEREE_H
+
+#endif //SYSU_INFANTRY_REFEREE_H

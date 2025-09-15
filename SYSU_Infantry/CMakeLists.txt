@@ -54,8 +54,6 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Execution/Gimbal/Gimbal_task.h
         4-Application_Layer/Perception/Ins/Ins_task.c
         4-Application_Layer/Perception/Ins/Ins_task.h
-        4-Application_Layer/Others/Others_task.c
-        4-Application_Layer/Others/Others_task.h
         4-Application_Layer/Perception/Referee/Referee_task.c
         4-Application_Layer/Perception/Referee/Referee_task.h
         4-Application_Layer/Remote_Control/rc_task.c
@@ -83,7 +81,18 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Decision_Making/Decision_making_task.c
         4-Application_Layer/Decision_Making/Decision_making_task.h
         3-Function_Module_Layer/Robot_Definitions/robot_definitions.h
-        3-Function_Module_Layer/Decision_Making/decision_making.h
+        3-Function_Module_Layer/Chassis/chassis.c
+        3-Function_Module_Layer/Chassis/chassis.h
+        3-Function_Module_Layer/Gimbal/gimbal.c
+        3-Function_Module_Layer/Gimbal/gimbal.h
+        3-Function_Module_Layer/Ins/ins.c
+        3-Function_Module_Layer/Ins/ins.h
+        3-Function_Module_Layer/Referee/referee.c
+        3-Function_Module_Layer/Referee/referee.h
+        3-Function_Module_Layer/Shoot/shoot.c
+        3-Function_Module_Layer/Shoot/shoot.h
+        3-Function_Module_Layer/Decision_making/decision_making.c
+        3-Function_Module_Layer/Decision_making/decision_making.h
 )
 
 # Add STM32CubeMX generated sources
@@ -117,12 +126,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Gimbal
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Ins
-        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Others
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Referee
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Bmi088_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Decision_making
 )
 
 # Add project symbols (macros)
