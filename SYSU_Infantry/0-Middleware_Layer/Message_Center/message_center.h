@@ -49,7 +49,7 @@ typedef struct ent
  * @param data_len 消息长度,通过sizeof()获取
  * @return Subscriber_t* 返回订阅者实例
  */
-Subscriber_t *SubRegister(char *name, uint8_t data_len);
+Subscriber_t *Sub_register(char *name, uint8_t data_len);
 
 /**
  * @brief 注册成为消息发布者
@@ -57,7 +57,7 @@ Subscriber_t *SubRegister(char *name, uint8_t data_len);
  * @param name 发布者发布的话题名称(话题)
  * @return Publisher_t* 返回发布者实例
  */
-Publisher_t *PubRegister(char *name, uint8_t data_len);
+Publisher_t *Pub_register(char *name, uint8_t data_len);
 
 /**
  * @brief 获取消息
@@ -66,7 +66,7 @@ Publisher_t *PubRegister(char *name, uint8_t data_len);
  * @param data_ptr 数据指针,接收的消息将会放到此处
  * @return uint8_t 返回值为0说明没有新的消息(消息队列为空),为1说明获取到了新的消息
  */
-uint8_t SubGetMessage(Subscriber_t *sub, void *data_ptr);
+uint8_t Sub_get_message(Subscriber_t *sub, void *data_ptr);
 
 /**
  * @brief 发布者给所有订阅了话题的订阅者推送消息
@@ -75,6 +75,6 @@ uint8_t SubGetMessage(Subscriber_t *sub, void *data_ptr);
  * @param data_ptr 指向要发布的数据的指针
  * @return uint8_t 新消息成功推送给几个订阅者
  */
-uint8_t PubPushMessage(Publisher_t *pub, void *data_ptr);
+uint8_t Pub_push_message(Publisher_t *pub, void *data_ptr);
 
 #endif // !PUBSUB_H

@@ -13,7 +13,7 @@ static Publisher_t message_center = {
     .mutex = NULL};
 
 // 初始化消息中心的互斥锁（需要在系统启动时调用）
-static void InitMessageCenterMutex(void)
+static void Init_message_center_mutex(void)
 {
     if (g_message_center_mutex == NULL)
     {
@@ -21,7 +21,7 @@ static void InitMessageCenterMutex(void)
     }
 }
 
-static void CheckName(char *name)
+static void Check_name(char *name)
 {
     if (name == NULL || strnlen(name, MAX_TOPIC_NAME_LEN + 1) >= MAX_TOPIC_NAME_LEN)
     {
@@ -30,7 +30,7 @@ static void CheckName(char *name)
     }
 }
 
-static void CheckLen(uint8_t len1, uint8_t len2)
+static void Check_len(uint8_t len1, uint8_t len2)
 {
     if (len1 != len2)
     {
@@ -39,10 +39,10 @@ static void CheckLen(uint8_t len1, uint8_t len2)
     }
 }
 
-Publisher_t *PubRegister(char *name, uint8_t data_len)
+Publisher_t *Pub_register(char *name, uint8_t data_len)
 {
-    CheckName(name);
-    InitMessageCenterMutex(); // 确保全局互斥锁已初始化
+    Check_name(name);
+    Init_message_center_mutex(); // 确保全局互斥锁已初始化
     
     // 保护整个注册过程
     if (xSemaphoreTake(g_message_center_mutex, portMAX_DELAY) != pdTRUE)
@@ -56,7 +56,7 @@ Publisher_t *PubRegister(char *name, uint8_t data_len)
         node = node->next_topic_node;            // 切换到下一个发布者(话题)结点
         if (strcmp(node->topic_name, name) == 0) // 如果已经注册了相同的话题,直接返回结点指针
         {
-            CheckLen(data_len, node->data_len);
+            Check_len(data_len, node->data_len);
             node->pub_registered_flag = 1;
             xSemaphoreGive(g_message_center_mutex); // 释放互斥锁
             return node;
@@ -90,9 +90,9 @@ Publisher_t *PubRegister(char *name, uint8_t data_len)
     return node->next_topic_node;
 }
 
-Subscriber_t *SubRegister(char *name, uint8_t data_len)
+Subscriber_t *Sub_register(char *name, uint8_t data_len)
 {
-    Publisher_t *pub = PubRegister(name, data_len); // 查找或创建该话题的发布者
+    Publisher_t *pub = Pub_register(name, data_len); // 查找或创建该话题的发布者
     if (pub == NULL)
     {
         return NULL; // 发布者注册失败
@@ -167,7 +167,7 @@ Subscriber_t *SubRegister(char *name, uint8_t data_len)
 }
 
 /* 如果队列为空,会返回0;成功获取数据,返回1;后续可以做更多的修改,比如剩余消息数目等 */
-uint8_t SubGetMessage(Subscriber_t *sub, void *data_ptr)
+uint8_t Sub_get_message(Subscriber_t *sub, void *data_ptr)
 {
     if (sub == NULL || data_ptr == NULL)
     {
@@ -194,7 +194,7 @@ uint8_t SubGetMessage(Subscriber_t *sub, void *data_ptr)
     return 1;
 }
 
-uint8_t PubPushMessage(Publisher_t *pub, void *data_ptr)
+uint8_t Pub_push_message(Publisher_t *pub, void *data_ptr)
 {
     if (pub == NULL || data_ptr == NULL)
     {

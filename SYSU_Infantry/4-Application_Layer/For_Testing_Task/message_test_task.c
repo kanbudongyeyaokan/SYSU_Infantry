@@ -41,8 +41,8 @@ static void Test_One_To_One(void)
     printf("\r\n=== Test 1: One Publisher -> One Subscriber ===\r\n");
     
     // 注册发布者和订阅者
-    Publisher_t *pub = PubRegister("sensor_topic", sizeof(sensor_data_t));
-    Subscriber_t *sub = SubRegister("sensor_topic", sizeof(sensor_data_t));
+    Publisher_t *pub = Pub_register("sensor_topic", sizeof(sensor_data_t));
+    Subscriber_t *sub = Sub_register("sensor_topic", sizeof(sensor_data_t));
     
     if (pub == NULL || sub == NULL) {
         printf("Error: Registration failed\r\n");
@@ -56,12 +56,12 @@ static void Test_One_To_One(void)
         .status = 1
     };
     
-    uint8_t result = PubPushMessage(pub, &send_data);
+    uint8_t result = Pub_push_message(pub, &send_data);
     printf("Published message to %d subscribers\r\n", result);
     
     // 接收数据
     sensor_data_t recv_data = {0};
-    if (SubGetMessage(sub, &recv_data)) {
+    if (Sub_get_message(sub, &recv_data)) {
         printf("Received data: counter=%lu, temp=%.1f, status=%d\r\n", 
                recv_data.counter, recv_data.temperature, recv_data.status);
         
@@ -84,11 +84,11 @@ static void Test_Multi_Pub_One_Sub(void)
     printf("\r\n=== Test 2: Multiple Publishers -> One Subscriber ===\r\n");
     
     // 注册多个发布者（相同话题）
-    Publisher_t *pub1 = PubRegister("motor_topic", sizeof(motor_data_t));
-    Publisher_t *pub2 = PubRegister("motor_topic", sizeof(motor_data_t));
+    Publisher_t *pub1 = Pub_register("motor_topic", sizeof(motor_data_t));
+    Publisher_t *pub2 = Pub_register("motor_topic", sizeof(motor_data_t));
     
     // 注册一个订阅者
-    Subscriber_t *sub = SubRegister("motor_topic", sizeof(motor_data_t));
+    Subscriber_t *sub = Sub_register("motor_topic", sizeof(motor_data_t));
     
     if (pub1 == NULL || pub2 == NULL || sub == NULL) {
         printf("Error: Registration failed\r\n");
@@ -109,12 +109,12 @@ static void Test_Multi_Pub_One_Sub(void)
         .current = 500
     };
     
-    uint8_t result1 = PubPushMessage(pub1, &motor1_data);
+    uint8_t result1 = Pub_push_message(pub1, &motor1_data);
     printf("Publisher 1 pushed message to %d subscribers\r\n", result1);
     
     // 接收第一条消息
     motor_data_t recv_data = {0};
-    if (SubGetMessage(sub, &recv_data)) {
+    if (Sub_get_message(sub, &recv_data)) {
         printf("Received Publisher 1 data: motor_id=%d, speed=%d, current=%d\r\n", 
                recv_data.motor_id, recv_data.speed, recv_data.current);
     }
@@ -126,12 +126,12 @@ static void Test_Multi_Pub_One_Sub(void)
         .current = 300
     };
     
-    uint8_t result2 = PubPushMessage(pub2, &motor2_data);
+    uint8_t result2 = Pub_push_message(pub2, &motor2_data);
     printf("Publisher 2 pushed message to %d subscribers\r\n", result2);
     
     // 接收第二条消息
     memset(&recv_data, 0, sizeof(recv_data));
-    if (SubGetMessage(sub, &recv_data)) {
+    if (Sub_get_message(sub, &recv_data)) {
         printf("Received Publisher 2 data: motor_id=%d, speed=%d, current=%d\r\n", 
                recv_data.motor_id, recv_data.speed, recv_data.current);
     } else {
@@ -145,13 +145,13 @@ static void Test_Multi_Pub_Multi_Sub(void)
     printf("\r\n=== Test 3: Multiple Publishers -> Multiple Subscribers ===\r\n");
     
     // 注册发布者
-    Publisher_t *pub1 = PubRegister("test_topic", sizeof(test_message_t));
-    Publisher_t *pub2 = PubRegister("test_topic", sizeof(test_message_t));
+    Publisher_t *pub1 = Pub_register("test_topic", sizeof(test_message_t));
+    Publisher_t *pub2 = Pub_register("test_topic", sizeof(test_message_t));
     
     // 注册多个订阅者
-    Subscriber_t *sub1 = SubRegister("test_topic", sizeof(test_message_t));
-    Subscriber_t *sub2 = SubRegister("test_topic", sizeof(test_message_t));
-    Subscriber_t *sub3 = SubRegister("test_topic", sizeof(test_message_t));
+    Subscriber_t *sub1 = Sub_register("test_topic", sizeof(test_message_t));
+    Subscriber_t *sub2 = Sub_register("test_topic", sizeof(test_message_t));
+    Subscriber_t *sub3 = Sub_register("test_topic", sizeof(test_message_t));
     
     if (pub1 == NULL || pub2 == NULL || 
         sub1 == NULL || sub2 == NULL || sub3 == NULL) {
@@ -166,7 +166,7 @@ static void Test_Multi_Pub_Multi_Sub(void)
     };
     strcpy(msg1.message, "Hello from P1");
     
-    uint8_t result1 = PubPushMessage(pub1, &msg1);
+    uint8_t result1 = Pub_push_message(pub1, &msg1);
     printf("Publisher 1 pushed message to %d subscribers\r\n", result1);
     
     // 所有订阅者接收消息
@@ -175,7 +175,7 @@ static void Test_Multi_Pub_Multi_Sub(void)
         Subscriber_t *sub = (i == 1) ? sub1 : (i == 2) ? sub2 : sub3;
         memset(&recv_msg, 0, sizeof(recv_msg));
         
-        if (SubGetMessage(sub, &recv_msg)) {
+        if (Sub_get_message(sub, &recv_msg)) {
             printf("Subscriber %d received: id=%d, time=%lu, msg='%s'\r\n", 
                    i, recv_msg.test_id, recv_msg.timestamp, recv_msg.message);
         } else {
@@ -190,7 +190,7 @@ static void Test_Multi_Pub_Multi_Sub(void)
     };
     strcpy(msg2.message, "Hello from P2");
     
-    uint8_t result2 = PubPushMessage(pub2, &msg2);
+    uint8_t result2 = Pub_push_message(pub2, &msg2);
     printf("Publisher 2 pushed message to %d subscribers\r\n", result2);
     
     // 所有订阅者接收新消息
@@ -198,7 +198,7 @@ static void Test_Multi_Pub_Multi_Sub(void)
         Subscriber_t *sub = (i == 1) ? sub1 : (i == 2) ? sub2 : sub3;
         memset(&recv_msg, 0, sizeof(recv_msg));
         
-        if (SubGetMessage(sub, &recv_msg)) {
+        if (Sub_get_message(sub, &recv_msg)) {
             printf("Subscriber %d received new message: id=%d, time=%lu, msg='%s'\r\n", 
                    i, recv_msg.test_id, recv_msg.timestamp, recv_msg.message);
         } else {
@@ -213,13 +213,13 @@ static void Test_One_Pub_Multi_Sub(void)
     printf("\r\n=== Test 4: One Publisher -> Multiple Subscribers ===\r\n");
     
     // 注册一个发布者
-    Publisher_t *pub = PubRegister("broadcast_topic", sizeof(sensor_data_t));
+    Publisher_t *pub = Pub_register("broadcast_topic", sizeof(sensor_data_t));
     
     // 注册多个订阅者
-    Subscriber_t *sub1 = SubRegister("broadcast_topic", sizeof(sensor_data_t));
-    Subscriber_t *sub2 = SubRegister("broadcast_topic", sizeof(sensor_data_t));
-    Subscriber_t *sub3 = SubRegister("broadcast_topic", sizeof(sensor_data_t));
-    Subscriber_t *sub4 = SubRegister("broadcast_topic", sizeof(sensor_data_t));
+    Subscriber_t *sub1 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
+    Subscriber_t *sub2 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
+    Subscriber_t *sub3 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
+    Subscriber_t *sub4 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
     
     if (pub == NULL || sub1 == NULL || sub2 == NULL || 
         sub3 == NULL || sub4 == NULL) {
@@ -234,7 +234,7 @@ static void Test_One_Pub_Multi_Sub(void)
         .status = 0xFF
     };
     
-    uint8_t result = PubPushMessage(pub, &broadcast_data);
+    uint8_t result = Pub_push_message(pub, &broadcast_data);
     printf("Broadcast message to %d subscribers\r\n", result);
     
     // 验证所有订阅者都能接收到相同数据
@@ -243,7 +243,7 @@ static void Test_One_Pub_Multi_Sub(void)
     Subscriber_t *subs[] = {sub1, sub2, sub3, sub4};
     for (int i = 0; i < 4; i++) {
         sensor_data_t recv_data = {0};
-        if (SubGetMessage(subs[i], &recv_data)) {
+        if (Sub_get_message(subs[i], &recv_data)) {
             printf("Subscriber %d: counter=%lu, temp=%.1f, status=0x%02X ", 
                    i+1, recv_data.counter, recv_data.temperature, recv_data.status);
             
@@ -267,11 +267,11 @@ static void Test_Concurrent_Access(void)
     printf("\r\n=== Test 5: Concurrent Access Test ===\r\n");
     
     // 创建多个不同话题进行并发测试
-    Publisher_t *pub_a = PubRegister("topic_a", sizeof(uint32_t));
-    Publisher_t *pub_b = PubRegister("topic_b", sizeof(uint32_t));
+    Publisher_t *pub_a = Pub_register("topic_a", sizeof(uint32_t));
+    Publisher_t *pub_b = Pub_register("topic_b", sizeof(uint32_t));
     
-    Subscriber_t *sub_a = SubRegister("topic_a", sizeof(uint32_t));
-    Subscriber_t *sub_b = SubRegister("topic_b", sizeof(uint32_t));
+    Subscriber_t *sub_a = Sub_register("topic_a", sizeof(uint32_t));
+    Subscriber_t *sub_b = Sub_register("topic_b", sizeof(uint32_t));
     
     if (pub_a == NULL || pub_b == NULL || sub_a == NULL || sub_b == NULL) {
         printf("Error: Registration failed\r\n");
@@ -282,15 +282,15 @@ static void Test_Concurrent_Access(void)
     uint32_t data_a = 0xAAAA0000 + test_counter;
     uint32_t data_b = 0xBBBB0000 + test_counter;
     
-    uint8_t result_a = PubPushMessage(pub_a, &data_a);
-    uint8_t result_b = PubPushMessage(pub_b, &data_b);
+    uint8_t result_a = Pub_push_message(pub_a, &data_a);
+    uint8_t result_b = Pub_push_message(pub_b, &data_b);
     
     printf("Topic A pushed to %d subscribers, Topic B pushed to %d subscribers\r\n", result_a, result_b);
     
     // 接收并验证数据
     uint32_t recv_a = 0, recv_b = 0;
     
-    if (SubGetMessage(sub_a, &recv_a) && SubGetMessage(sub_b, &recv_b)) {
+    if (Sub_get_message(sub_a, &recv_a) && Sub_get_message(sub_b, &recv_b)) {
         printf("Received data - A: 0x%08lX, B: 0x%08lX\r\n", recv_a, recv_b);
         
         if (recv_a == data_a && recv_b == data_b) {
