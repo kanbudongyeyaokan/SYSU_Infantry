@@ -56,8 +56,6 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Perception/Ins/Ins_task.h
         4-Application_Layer/Perception/Referee/Referee_task.c
         4-Application_Layer/Perception/Referee/Referee_task.h
-        4-Application_Layer/Remote_Control/rc_task.c
-        4-Application_Layer/Remote_Control/rc_task.h
         4-Application_Layer/Execution/Shoot/shoot_task.c
         4-Application_Layer/Execution/Shoot/shoot_task.h
 
@@ -76,6 +74,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/For_Testing_Task/can_motors_test_task.c
         4-Application_Layer/For_Testing_Task/rc_test_task.h
         4-Application_Layer/For_Testing_Task/rc_test_task.c
+        4-Application_Layer/For_Testing_Task/message_test_task.h
+        4-Application_Layer/For_Testing_Task/message_test_task.c
+
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
         4-Application_Layer/Decision_Making/Decision_making_task.c

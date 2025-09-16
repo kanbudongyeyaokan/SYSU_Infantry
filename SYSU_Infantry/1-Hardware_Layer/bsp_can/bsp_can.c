@@ -94,6 +94,7 @@ uint8_t Can_send_data(Can_controller_t* Can_controller,uint8_t *tx_buff)
             tx_buff,&Can_controller->tx_mailbox) != HAL_OK ) {
             return 0;
         }
+    return 1;  // 修复：添加成功时的返回值
 }
 
 //接收处理函数，会被两个FIFO接收回调进行调用

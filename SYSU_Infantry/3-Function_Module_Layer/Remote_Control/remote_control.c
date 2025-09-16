@@ -29,7 +29,7 @@ static void Rectify_rc_data() {
 static void sbus_to_rc(volatile const uint8_t *sbus_buf)
 {
     //安全检查
-    if (sbus_buf == NULL || rc_data == NULL)
+    if (sbus_buf == NULL ) // rc_data 是已经静态分配好的内存，不需要检查
     {
         return;
     }

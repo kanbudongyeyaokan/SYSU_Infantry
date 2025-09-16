@@ -12,6 +12,8 @@
 #include "bmi088_test_task.h"
 #include "can_motors_test_task.h"
 #include "rc_test_task.h"
+#include "Decision_making_task.h"  // 添加决策任务头文件
+#include "message_test_task.h"     // 添加消息中心测试任务头文件
 
 /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
@@ -25,6 +27,7 @@ osThreadId others_task_handle; //处理其他任务，比如与视觉通信，�
 osThreadId bmi088_test_task_handle; //bmi088测试任务
 osThreadId can_motors_test_task_handle; // can电机测试任务
 osThreadId rc_test_task_handle; //单独遥控器测试任务
+osThreadId message_test_task_handle; //消息中心测试任务
 
 
 
@@ -52,8 +55,8 @@ void Robot_task_init(void)
     // osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 1024);
     // referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
     //
-     osThreadDef(decision_making_task, Decision_making_task, osPriorityNormal, 0, 1024);
-     decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
+    //  osThreadDef(decision_making_task, Decision_making_task, osPriorityNormal, 0, 1024);
+    //  decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
     //
     // osThreadDef(others_task, Others_task, osPriorityNormal, 0, 1024);
     // others_task_handle = osThreadCreate(osThread(others_task), NULL);
@@ -61,15 +64,18 @@ void Robot_task_init(void)
   //  uart_instance = Uart_register(&huart1,NULL);
 
     // 创建测试任务
-   osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
-   bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
+  //  osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
+  //  bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
 
     // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
     // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
+    // osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
+    // rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
 
-    //osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
-    //rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
+    // 创建消息中心测试任务
+    osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
+    message_test_task_handle = osThreadCreate(osThread(message_test_task), NULL);
 
 
 
