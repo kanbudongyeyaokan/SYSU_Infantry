@@ -35,17 +35,69 @@ typedef struct {
 // 全局变量
 static uint32_t test_counter = 0;
 
+// 全局发布者和订阅者实例，避免重复注册
+static Publisher_t *g_sensor_pub = NULL;
+static Subscriber_t *g_sensor_sub = NULL;
+static Publisher_t *g_motor_pub = NULL;
+static Subscriber_t *g_motor_sub = NULL;
+static Publisher_t *g_test_pub = NULL;
+static Subscriber_t *g_test_sub1 = NULL;
+static Subscriber_t *g_test_sub2 = NULL;
+static Subscriber_t *g_test_sub3 = NULL;
+static Publisher_t *g_broadcast_pub = NULL;
+static Subscriber_t *g_broadcast_sub1 = NULL;
+static Subscriber_t *g_broadcast_sub2 = NULL;
+static Subscriber_t *g_broadcast_sub3 = NULL;
+static Subscriber_t *g_broadcast_sub4 = NULL;
+static Publisher_t *g_topic_a_pub = NULL;
+static Publisher_t *g_topic_b_pub = NULL;
+static Subscriber_t *g_topic_a_sub = NULL;
+static Subscriber_t *g_topic_b_sub = NULL;
+
+// 初始化全局发布者和订阅者
+static void Init_global_publishers_subscribers(void)
+{
+    if (g_sensor_pub == NULL) {
+        g_sensor_pub = Pub_register("sensor_topic", sizeof(sensor_data_t));
+        g_sensor_sub = Sub_register("sensor_topic", sizeof(sensor_data_t));
+    }
+    
+    if (g_motor_pub == NULL) {
+        g_motor_pub = Pub_register("motor_topic", sizeof(motor_data_t));
+        g_motor_sub = Sub_register("motor_topic", sizeof(motor_data_t));
+    }
+    
+    if (g_test_pub == NULL) {
+        g_test_pub = Pub_register("test_topic", sizeof(test_message_t));
+        g_test_sub1 = Sub_register("test_topic", sizeof(test_message_t));
+        g_test_sub2 = Sub_register("test_topic", sizeof(test_message_t));
+        g_test_sub3 = Sub_register("test_topic", sizeof(test_message_t));
+    }
+    
+    if (g_broadcast_pub == NULL) {
+        g_broadcast_pub = Pub_register("broadcast_topic", sizeof(sensor_data_t));
+        g_broadcast_sub1 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
+        g_broadcast_sub2 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
+        g_broadcast_sub3 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
+        g_broadcast_sub4 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
+    }
+    
+    if (g_topic_a_pub == NULL) {
+        g_topic_a_pub = Pub_register("topic_a", sizeof(uint32_t));
+        g_topic_b_pub = Pub_register("topic_b", sizeof(uint32_t));
+        g_topic_a_sub = Sub_register("topic_a", sizeof(uint32_t));
+        g_topic_b_sub = Sub_register("topic_b", sizeof(uint32_t));
+    }
+}
+
 // 测试1：一对一发布订阅
 static void Test_One_To_One(void)
 {
     printf("\r\n=== Test 1: One Publisher -> One Subscriber ===\r\n");
     
-    // 注册发布者和订阅者
-    Publisher_t *pub = Pub_register("sensor_topic", sizeof(sensor_data_t));
-    Subscriber_t *sub = Sub_register("sensor_topic", sizeof(sensor_data_t));
-    
-    if (pub == NULL || sub == NULL) {
-        printf("Error: Registration failed\r\n");
+    // 使用全局发布者和订阅者
+    if (g_sensor_pub == NULL || g_sensor_sub == NULL) {
+        printf("Error: Global instances not initialized\r\n");
         return;
     }
     
@@ -56,12 +108,12 @@ static void Test_One_To_One(void)
         .status = 1
     };
     
-    uint8_t result = Pub_push_message(pub, &send_data);
+    uint8_t result = Pub_push_message(g_sensor_pub, &send_data);
     printf("Published message to %d subscribers\r\n", result);
     
     // 接收数据
     sensor_data_t recv_data = {0};
-    if (Sub_get_message(sub, &recv_data)) {
+    if (Sub_get_message(g_sensor_sub, &recv_data)) {
         printf("Received data: counter=%lu, temp=%.1f, status=%d\r\n", 
                recv_data.counter, recv_data.temperature, recv_data.status);
         
@@ -83,14 +135,11 @@ static void Test_Multi_Pub_One_Sub(void)
 {
     printf("\r\n=== Test 2: Multiple Publishers -> One Subscriber ===\r\n");
     
-    // 注册多个发布者（相同话题）
+    // 使用相同话题注册多个发布者（会返回相同实例）
     Publisher_t *pub1 = Pub_register("motor_topic", sizeof(motor_data_t));
     Publisher_t *pub2 = Pub_register("motor_topic", sizeof(motor_data_t));
     
-    // 注册一个订阅者
-    Subscriber_t *sub = Sub_register("motor_topic", sizeof(motor_data_t));
-    
-    if (pub1 == NULL || pub2 == NULL || sub == NULL) {
+    if (pub1 == NULL || pub2 == NULL || g_motor_sub == NULL) {
         printf("Error: Registration failed\r\n");
         return;
     }
@@ -114,7 +163,7 @@ static void Test_Multi_Pub_One_Sub(void)
     
     // 接收第一条消息
     motor_data_t recv_data = {0};
-    if (Sub_get_message(sub, &recv_data)) {
+    if (Sub_get_message(g_motor_sub, &recv_data)) {
         printf("Received Publisher 1 data: motor_id=%d, speed=%d, current=%d\r\n", 
                recv_data.motor_id, recv_data.speed, recv_data.current);
     }
@@ -131,7 +180,7 @@ static void Test_Multi_Pub_One_Sub(void)
     
     // 接收第二条消息
     memset(&recv_data, 0, sizeof(recv_data));
-    if (Sub_get_message(sub, &recv_data)) {
+    if (Sub_get_message(g_motor_sub, &recv_data)) {
         printf("Received Publisher 2 data: motor_id=%d, speed=%d, current=%d\r\n", 
                recv_data.motor_id, recv_data.speed, recv_data.current);
     } else {
@@ -144,17 +193,12 @@ static void Test_Multi_Pub_Multi_Sub(void)
 {
     printf("\r\n=== Test 3: Multiple Publishers -> Multiple Subscribers ===\r\n");
     
-    // 注册发布者
+    // 使用相同话题注册多个发布者（会返回相同实例）
     Publisher_t *pub1 = Pub_register("test_topic", sizeof(test_message_t));
     Publisher_t *pub2 = Pub_register("test_topic", sizeof(test_message_t));
     
-    // 注册多个订阅者
-    Subscriber_t *sub1 = Sub_register("test_topic", sizeof(test_message_t));
-    Subscriber_t *sub2 = Sub_register("test_topic", sizeof(test_message_t));
-    Subscriber_t *sub3 = Sub_register("test_topic", sizeof(test_message_t));
-    
     if (pub1 == NULL || pub2 == NULL || 
-        sub1 == NULL || sub2 == NULL || sub3 == NULL) {
+        g_test_sub1 == NULL || g_test_sub2 == NULL || g_test_sub3 == NULL) {
         printf("Error: Registration failed\r\n");
         return;
     }
@@ -171,11 +215,11 @@ static void Test_Multi_Pub_Multi_Sub(void)
     
     // 所有订阅者接收消息
     test_message_t recv_msg = {0};
+    Subscriber_t *subs[] = {g_test_sub1, g_test_sub2, g_test_sub3};
     for (int i = 1; i <= 3; i++) {
-        Subscriber_t *sub = (i == 1) ? sub1 : (i == 2) ? sub2 : sub3;
         memset(&recv_msg, 0, sizeof(recv_msg));
         
-        if (Sub_get_message(sub, &recv_msg)) {
+        if (Sub_get_message(subs[i-1], &recv_msg)) {
             printf("Subscriber %d received: id=%d, time=%lu, msg='%s'\r\n", 
                    i, recv_msg.test_id, recv_msg.timestamp, recv_msg.message);
         } else {
@@ -195,10 +239,9 @@ static void Test_Multi_Pub_Multi_Sub(void)
     
     // 所有订阅者接收新消息
     for (int i = 1; i <= 3; i++) {
-        Subscriber_t *sub = (i == 1) ? sub1 : (i == 2) ? sub2 : sub3;
         memset(&recv_msg, 0, sizeof(recv_msg));
         
-        if (Sub_get_message(sub, &recv_msg)) {
+        if (Sub_get_message(subs[i-1], &recv_msg)) {
             printf("Subscriber %d received new message: id=%d, time=%lu, msg='%s'\r\n", 
                    i, recv_msg.test_id, recv_msg.timestamp, recv_msg.message);
         } else {
@@ -212,18 +255,9 @@ static void Test_One_Pub_Multi_Sub(void)
 {
     printf("\r\n=== Test 4: One Publisher -> Multiple Subscribers ===\r\n");
     
-    // 注册一个发布者
-    Publisher_t *pub = Pub_register("broadcast_topic", sizeof(sensor_data_t));
-    
-    // 注册多个订阅者
-    Subscriber_t *sub1 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
-    Subscriber_t *sub2 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
-    Subscriber_t *sub3 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
-    Subscriber_t *sub4 = Sub_register("broadcast_topic", sizeof(sensor_data_t));
-    
-    if (pub == NULL || sub1 == NULL || sub2 == NULL || 
-        sub3 == NULL || sub4 == NULL) {
-        printf("Error: Registration failed\r\n");
+    if (g_broadcast_pub == NULL || g_broadcast_sub1 == NULL || g_broadcast_sub2 == NULL || 
+        g_broadcast_sub3 == NULL || g_broadcast_sub4 == NULL) {
+        printf("Error: Global instances not initialized\r\n");
         return;
     }
     
@@ -234,13 +268,13 @@ static void Test_One_Pub_Multi_Sub(void)
         .status = 0xFF
     };
     
-    uint8_t result = Pub_push_message(pub, &broadcast_data);
+    uint8_t result = Pub_push_message(g_broadcast_pub, &broadcast_data);
     printf("Broadcast message to %d subscribers\r\n", result);
     
     // 验证所有订阅者都能接收到相同数据
     printf("Verifying all subscribers receive data:\r\n");
     
-    Subscriber_t *subs[] = {sub1, sub2, sub3, sub4};
+    Subscriber_t *subs[] = {g_broadcast_sub1, g_broadcast_sub2, g_broadcast_sub3, g_broadcast_sub4};
     for (int i = 0; i < 4; i++) {
         sensor_data_t recv_data = {0};
         if (Sub_get_message(subs[i], &recv_data)) {
@@ -266,15 +300,9 @@ static void Test_Concurrent_Access(void)
 {
     printf("\r\n=== Test 5: Concurrent Access Test ===\r\n");
     
-    // 创建多个不同话题进行并发测试
-    Publisher_t *pub_a = Pub_register("topic_a", sizeof(uint32_t));
-    Publisher_t *pub_b = Pub_register("topic_b", sizeof(uint32_t));
-    
-    Subscriber_t *sub_a = Sub_register("topic_a", sizeof(uint32_t));
-    Subscriber_t *sub_b = Sub_register("topic_b", sizeof(uint32_t));
-    
-    if (pub_a == NULL || pub_b == NULL || sub_a == NULL || sub_b == NULL) {
-        printf("Error: Registration failed\r\n");
+    if (g_topic_a_pub == NULL || g_topic_b_pub == NULL || 
+        g_topic_a_sub == NULL || g_topic_b_sub == NULL) {
+        printf("Error: Global instances not initialized\r\n");
         return;
     }
     
@@ -282,15 +310,15 @@ static void Test_Concurrent_Access(void)
     uint32_t data_a = 0xAAAA0000 + test_counter;
     uint32_t data_b = 0xBBBB0000 + test_counter;
     
-    uint8_t result_a = Pub_push_message(pub_a, &data_a);
-    uint8_t result_b = Pub_push_message(pub_b, &data_b);
+    uint8_t result_a = Pub_push_message(g_topic_a_pub, &data_a);
+    uint8_t result_b = Pub_push_message(g_topic_b_pub, &data_b);
     
     printf("Topic A pushed to %d subscribers, Topic B pushed to %d subscribers\r\n", result_a, result_b);
     
     // 接收并验证数据
     uint32_t recv_a = 0, recv_b = 0;
     
-    if (Sub_get_message(sub_a, &recv_a) && Sub_get_message(sub_b, &recv_b)) {
+    if (Sub_get_message(g_topic_a_sub, &recv_a) && Sub_get_message(g_topic_b_sub, &recv_b)) {
         printf("Received data - A: 0x%08lX, B: 0x%08lX\r\n", recv_a, recv_b);
         
         if (recv_a == data_a && recv_b == data_b) {
@@ -315,6 +343,11 @@ void Message_test_task(void const *argument)
     printf("\r\n========================================\r\n");
     printf("     Message Center Pub-Sub Model Test Started\r\n");
     printf("========================================\r\n");
+    
+    // 初始化全局发布者和订阅者实例（只执行一次）
+    printf("Initializing global publishers and subscribers...\r\n");
+    Init_global_publishers_subscribers();
+    printf("Initialization completed.\r\n");
     
     // 等待系统稳定
     osDelay(1000);
