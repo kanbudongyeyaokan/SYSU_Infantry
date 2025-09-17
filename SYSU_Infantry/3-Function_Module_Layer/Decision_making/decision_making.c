@@ -177,7 +177,7 @@ void RC_ctrl_set()
  * @brief 控制输入为键鼠的模式和控制量设置
  *
 */
-static void Keyboard_ctrl_set()
+void Keyboard_ctrl_set()
 {
     // 键盘控制设置的临时实现
     // 默认模式设置
@@ -194,7 +194,7 @@ static void Keyboard_ctrl_set()
  * @brief  紧急停止,包括遥控器左上侧拨轮打满/重要模块离线等
  *
  */
-static void Emergency_stop()
+void Emergency_stop()
 {
     // 拨轮的向下打到底则进入急停模式
     if (rc_data[CURRNET].rc.dial > 300 || robot_state == ROBOT_OFF) 
