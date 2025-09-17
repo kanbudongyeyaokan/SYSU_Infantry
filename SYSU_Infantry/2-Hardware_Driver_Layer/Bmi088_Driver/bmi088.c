@@ -15,24 +15,8 @@
 #include "gpio.h"
 #include "spi.h"
 
-// EKF相关常数定义
-#define EKF_DEG_TO_RAD (3.14159265f / 180.0f)
-#define EKF_RAD_TO_DEG (180.0f / 3.14159265f)
-#define EKF_GRAVITY 9.80665f
-#define EKF_STATIC_THRESHOLD_DEFAULT 0.2f
-#define EKF_STATIC_COUNT_THRESHOLD 100
-
-// 矩阵运算辅助函数声明
-static void matrix_multiply_3x3(float a[3][3], float b[3][3], float result[3][3]);
-static void matrix_multiply_7x7(float a[7][7], float b[7][7], float result[7][7]);
-static void matrix_transpose_3x3(float src[3][3], float dst[3][3]);
-static void matrix_inverse_3x3(float src[3][3], float dst[3][3]);
-static void quaternion_normalize(Quaternion_t* q);
-static void quaternion_to_euler(Quaternion_t* q, Euler_angles_t* euler);
-static void euler_to_quaternion(Euler_angles_t* euler, Quaternion_t* q);
-static void ekf_predict_step(Bmi088_device_t* bmi088, float gyro[3]);
-static void ekf_update_step(Bmi088_device_t* bmi088, float acc[3]);
-static bool detect_static_state(Bmi088_device_t* bmi088, float acc[3], float gyro[3]);
+// 包含EKF模块头文件
+#include "algorithm_ekf.h"
 
 // 静态BMI088设备实例存储区
 static Bmi088_device_t bmi088_instances[1]; // 可以根据需要增加
@@ -374,47 +358,11 @@ Bmi088_error_e Bmi088_ekf_init(Bmi088_device_t* bmi088, Ekf_config_t* ekf_config
         return ACC_DATA_ERR; // 使用现有错误类型
     }
     
-    Ekf_state_t* ekf = &bmi088->data.ekf_state;
-    
-    // 初始化四元数为单位四元数
-    ekf->quaternion.q0 = 1.0f;
-    ekf->quaternion.q1 = 0.0f;
-    ekf->quaternion.q2 = 0.0f;
-    ekf->quaternion.q3 = 0.0f;
-    
-    // 初始化欧拉角为零
-    ekf->euler.roll = 0.0f;
-    ekf->euler.pitch = 0.0f;
-    ekf->euler.yaw = 0.0f;
-    
-    // 初始化陀螺仪零偏为零
-    memset(ekf->gyro_bias, 0, sizeof(ekf->gyro_bias));
-    
-    // 初始化协方差矩阵P (7x7: 四元数4个 + 零偏3个)
-    memset(ekf->P, 0, sizeof(ekf->P));
-    for (int i = 0; i < 7; i++) {
-        ekf->P[i][i] = (i < 4) ? 1.0f : 0.1f; // 四元数初始不确定性大，零偏小
+    // 调用EKF模块初始化函数
+    Ekf_error_e ekf_err = Ekf_init(&bmi088->data.ekf_state, ekf_config);
+    if (ekf_err != EKF_NO_ERROR) {
+        return ACC_DATA_ERR; // 使用现有错误类型
     }
-    
-    // 初始化过程噪声协方差矩阵Q
-    memset(ekf->Q, 0, sizeof(ekf->Q));
-    for (int i = 0; i < 4; i++) {
-        ekf->Q[i][i] = ekf_config->process_noise_q; // 四元数过程噪声
-    }
-    for (int i = 4; i < 7; i++) {
-        ekf->Q[i][i] = ekf_config->gyro_bias_noise; // 零偏过程噪声
-    }
-    
-    // 初始化测量噪声协方差矩阵R (3x3: 加速度计xyz)
-    memset(ekf->R, 0, sizeof(ekf->R));
-    for (int i = 0; i < 3; i++) {
-        ekf->R[i][i] = ekf_config->measurement_noise_r;
-    }
-    
-    // 初始化其他参数
-    ekf->is_initialized = true;
-    ekf->static_count = 0;
-    ekf->is_static = false;
     
     return NO_ERROR;
 }
@@ -441,24 +389,11 @@ Bmi088_error_e Bmi088_ekf_update(Bmi088_device_t* bmi088) {
                      gyro_data->pitch * EKF_DEG_TO_RAD, 
                      gyro_data->yaw * EKF_DEG_TO_RAD};
     
-    // 静态检测和零偏校准
-    if (detect_static_state(bmi088, acc, gyro)) {
-        // 在静态状态下更新零偏
-        Ekf_state_t* ekf = &bmi088->data.ekf_state;
-        for (int i = 0; i < 3; i++) {
-            ekf->gyro_bias[i] = 0.95f * ekf->gyro_bias[i] + 0.05f * gyro[i];
-        }
+    // 调用EKF模块更新函数
+    Ekf_error_e ekf_err = Ekf_update(&bmi088->data.ekf_state, acc, gyro);
+    if (ekf_err != EKF_NO_ERROR) {
+        return ACC_DATA_ERR;  // 使用现有错误类型
     }
-    
-    // EKF预测步骤
-    ekf_predict_step(bmi088, gyro);
-    
-    // EKF更新步骤（使用加速度计数据）
-    ekf_update_step(bmi088, acc);
-    
-    // 更新欧拉角
-    quaternion_to_euler(&bmi088->data.ekf_state.quaternion, 
-                        &bmi088->data.ekf_state.euler);
     
     return NO_ERROR;
 }
@@ -485,237 +420,5 @@ Euler_angles_t* Bmi088_get_euler_angles(Bmi088_device_t* bmi088) {
 
 // ===================== 辅助函数实现 =====================
 
-/**
- * @brief 四元数归一化
- */
-static void quaternion_normalize(Quaternion_t* q) {
-    float norm = sqrtf(q->q0*q->q0 + q->q1*q->q1 + q->q2*q->q2 + q->q3*q->q3);
-    if (norm > 0.0f) {
-        q->q0 /= norm;
-        q->q1 /= norm;
-        q->q2 /= norm;
-        q->q3 /= norm;
-    }
-}
-
-/**
- * @brief 四元数转欧拉角（ZYX顺序，单位：度）
- */
-static void quaternion_to_euler(Quaternion_t* q, Euler_angles_t* euler) {
-    float q0 = q->q0, q1 = q->q1, q2 = q->q2, q3 = q->q3;
-    
-    // Roll (x-axis rotation)
-    float sinr_cosp = 2 * (q0 * q1 + q2 * q3);
-    float cosr_cosp = 1 - 2 * (q1 * q1 + q2 * q2);
-    euler->roll = atan2f(sinr_cosp, cosr_cosp) * EKF_RAD_TO_DEG;
-    
-    // Pitch (y-axis rotation)
-    float sinp = 2 * (q0 * q2 - q3 * q1);
-    if (fabsf(sinp) >= 1) {
-        euler->pitch = copysignf(90.0f, sinp); // use 90 degrees if out of range
-    } else {
-        euler->pitch = asinf(sinp) * EKF_RAD_TO_DEG;
-    }
-    
-    // Yaw (z-axis rotation)
-    float siny_cosp = 2 * (q0 * q3 + q1 * q2);
-    float cosy_cosp = 1 - 2 * (q2 * q2 + q3 * q3);
-    euler->yaw = atan2f(siny_cosp, cosy_cosp) * EKF_RAD_TO_DEG;
-}
-
-/**
- * @brief EKF预测步骤
- */
-static void ekf_predict_step(Bmi088_device_t* bmi088, float gyro[3]) {
-    Ekf_state_t* ekf = &bmi088->data.ekf_state;
-    float dt = 0.001f; // 假设1ms采样周期，实际应从配置获取
-    
-    // 减去零偏
-    float wx = gyro[0] - ekf->gyro_bias[0];
-    float wy = gyro[1] - ekf->gyro_bias[1];
-    float wz = gyro[2] - ekf->gyro_bias[2];
-    
-    // 四元数预测（使用角速度积分）
-    Quaternion_t q_old = ekf->quaternion;
-    
-    float half_dt = 0.5f * dt;
-    ekf->quaternion.q0 = q_old.q0 - half_dt * (q_old.q1 * wx + q_old.q2 * wy + q_old.q3 * wz);
-    ekf->quaternion.q1 = q_old.q1 + half_dt * (q_old.q0 * wx - q_old.q3 * wy + q_old.q2 * wz);
-    ekf->quaternion.q2 = q_old.q2 + half_dt * (q_old.q3 * wx + q_old.q0 * wy - q_old.q1 * wz);
-    ekf->quaternion.q3 = q_old.q3 - half_dt * (q_old.q2 * wx - q_old.q1 * wy - q_old.q0 * wz);
-    
-    // 四元数归一化
-    quaternion_normalize(&ekf->quaternion);
-    
-    // 计算雅可比矩阵F（简化版本）
-    float F[7][7];
-    memset(F, 0, sizeof(F));
-    
-    // 四元数部分的雅可比
-    F[0][0] = 1.0f; F[0][1] = -half_dt * wx; F[0][2] = -half_dt * wy; F[0][3] = -half_dt * wz;
-    F[1][0] = half_dt * wx; F[1][1] = 1.0f; F[1][2] = half_dt * wz; F[1][3] = -half_dt * wy;
-    F[2][0] = half_dt * wy; F[2][1] = -half_dt * wz; F[2][2] = 1.0f; F[2][3] = half_dt * wx;
-    F[3][0] = half_dt * wz; F[3][1] = half_dt * wy; F[3][2] = -half_dt * wx; F[3][3] = 1.0f;
-    
-    // 零偏部分（假设为常数）
-    F[4][4] = 1.0f;
-    F[5][5] = 1.0f;
-    F[6][6] = 1.0f;
-    
-    // 更新协方差矩阵 P = F * P * F^T + Q
-    float P_temp[7][7], FT[7][7];
-    matrix_multiply_7x7(F, ekf->P, P_temp);
-    
-    // 计算F的转置
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 7; j++) {
-            FT[i][j] = F[j][i];
-        }
-    }
-    
-    matrix_multiply_7x7(P_temp, FT, ekf->P);
-    
-    // 加上过程噪声
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 7; j++) {
-            ekf->P[i][j] += ekf->Q[i][j];
-        }
-    }
-}
-
-/**
- * @brief EKF更新步骤（使用加速度计）
- */
-static void ekf_update_step(Bmi088_device_t* bmi088, float acc[3]) {
-    Ekf_state_t* ekf = &bmi088->data.ekf_state;
-    
-    // 归一化加速度计数据
-    float acc_norm = sqrtf(acc[0]*acc[0] + acc[1]*acc[1] + acc[2]*acc[2]);
-    if (acc_norm < 0.1f) return; // 避免除零
-    
-    float acc_unit[3] = {acc[0]/acc_norm, acc[1]/acc_norm, acc[2]/acc_norm};
-    
-    // 从四元数计算预期的重力方向（机体坐标系）
-    Quaternion_t* q = &ekf->quaternion;
-    float gravity_pred[3];
-    gravity_pred[0] = 2.0f * (q->q1 * q->q3 - q->q0 * q->q2);
-    gravity_pred[1] = 2.0f * (q->q0 * q->q1 + q->q2 * q->q3);
-    gravity_pred[2] = q->q0*q->q0 - q->q1*q->q1 - q->q2*q->q2 + q->q3*q->q3;
-    
-    // 计算残差（观测值 - 预测值）
-    float residual[3];
-    residual[0] = acc_unit[0] - gravity_pred[0];
-    residual[1] = acc_unit[1] - gravity_pred[1];
-    residual[2] = acc_unit[2] - gravity_pred[2];
-    
-    // 计算观测矩阵H（3x7，只有前4列非零）
-    float H[3][7];
-    memset(H, 0, sizeof(H));
-    
-    H[0][0] = -2.0f * q->q2; H[0][1] = 2.0f * q->q3; H[0][2] = -2.0f * q->q0; H[0][3] = 2.0f * q->q1;
-    H[1][0] = 2.0f * q->q1; H[1][1] = 2.0f * q->q0; H[1][2] = 2.0f * q->q3; H[1][3] = 2.0f * q->q2;
-    H[2][0] = 2.0f * q->q0; H[2][1] = -2.0f * q->q1; H[2][2] = -2.0f * q->q2; H[2][3] = 2.0f * q->q3;
-    
-    // 计算卡尔曼增益 K = P * H^T * (H * P * H^T + R)^-1
-    // 为简化计算，这里使用近似方法
-    float gain = 0.1f; // 简化的固定增益
-    
-    // 更新状态估计
-    ekf->quaternion.q0 += gain * (H[0][0] * residual[0] + H[1][0] * residual[1] + H[2][0] * residual[2]);
-    ekf->quaternion.q1 += gain * (H[0][1] * residual[0] + H[1][1] * residual[1] + H[2][1] * residual[2]);
-    ekf->quaternion.q2 += gain * (H[0][2] * residual[0] + H[1][2] * residual[1] + H[2][2] * residual[2]);
-    ekf->quaternion.q3 += gain * (H[0][3] * residual[0] + H[1][3] * residual[1] + H[2][3] * residual[2]);
-    
-    // 四元数归一化
-    quaternion_normalize(&ekf->quaternion);
-}
-
-/**
- * @brief 检测静态状态
- */
-static bool detect_static_state(Bmi088_device_t* bmi088, float acc[3], float gyro[3]) {
-    Ekf_state_t* ekf = &bmi088->data.ekf_state;
-    
-    // 计算加速度计幅值
-    float acc_magnitude = sqrtf(acc[0]*acc[0] + acc[1]*acc[1] + acc[2]*acc[2]);
-    float gravity_diff = fabsf(acc_magnitude - EKF_GRAVITY);
-    
-    // 计算陀螺仪幅值
-    float gyro_magnitude = sqrtf(gyro[0]*gyro[0] + gyro[1]*gyro[1] + gyro[2]*gyro[2]);
-    
-    // 静态检测条件
-    if (gravity_diff < EKF_STATIC_THRESHOLD_DEFAULT && gyro_magnitude < 0.1f) {
-        ekf->static_count++;
-        if (ekf->static_count > EKF_STATIC_COUNT_THRESHOLD) {
-            ekf->is_static = true;
-        }
-    } else {
-        ekf->static_count = 0;
-        ekf->is_static = false;
-    }
-    
-    return ekf->is_static;
-}
-
-/**
- * @brief 7x7矩阵乘法
- */
-static void matrix_multiply_7x7(float a[7][7], float b[7][7], float result[7][7]) {
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 7; j++) {
-            result[i][j] = 0.0f;
-            for (int k = 0; k < 7; k++) {
-                result[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
-}
-
-/**
- * @brief 3x3矩阵乘法（预留）
- */
-static void matrix_multiply_3x3(float a[3][3], float b[3][3], float result[3][3]) {
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            result[i][j] = 0.0f;
-            for (int k = 0; k < 3; k++) {
-                result[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
-}
-
-/**
- * @brief 3x3矩阵转置（预留）
- */
-static void matrix_transpose_3x3(float src[3][3], float dst[3][3]) {
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            dst[i][j] = src[j][i];
-        }
-    }
-}
-
-/**
- * @brief 3x3矩阵求逆（预留，简化实现）
- */
-static void matrix_inverse_3x3(float src[3][3], float dst[3][3]) {
-    // 这里使用简化的实现，实际应用中需要完整的矩阵求逆算法
-    float det = src[0][0] * (src[1][1] * src[2][2] - src[1][2] * src[2][1])
-              - src[0][1] * (src[1][0] * src[2][2] - src[1][2] * src[2][0])
-              + src[0][2] * (src[1][0] * src[2][1] - src[1][1] * src[2][0]);
-    
-    if (fabsf(det) < 1e-6f) return; // 奇异矩阵
-    
-    float inv_det = 1.0f / det;
-    dst[0][0] = (src[1][1] * src[2][2] - src[1][2] * src[2][1]) * inv_det;
-    dst[0][1] = (src[0][2] * src[2][1] - src[0][1] * src[2][2]) * inv_det;
-    dst[0][2] = (src[0][1] * src[1][2] - src[0][2] * src[1][1]) * inv_det;
-    dst[1][0] = (src[1][2] * src[2][0] - src[1][0] * src[2][2]) * inv_det;
-    dst[1][1] = (src[0][0] * src[2][2] - src[0][2] * src[2][0]) * inv_det;
-    dst[1][2] = (src[0][2] * src[1][0] - src[0][0] * src[1][2]) * inv_det;
-    dst[2][0] = (src[1][0] * src[2][1] - src[1][1] * src[2][0]) * inv_det;
-    dst[2][1] = (src[0][1] * src[2][0] - src[0][0] * src[2][1]) * inv_det;
-    dst[2][2] = (src[0][0] * src[1][1] - src[0][1] * src[1][0]) * inv_det;
-}
+// EKF相关函数已经移到ekf.c中实现
 

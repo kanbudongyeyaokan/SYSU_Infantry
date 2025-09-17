@@ -63,6 +63,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         2-Hardware_Driver_Layer/Bmi088_Driver/bmi088_regNdef.h
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
         0-Middleware_Layer/Pid_Controller/algorithm_pid.c
+        0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h
+        0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c
         4-Application_Layer/For_Testing_Task/bmi088_test_task.h
         4-Application_Layer/For_Testing_Task/bmi088_test_task.c
         4-Application_Layer/For_Testing_Task/can_motors_test_task.h
@@ -116,6 +118,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_can
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Pid_Controller
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Message_Center
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Kalman_Fliter
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver

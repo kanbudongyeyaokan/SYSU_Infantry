@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "stdlib.h": "c",
-        "bsp_usart.h": "c"
+        "bsp_usart.h": "c",
+        "algorithm_ekf.h": "c"
     }
 }
