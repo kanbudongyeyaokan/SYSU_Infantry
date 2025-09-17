@@ -13,6 +13,7 @@
 #include "bmi088_regNdef.h"
 #include "spi.h"
 #include "gpio.h"
+#include "algorithm_ekf.h"  // 包含EKF模块头文件
 
 /**
  * @brief BMI088配置结构体
@@ -39,51 +40,7 @@ typedef struct {
     float yaw;
 } Gyro_raw_data_t;
 
-/**
- * @brief 四元数结构体
- */
-typedef struct {
-    float q0; /*!< 四元数实部 */
-    float q1; /*!< 四元数虚部i */
-    float q2; /*!< 四元数虚部j */
-    float q3; /*!< 四元数虚部k */
-} Quaternion_t;
-
-/**
- * @brief 欧拉角结构体（单位：度）
- */
-typedef struct {
-    float roll;  /*!< 横滚角 */
-    float pitch; /*!< 俯仰角 */
-    float yaw;   /*!< 偏航角 */
-} Euler_angles_t;
-
-/**
- * @brief EKF配置参数结构体
- */
-typedef struct {
-    float process_noise_q;      /*!< 过程噪声协方差 */
-    float measurement_noise_r;  /*!< 测量噪声协方差 */
-    float gyro_bias_noise;      /*!< 陀螺仪零偏噪声 */
-    float dt;                   /*!< 采样周期(s) */
-    bool enable_bias_correction;/*!< 启用零偏校正 */
-    float static_threshold;     /*!< 静态检测阈值 */
-} Ekf_config_t;
-
-/**
- * @brief EKF状态结构体
- */
-typedef struct {
-    Quaternion_t quaternion;     /*!< 姿态四元数 */
-    Euler_angles_t euler;        /*!< 欧拉角 */
-    float gyro_bias[3];          /*!< 陀螺仪零偏 [x,y,z] */
-    float P[7][7];               /*!< 协方差矩阵 7x7 (四元数4 + 零偏3) */
-    float Q[7][7];               /*!< 过程噪声协方差矩阵 */
-    float R[3][3];               /*!< 测量噪声协方差矩阵 */
-    bool is_initialized;         /*!< 初始化标志 */
-    uint16_t static_count;       /*!< 静态计数器 */
-    bool is_static;              /*!< 静态状态标志 */
-} Ekf_state_t;
+// EKF相关结构体已移至ekf.h中
 
 typedef struct {
     Acc_raw_data_t acc_raw_data;
