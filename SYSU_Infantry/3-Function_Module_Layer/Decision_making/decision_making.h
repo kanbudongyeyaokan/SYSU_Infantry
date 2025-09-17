@@ -13,8 +13,56 @@
 //底盘
 typedef struct
 {
- 
-}Chassis_cmd;
+     // 控制量
+    float vx;           // 前进方向速度
+    float vy;           // 横移方向速度
+    float wz;           // 旋转速度
+    float offset_angle; // 底盘和归中位置的夹角
+    chassis_mode_e chassis_mode;        //底盘控制模式
+}Chassis_cmd_send_t;
+
+//云台
+typedef struct 
+{
+    float yaw;          //yaw控制量
+    float pitch;        //chassis控制量
+    gimbal_mode_e gimbal_mode;          //云台控制模式
+}Gimbal_cmd_send_t;
+
+
+//发射机构
+typedef struct 
+{
+    shoot_mode_e shoot_mode;    //发射模式-若打开则摩擦轮也跟着打开
+    loader_mode_e loader_mode;  //子弹发射模式
+    uint8_t shoot_rate;         //发射弹频
+}Shoot_cmd_send_t;
+
+/******************决策任务接收各个模块的反馈信息**********************/
+//底盘
+typedef struct 
+{
+    //接收底盘陀螺仪反馈数据
+    float chassis_wz;   //底盘角速度，可以由底盘陀螺仪反馈回来
+}Chassis_feedback_info_t;
+//云台
+typedef struct 
+{
+    //接收云台陀螺仪反馈数据
+
+    //YAW轴电机的单圈角度---由编码器得来
+    uint16_t yaw_motor_angle;
+}Gimbal_feedback_info_t;
+//发射机构
+typedef struct 
+{
+    uint8_t gun_rest_heat;      // 剩余枪管热量,在裁判系统中读取？
+
+}Shoot_feedback_info_t;
+
+
+
+
 
 
 /**
