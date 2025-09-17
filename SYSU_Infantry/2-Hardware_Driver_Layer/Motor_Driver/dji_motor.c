@@ -89,6 +89,25 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
     strncpy(motor->motor_name, config->motor_name, sizeof(motor->motor_name) - 1);//名字
     motor->motor_type = config->motor_type;//电机类型
     motor->motor_status = MOTOR_STOP;//电机运动状态
+    
+    // 初始化默认场景的PID控制器
+    motor->motor_pid.current_scene = SCENE_DEFAULT;
+    
+    // 为所有场景复制默认的PID参数 - 默认都使用初始化时提供的参数
+    for (int i = 0; i < MAX_MOTOR_SCENES; i++) {
+        motor->motor_pid.scene_configs[i].close_loop = config->motor_controller_init.close_loop;
+        motor->motor_pid.scene_configs[i].current_pid = config->motor_controller_init.current_pid;
+        motor->motor_pid.scene_configs[i].speed_pid = config->motor_controller_init.speed_pid;
+        motor->motor_pid.scene_configs[i].angle_pid = config->motor_controller_init.angle_pid;
+    }
+    
+    // 根据默认场景初始化控制器
+    motor->motor_pid.close_loop = config->motor_controller_init.close_loop;
+    motor->motor_pid.angle_source = config->motor_controller_init.angle_source;
+    motor->motor_pid.speed_source = config->motor_controller_init.speed_source;
+    motor->motor_pid.other_angle_feedback_ptr = config->motor_controller_init.other_angle_feedback_ptr;
+    motor->motor_pid.other_speed_feedback_ptr = config->motor_controller_init.other_speed_feedback_ptr;
+    
     //控制器初始化
     Pid_init(&motor->motor_pid.current_pid,&config->motor_controller_init.current_pid);//电流环
     Pid_init(&motor->motor_pid.angle_pid,&config->motor_controller_init.angle_pid);    //角度环

@@ -6,6 +6,7 @@
 #include "string.h"
 
 #define MAX_MOTOR_COUNT 16
+#define MAX_MOTOR_SCENES 5  // 最大支持的场景数量
 
 #define SPEED_SMOOTH_COEF 0.85f      // 最好大于0.85
 #define CURRENT_SMOOTH_COEF 0.9     // 必须大于0.9
@@ -19,6 +20,16 @@ typedef enum
     M2006,
     GM6020
 }Djimotor_type_e;
+
+/**电机控制场景枚举**/
+typedef enum
+{
+    SCENE_DEFAULT = 0,      // 默认场景
+    SCENE_KEYBOARD_MOUSE,   // 键盘鼠标控制场景
+    SCENE_REMOTE_CONTROL,   // 遥控器控制场景
+    SCENE_SPINNING_TOP,     // 小陀螺机动场景
+    SCENE_FOLLOW_GIMBAL     // 底盘跟随云台场景
+}Djimotor_scene_e;
 
 /**DJI电机控制状态**/
 typedef enum
@@ -58,11 +69,22 @@ typedef struct
 }Djimotor_measure_t;
 #pragma pack()
 
+/**单个场景的PID配置**/
+#pragma pack(1)
+typedef struct
+{
+    Djimotor_closeloop_e close_loop;       //电机控制模式
+    Pid_init_t current_pid;     //电流PID参数
+    Pid_init_t angle_pid;       //角度PID参数
+    Pid_init_t speed_pid;       //速度PID参数
+}Djimotor_scene_config_t;
+#pragma pack()
+
 /**DJI电机控制器结构体**/
 #pragma pack(1)
 typedef struct
 {
-    Djimotor_closeloop_e close_loop;       //电机模式
+    Djimotor_closeloop_e close_loop;       //当前电机模式
     Djimotor_feedback_source_e angle_source;//电机角度反馈值来源
     Djimotor_feedback_source_e speed_source;
     float *other_angle_feedback_ptr; // 其他角度反馈数据指针
@@ -73,7 +95,10 @@ typedef struct
     Pid_instance_t speed_pid;   //速度环
 
     float pid_target;           //PID目标量
-
+    
+    // 场景管理
+    Djimotor_scene_e current_scene;                      // 当前场景
+    Djimotor_scene_config_t scene_configs[MAX_MOTOR_SCENES]; // 所有场景的配置
 }Djimotor_controller_t;
 #pragma pack()
 
@@ -134,6 +159,14 @@ Djimotor_measure_t Djimotor_get_measure(Djimotor_device_t *motor);
 //设置电机状态
 void Djimotor_set_status(Djimotor_device_t *motor,Djimotor_status_e status);
 
+// 场景管理函数
+// 切换电机控制场景
+void Djimotor_switch_scene(Djimotor_device_t *motor, Djimotor_scene_e scene);
 
+// 更新场景PID配置
+void Djimotor_update_scene_config(Djimotor_device_t *motor, Djimotor_scene_e scene, Djimotor_scene_config_t *config);
+
+// 获取当前场景
+Djimotor_scene_e Djimotor_get_current_scene(Djimotor_device_t *motor);
 
 #endif //_DJI_MOTOR_H
