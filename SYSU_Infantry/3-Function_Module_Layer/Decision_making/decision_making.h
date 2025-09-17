@@ -62,8 +62,23 @@ typedef struct
 
 
 
+/**
+ * @brief 任务初始化函数，初始化决策层的发布者和订阅者,获取遥控器数据
+ *
+*/
+void Decision_making_task_init();
 
+/**
+ * @brief 接收各个应用层反馈回来的数据
+ *
+*/
+void Receive_feedback_infomation();
 
+/**
+ * @brief 发送决策层的控制信息给各个应用层
+ *
+*/
+void Send_command_to_all_task();
 
 /**
  * @brief 根据遥控器左边开关决定机器人是键鼠控制还是遥控器控制,并且调用对应的控制函数
@@ -72,15 +87,15 @@ typedef struct
 void Robot_set_command();
 
 /**
- * @brief 控制输入为遥控器(调试时)的模式和控制量设置
+ * @brief 控制输入为遥控器(调试时)的模式和控制量设置,不做发送
  *
 */
-void RC_ctrl_set();
+void RC_command_set();
 
 /**
- * @brief 控制输入为键鼠的模式和控制量设置
+ * @brief 控制输入为键鼠的模式和控制量设置，不做发送
  *
 */
-static void Keyboard_ctrl_set();
+static void Keyboard_command_set();
 
 #endif //SYSU_INFANTRY_DECISION_MAKING_H
