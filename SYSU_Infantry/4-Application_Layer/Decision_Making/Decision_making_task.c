@@ -9,7 +9,8 @@
  * @brief 机器人决策任务,500Hz频率运行
  *
  */
-void Decision_making_task() {
+void Decision_making_task()
+{
 
 
 }

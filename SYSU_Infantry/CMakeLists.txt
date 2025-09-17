@@ -87,8 +87,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Referee/referee.h
         3-Function_Module_Layer/Shoot/shoot.c
         3-Function_Module_Layer/Shoot/shoot.h
-        4-Application_Layer/Decision_Making_Task/Decision_making_task.c
-        4-Application_Layer/Decision_Making_Task/Decision_making_task.h
+        4-Application_Layer/Decision_Making/Decision_making_task.c
+        4-Application_Layer/Decision_Making/Decision_making_task.h
         3-Function_Module_Layer/Decision_making/decision_making.c
         3-Function_Module_Layer/Decision_making/decision_making.h
 )
@@ -129,7 +129,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Shoot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Bmi088_Driver
-        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making_Task
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Robot_Definitions
 
 )

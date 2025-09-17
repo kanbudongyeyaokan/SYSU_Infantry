@@ -1,9 +1,20 @@
 #ifndef _ROBOT_DEFINITIONS_H
 #define _ROBOT_DEFINITIONS_H
 
+//该层只放机器人的物理参数定义，以及各个模块状态的描述
+
 /**************************Robot_physical parameters*******************************/
 
+
+
 /******************************Robot_state_machine*********************************/
+/********机器人ROBOT************/
+typedef enum
+{
+    ROBOT_ON = 0,//机器人开启
+    ROBOT_OFF    //机器人离线，一般用于急停模式的处理
+}Robot_status_e;
+
 /********云台GIMBAL************/
 // 云台模式设置
 typedef enum
@@ -39,6 +50,7 @@ typedef enum
     LOAD_1_BULLET,  // 单发
     LOAD_BURSTFIRE, // 连发
 } loader_mode_e;
+
 
 
 #endif _ROBOT_DEFINITIONS_H
