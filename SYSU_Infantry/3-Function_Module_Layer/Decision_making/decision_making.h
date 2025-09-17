@@ -2,6 +2,7 @@
 #define SYSU_INFANTRY_DECISION_MAKING_H
 
 #include "main.h"
+#include "robot_definitions.h"
 
 /**************决策*****************/
 

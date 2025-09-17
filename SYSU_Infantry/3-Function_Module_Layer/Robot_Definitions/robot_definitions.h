@@ -52,4 +52,4 @@ typedef enum
 
 
 
-#endif _ROBOT_DEFINITIONS_H
+#endif /* _ROBOT_DEFINITIONS_H */
