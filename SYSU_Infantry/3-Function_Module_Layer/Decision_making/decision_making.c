@@ -177,10 +177,17 @@ void RC_ctrl_set()
  * @brief 控制输入为键鼠的模式和控制量设置
  *
 */
-void Keyboard_ctrl_set()
+static void Keyboard_ctrl_set()
 {
-
-
+    // 键盘控制设置的临时实现
+    // 默认模式设置
+    chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+    gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
+    shoot_cmd_send.shoot_mode = SHOOT_OFF;
+    shoot_cmd_send.loader_mode = LOAD_STOP;
+    
+    // 这里添加键盘鼠标的具体控制逻辑
+    // ...
 }
 
 /**
