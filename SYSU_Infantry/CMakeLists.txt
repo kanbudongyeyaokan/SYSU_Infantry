@@ -65,6 +65,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/Pid_Controller/algorithm_pid.c
         0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h
         0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c
+        0-Middleware_Layer/Kalman_Fliter/algorithm_kf.h
+        0-Middleware_Layer/Kalman_Fliter/algorithm_kf.c
+
         4-Application_Layer/For_Testing_Task/bmi088_test_task.h
         4-Application_Layer/For_Testing_Task/bmi088_test_task.c
         4-Application_Layer/For_Testing_Task/can_motors_test_task.h
