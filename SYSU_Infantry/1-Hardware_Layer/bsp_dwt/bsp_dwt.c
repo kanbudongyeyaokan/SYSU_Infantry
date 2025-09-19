@@ -52,10 +52,11 @@ void DWT_Init(uint32_t CPU_Freq_mHz)
 }
 
 /**
-  * @brief
-  * @param
-  * @note
-*/
+ * @brief 获取两次调用之间的时间间隔,单位为秒/s
+ *
+ * @param cnt_last 上一次调用的时间戳
+ * @return float 时间间隔,单位为秒/s
+ */
 float DWT_GetDeltaT(uint32_t *cnt_last)
 {
     volatile uint32_t cnt_now = DWT->CYCCNT;
@@ -67,17 +68,10 @@ float DWT_GetDeltaT(uint32_t *cnt_last)
     return dt;
 }
 
-double DWT_GetDeltaT64(uint32_t *cnt_last)
-{
-    volatile uint32_t cnt_now = DWT->CYCCNT;
-    double dt = ((uint32_t)(cnt_now - *cnt_last)) / ((double)(CPU_FREQ_Hz));
-    *cnt_last = cnt_now;
-
-    DWT_CNT_Update();
-
-    return dt;
-}
-
+/**
+ * @brief DWT更新时间轴函数,会被三个timeline函数调用
+ * @attention 如果长时间不调用timeline函数,则需要手动调用该函数更新时间轴,否则CYCCNT溢出后定时和时间轴不准确
+ */
 void DWT_SysTimeUpdate(void)
 {
     volatile uint32_t cnt_now = DWT->CYCCNT;
@@ -93,7 +87,11 @@ void DWT_SysTimeUpdate(void)
     CNT_TEMP3 = CNT_TEMP2 - SysTime.ms * CPU_FREQ_Hz_ms;
     SysTime.us = CNT_TEMP3 / CPU_FREQ_Hz_us;
 }
-
+/**
+ * @brief 获取当前时间,单位为秒/s,即初始化后的时间
+ *
+ * @return float 时间轴
+ */
 float DWT_GetTimeline_s(void)
 {
     DWT_SysTimeUpdate();
@@ -102,7 +100,11 @@ float DWT_GetTimeline_s(void)
 
     return DWT_Timelinef32;
 }
-
+/**
+ * @brief 获取当前时间,单位为毫秒/ms,即初始化后的时间
+ *
+ * @return float
+ */
 float DWT_GetTimeline_ms(void)
 {
     DWT_SysTimeUpdate();
@@ -111,7 +113,11 @@ float DWT_GetTimeline_ms(void)
 
     return DWT_Timelinef32;
 }
-
+/**
+ * @brief 获取当前时间,单位为微秒/us,即初始化后的时间
+ *
+ * @return uint64_t
+ */
 uint64_t DWT_GetTimeline_us(void)
 {
     DWT_SysTimeUpdate();
@@ -120,12 +126,50 @@ uint64_t DWT_GetTimeline_us(void)
 
     return DWT_Timelinef32;
 }
-
+/**
+ * @brief DWT延时函数,单位为 s
+ * @attention 该函数不受中断是否开启的影响,可以在临界区和关闭中断时使用
+ * @note 禁止在__disable_irq()和__enable_irq()之间使用HAL_Delay()函数,应使用本函数
+ *
+ * @param Delay 延时时间,单位为s
+ */
 void DWT_Delay(float Delay)
 {
     uint32_t tickstart = DWT->CYCCNT;
     float wait = Delay;
 
     while ((DWT->CYCCNT - tickstart) < wait * (float)CPU_FREQ_Hz)
+        ;
+}
+
+/**
+ * @brief DWT延时函数,单位为ms
+ * @attention 该函数不受中断是否开启的影响,可以在临界区和关闭中断时使用
+ * @note 禁止在__disable_irq()和__enable_irq()之间使用HAL_Delay()函数,应使用本函数
+ *
+ * @param Delay 延时时间,单位为ms
+ */
+void DWT_delay_ms(uint32_t delay_ms)
+{
+    uint32_t tickstart = DWT->CYCCNT;
+    float wait = delay_ms;
+
+    while ((DWT->CYCCNT - tickstart) < wait * CPU_FREQ_Hz/1000)
+        ;
+}
+
+/**
+ * @brief DWT延时函数,单位为us
+ * @attention 该函数不受中断是否开启的影响,可以在临界区和关闭中断时使用
+ * @note 禁止在__disable_irq()和__enable_irq()之间使用HAL_Delay()函数,应使用本函数
+ *
+ * @param Delay 延时时间,单位为us
+ */
+void DWT_delay_us(uint32_t delay_us)
+{
+    uint32_t tickstart = DWT->CYCCNT;
+    float wait = delay_us;
+    //空循环等待
+    while ((DWT->CYCCNT - tickstart) < wait * CPU_FREQ_Hz/1000000)
         ;
 }

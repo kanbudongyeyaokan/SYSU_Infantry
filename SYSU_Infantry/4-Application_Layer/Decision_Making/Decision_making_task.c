@@ -16,10 +16,14 @@ void Decision_making_task()
 
     for (;;)
     {
+        //接收应用层的反馈数据
         Receive_feedback_infomation();
+        //决策要发的控制信息
         Robot_set_command();
+        //向各个应用层传送控制信息
         Send_command_to_all_task();
-        osDelay(2);//控制频率500HZ
+        //控制频率500HZ
+        osDelay(2);
     }
 
 }

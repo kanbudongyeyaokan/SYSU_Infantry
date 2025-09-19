@@ -50,14 +50,6 @@ void DWT_Init(uint32_t CPU_Freq_mHz);
 float DWT_GetDeltaT(uint32_t *cnt_last);
 
 /**
- * @brief 获取两次调用之间的时间间隔,单位为秒/s,高精度
- *
- * @param cnt_last 上一次调用的时间戳
- * @return double 时间间隔,单位为秒/s
- */
-double DWT_GetDeltaT64(uint32_t *cnt_last);
-
-/**
  * @brief 获取当前时间,单位为秒/s,即初始化后的时间
  *
  * @return float 时间轴
@@ -86,6 +78,24 @@ uint64_t DWT_GetTimeline_us(void);
  * @param Delay 延时时间,单位为秒/s
  */
 void DWT_Delay(float Delay);
+
+/**
+ * @brief DWT延时函数,单位为ms
+ * @attention 该函数不受中断是否开启的影响,可以在临界区和关闭中断时使用
+ * @note 禁止在__disable_irq()和__enable_irq()之间使用HAL_Delay()函数,应使用本函数
+ *
+ * @param Delay 延时时间,单位为ms
+ */
+void DWT_delay_ms(uint32_t delay_ms);
+
+/**
+ * @brief DWT延时函数,单位为us
+ * @attention 该函数不受中断是否开启的影响,可以在临界区和关闭中断时使用
+ * @note 禁止在__disable_irq()和__enable_irq()之间使用HAL_Delay()函数,应使用本函数
+ *
+ * @param Delay 延时时间,单位为us
+ */
+void DWT_delay_us(uint32_t delay_us);
 
 /**
  * @brief DWT更新时间轴函数,会被三个timeline函数调用
