@@ -25,6 +25,14 @@ typedef enum
 } gimbal_mode_e;
 
 /********底盘CHASSIS************/
+//底盘类型设置
+typedef enum
+{
+    CHASSIS_TYPE_OMNI = 0,     // 全向轮底盘
+    CHASSIS_TYPE_MECANUM,      // 麦克纳姆轮底盘
+    CHASSIS_TYPE_DIFFERENTIAL, // 差速轮底盘
+} chassis_type_e;
+
 //底盘运动模式设置
 typedef enum
 {

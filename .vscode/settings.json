@@ -3,7 +3,9 @@
     "stdlib.h": "c",
     "bsp_usart.h": "c",
     "message_center.h": "c",
-    "robot_definitions.h": "c"
+    "robot_definitions.h": "c",
+    "decision_making.h": "c",
+    "motor_control.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

@@ -26,10 +26,10 @@
 void Motor_control_init(void);
 
 /**
- * @brief 处理底盘控制指令
- * @note  订阅底盘控制指令并控制底盘电机
+ * @brief 处理底盘电机控制
+ * @note  从Chassis Task获取底盘电机目标值和配置，控制底盘电机
  */
-void Motor_control_handle_chassis_cmd(void);
+void Motor_control_handle_chassis_motors(void);
 
 /**
  * @brief 处理云台控制指令

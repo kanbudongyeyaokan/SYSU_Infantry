@@ -4,6 +4,7 @@
 #include "bsp_can.h"
 #include "algorithm_pid.h"
 #include "string.h"
+#include "robot_definitions.h"
 
 #define MAX_MOTOR_COUNT 16
 #define MAX_MOTOR_SCENES 5  // 最大支持的场景数量
@@ -22,14 +23,9 @@ typedef enum
 }Djimotor_type_e;
 
 /**电机控制场景枚举**/
-typedef enum
-{
-    SCENE_DEFAULT = 0,      // 默认场景
-    SCENE_KEYBOARD_MOUSE,   // 键盘鼠标控制场景
-    SCENE_REMOTE_CONTROL,   // 遥控器控制场景
-    SCENE_SPINNING_TOP,     // 小陀螺机动场景
-    SCENE_FOLLOW_GIMBAL     // 底盘跟随云台场景
-}Djimotor_scene_e;
+// 使用robot_definitions.h中的chassis_mode_e替代原有的场景枚举
+// 为保持兼容性，保留场景枚举的别名定义
+typedef chassis_mode_e Djimotor_scene_e;
 
 /**DJI电机控制状态**/
 typedef enum
@@ -97,7 +93,7 @@ typedef struct
     float pid_target;           //PID目标量
     
     // 场景管理
-    Djimotor_scene_e current_scene;                      // 当前场景
+    chassis_mode_e current_scene;                        // 当前场景
     Djimotor_scene_config_t scene_configs[MAX_MOTOR_SCENES]; // 所有场景的配置
 }Djimotor_controller_t;
 #pragma pack()
@@ -161,12 +157,12 @@ void Djimotor_set_status(Djimotor_device_t *motor,Djimotor_status_e status);
 
 // 场景管理函数
 // 切换电机控制场景
-void Djimotor_switch_scene(Djimotor_device_t *motor, Djimotor_scene_e scene);
+void Djimotor_switch_scene(Djimotor_device_t *motor, chassis_mode_e scene);
 
 // 更新场景PID配置
-void Djimotor_update_scene_config(Djimotor_device_t *motor, Djimotor_scene_e scene, Djimotor_scene_config_t *config);
+void Djimotor_update_scene_config(Djimotor_device_t *motor, chassis_mode_e scene, Djimotor_scene_config_t *config);
 
 // 获取当前场景
-Djimotor_scene_e Djimotor_get_current_scene(Djimotor_device_t *motor);
+chassis_mode_e Djimotor_get_current_scene(Djimotor_device_t *motor);
 
 #endif //_DJI_MOTOR_H

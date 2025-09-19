@@ -9,6 +9,7 @@
  */
 
 #include "motor_control.h"
+#include "motor_chassis_interface.h"
 #include <stdio.h>
 #include "decision_making.h"
 
@@ -17,23 +18,19 @@ Djimotor_device_t *chassis_motors[4]; // 4个底盘电机
 Djimotor_device_t *gimbal_motors[2];  // 2个云台电机(yaw和pitch)
 Djimotor_device_t *shoot_motors[3];   // 3个发射机构电机(2个摩擦轮+1个拨弹)
 
-// 订阅决策层发来的控制指令
-static Subscriber_t *chassis_cmd_sub;
+// 订阅决策层发来的控制指令（仅云台和发射机构）
 static Subscriber_t *gimbal_cmd_sub;
 static Subscriber_t *shoot_cmd_sub;
 
 // 存储决策层发来的控制命令
-static Chassis_cmd_send_t chassis_cmd;
 static Gimbal_cmd_send_t gimbal_cmd;
 static Shoot_cmd_send_t shoot_cmd;
 
-// 发布给决策层的反馈信息
-static Publisher_t *chassis_feedback_pub;
+// 发布给决策层的反馈信息（仅云台和发射机构）
 static Publisher_t *gimbal_feedback_pub;
 static Publisher_t *shoot_feedback_pub;
 
 // 存储发送给决策层的反馈信息
-static Chassis_feedback_info_t chassis_feedback;
 static Gimbal_feedback_info_t gimbal_feedback;
 static Shoot_feedback_info_t shoot_feedback;
 
@@ -198,8 +195,8 @@ static void Motor_init(void)
     // 设置电机场景配置
     // 示例：为底盘电机设置不同场景的PID参数
     for (int i = 0; i < 4; i++) {
-        // 场景1：键盘鼠标模式
-        Djimotor_scene_config_t keyboard_mouse_config = {
+        // 场景1：不跟随模式（对应原键盘鼠标模式）
+        Djimotor_scene_config_t no_follow_config = {
             .close_loop = SPEED_LOOP,
             .speed_pid = {
                 .kp = 15.0f,
@@ -213,58 +210,58 @@ static void Motor_init(void)
                 .feedfoward_coefficient = 0.0f
             }
         };
-        Djimotor_update_scene_config(chassis_motors[i], SCENE_KEYBOARD_MOUSE, &keyboard_mouse_config);
+        Djimotor_update_scene_config(chassis_motors[i], CHASSIS_NO_FOLLOW, &no_follow_config);
 
-        // // 场景2：遥控器控制模式
-        // Djimotor_scene_config_t remote_control_config = {
-        //     .close_loop = SPEED_LOOP,
-        //     .speed_pid = {
-        //         .kp = 10.0f,
-        //         .ki = 0.3f,
-        //         .kd = 0.0f,
-        //         .max_out = 10000.0f,
-        //         .max_iout = 3000.0f,
-        //         .deadband = 10.0f,
-        //         .optimization = PID_OUTPUT_FILTER | PID_OUTPUT_LIMIT,
-        //         .LPF_coefficient = 0.85f,
-        //         .feedfoward_coefficient = 0.0f
-        //     }
-        // };
-        // Djimotor_update_scene_config(chassis_motors[i], SCENE_REMOTE_CONTROL, &remote_control_config);
+        // 场景2：跟随云台模式
+        Djimotor_scene_config_t follow_gimbal_config = {
+            .close_loop = SPEED_LOOP,
+            .speed_pid = {
+                .kp = 18.0f,
+                .ki = 0.6f,
+                .kd = 0.05f,
+                .max_out = 16000.0f,
+                .max_iout = 6000.0f,
+                .deadband = 8.0f,
+                .optimization = PID_OUTPUT_FILTER | PID_OUTPUT_LIMIT,
+                .LPF_coefficient = 0.8f,
+                .feedfoward_coefficient = 0.0f
+            }
+        };
+        Djimotor_update_scene_config(chassis_motors[i], CHASSIS_FOLLOW_GIMBAL, &follow_gimbal_config);
 
-        // // 场景3：小陀螺模式
-        // Djimotor_scene_config_t spinning_top_config = {
-        //     .close_loop = SPEED_LOOP,
-        //     .speed_pid = {
-        //         .kp = 20.0f,
-        //         .ki = 0.8f,
-        //         .kd = 0.1f,
-        //         .max_out = 16000.0f,
-        //         .max_iout = 8000.0f,
-        //         .deadband = 5.0f,
-        //         .optimization = PID_OUTPUT_FILTER | PID_OUTPUT_LIMIT,
-        //         .LPF_coefficient = 0.7f,
-        //         .feedfoward_coefficient = 0.0f
-        //     }
-        // };
-        // Djimotor_update_scene_config(chassis_motors[i], SCENE_SPINNING_TOP, &spinning_top_config);
+        // 场景3：小陀螺模式
+        Djimotor_scene_config_t spinning_top_config = {
+            .close_loop = SPEED_LOOP,
+            .speed_pid = {
+                .kp = 20.0f,
+                .ki = 0.8f,
+                .kd = 0.1f,
+                .max_out = 16000.0f,
+                .max_iout = 8000.0f,
+                .deadband = 5.0f,
+                .optimization = PID_OUTPUT_FILTER | PID_OUTPUT_LIMIT,
+                .LPF_coefficient = 0.7f,
+                .feedfoward_coefficient = 0.0f
+            }
+        };
+        Djimotor_update_scene_config(chassis_motors[i], CHASSIS_ROTATE, &spinning_top_config);
 
-        // // 场景4：底盘跟随云台模式
-        // Djimotor_scene_config_t follow_gimbal_config = {
-        //     .close_loop = SPEED_LOOP,
-        //     .speed_pid = {
-        //         .kp = 18.0f,
-        //         .ki = 0.6f,
-        //         .kd = 0.05f,
-        //         .max_out = 16000.0f,
-        //         .max_iout = 6000.0f,
-        //         .deadband = 8.0f,
-        //         .optimization = PID_OUTPUT_FILTER | PID_OUTPUT_LIMIT,
-        //         .LPF_coefficient = 0.8f,
-        //         .feedfoward_coefficient = 0.0f
-        //     }
-        // };
-        // Djimotor_update_scene_config(chassis_motors[i], SCENE_FOLLOW_GIMBAL, &follow_gimbal_config);
+        // 场景4：零力矩模式
+        Djimotor_scene_config_t zero_force_config = {
+            .close_loop = OPEN_LOOP,
+            .speed_pid = {
+                .kp = 0.0f,
+                .ki = 0.0f,
+                .kd = 0.0f,
+                .max_out = 0.0f,
+                .max_iout = 0.0f,
+                .deadband = 0.0f,
+                .optimization = 0,
+                .LPF_coefficient = 0.0f,
+                .feedfoward_coefficient = 0.0f
+            }
+        };
+        Djimotor_update_scene_config(chassis_motors[i], CHASSIS_ZERO_FORCE, &zero_force_config);
     }
 
     // 类似地，可以为云台和发射机构电机设置不同场景的PID参数
@@ -275,13 +272,11 @@ static void Motor_init(void)
  */
 static void Message_init(void)
 {
-    // 订阅决策层发来的控制指令
-    chassis_cmd_sub = Sub_register("chassis_cmd", sizeof(Chassis_cmd_send_t));
+    // 订阅决策层发来的控制指令（仅云台和发射机构）
     gimbal_cmd_sub = Sub_register("gimbal_cmd", sizeof(Gimbal_cmd_send_t));
     shoot_cmd_sub = Sub_register("shoot_cmd", sizeof(Shoot_cmd_send_t));
 
-    // 注册反馈信息发布者
-    chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
+    // 注册反馈信息发布者（仅云台和发射机构）
     gimbal_feedback_pub = Pub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
     shoot_feedback_pub = Pub_register("shoot_feedback", sizeof(Shoot_feedback_info_t));
 }
@@ -294,70 +289,30 @@ void Motor_control_init(void)
 {
     Motor_init();
     Message_init();
+    // 注意：Motor_chassis_interface_init() 由Chassis Task调用，避免重复初始化
 }
 
 /**
- * @brief 处理底盘控制指令
- * @note  订阅底盘控制指令并控制底盘电机
+ * @brief 处理底盘电机控制
+ * @note  从Chassis Task获取底盘电机目标值和配置，控制底盘电机
  */
-void Motor_control_handle_chassis_cmd(void)
+void Motor_control_handle_chassis_motors(void)
 {
-    // 从消息中心获取最新指令
-    if (Sub_get_message(chassis_cmd_sub, &chassis_cmd)) {
-        
-        // 根据控制模式切换电机场景
-        Djimotor_scene_e scene;
-        switch (chassis_cmd.chassis_mode) {
-            case CHASSIS_FOLLOW_GIMBAL:
-                scene = SCENE_FOLLOW_GIMBAL;
-                break;
-            case CHASSIS_ROTATE:
-                scene = SCENE_SPINNING_TOP;
-                break;
-            case CHASSIS_NO_FOLLOW:
-                scene = SCENE_KEYBOARD_MOUSE;  // 或其他合适的场景
-                break;
-            default:
-                scene = SCENE_DEFAULT;
-                break;
-        }
-        
-        // 为所有底盘电机切换场景
+    // 检查并获取底盘电机配置更新
+    chassis_mode_e chassis_mode;
+    if (Motor_get_chassis_config(&chassis_mode)) {
+        // 直接使用chassis_mode作为场景，为所有底盘电机切换场景
         for (int i = 0; i < 4; i++) {
-            Djimotor_switch_scene(chassis_motors[i], scene);
+            Djimotor_switch_scene(chassis_motors[i], chassis_mode);
         }
-
-        // 使用全向轮运动学模型
-        float motor_speed[4];
-        
-        // 假设全向轮布局为经典的"十字布局"（90度间隔）
-        // 轮子布局（从俯视图看）：
-        //    1(前)
-        //  2(左) 0(右)
-        //    3(后)
-        //
-        // 全向轮运动学模型（轮子方向为90度间隔）
-        // 右轮(0) = +vy - wz  （贡献侧向移动和旋转）
-        // 前轮(1) = +vx - wz  （贡献前向移动和旋转）
-        // 左轮(2) = -vy - wz  （贡献侧向移动和旋转）
-        // 后轮(3) = -vx - wz  （贡献前向移动和旋转）
-        
-        // 旋转补偿系数，根据底盘尺寸调整
-        float rotate_ratio = 1.0f;
-        float wheel_radius = 0.076f; // 轮子半径，单位：米
-        float chassis_radius = 0.2f; // 底盘半径（中心到轮子距离），单位：米
-        
-        // 计算旋转分量
-        float rotate_compensation = rotate_ratio * chassis_cmd.wz * chassis_radius / wheel_radius;
-        
-        motor_speed[0] = chassis_cmd.vy - rotate_compensation;  // 右轮
-        motor_speed[1] = chassis_cmd.vx - rotate_compensation;  // 前轮
-        motor_speed[2] = -chassis_cmd.vy - rotate_compensation; // 左轮
-        motor_speed[3] = -chassis_cmd.vx - rotate_compensation; // 后轮
-
-        // 设置电机目标速度
+    }
+    
+    // 检查并获取底盘电机速度目标值
+    float motor_speeds[4];
+    if (Motor_get_chassis_speeds(motor_speeds)) {
+        // 设置底盘电机目标速度
         for (int i = 0; i < 4; i++) {
-            Djimotor_set_target(chassis_motors[i], motor_speed[i]);
+            Djimotor_set_target(chassis_motors[i], motor_speeds[i]);
         }
     }
 }
@@ -451,22 +406,10 @@ void Motor_control_handle_shoot_cmd(void)
 
 /**
  * @brief 收集电机反馈信息并发布
- * @note  收集所有电机的反馈数据并通过消息中心发布
+ * @note  收集云台和发射机构电机的反馈数据并通过消息中心发布
  */
 void Motor_control_collect_feedback(void)
 {
-    // 收集底盘反馈信息
-    // 例如：底盘角速度可以从电机反馈获取
-    float chassis_wz = 0;
-    for (int i = 0; i < 4; i++) {
-        Djimotor_measure_t measure = Djimotor_get_measure(chassis_motors[i]);
-        // 根据轮子的速度计算底盘角速度
-        // 这里是简化计算，实际应该根据运动学模型
-        chassis_wz += measure.angular_velocity / 4.0f;
-    }
-    chassis_feedback.chassis_wz = chassis_wz;
-    Pub_push_message(chassis_feedback_pub, &chassis_feedback);
-    
     // 收集云台反馈信息
     Djimotor_measure_t yaw_measure = Djimotor_get_measure(gimbal_motors[0]);
     gimbal_feedback.yaw_motor_angle = yaw_measure.current_angle;

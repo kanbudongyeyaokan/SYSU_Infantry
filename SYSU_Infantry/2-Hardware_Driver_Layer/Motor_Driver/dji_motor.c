@@ -2,6 +2,7 @@
 #include "bsp_can.h"
 #include "stdlib.h"
 #include "bsp_usart.h"
+
 // 电机实例数组,用于管理已初始化的电机列表
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
 static uint8_t motor_count = 0;
@@ -91,7 +92,7 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
     motor->motor_status = MOTOR_STOP;//电机运动状态
     
     // 初始化默认场景的PID控制器
-    motor->motor_pid.current_scene = SCENE_DEFAULT;
+    motor->motor_pid.current_scene = CHASSIS_NO_FOLLOW;
     
     // 为所有场景复制默认的PID参数 - 默认都使用初始化时提供的参数
     for (int i = 0; i < MAX_MOTOR_SCENES; i++) {

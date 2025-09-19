@@ -58,6 +58,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Perception/Referee_Task/Referee_task.h
         4-Application_Layer/Execution/Shoot_Task/shoot_task.c
         4-Application_Layer/Execution/Shoot_Task/shoot_task.h
+        4-Application_Layer/Execution/Motor_Task/motor_task.c
+        4-Application_Layer/Execution/Motor_Task/motor_task.h
+
+
         2-Hardware_Driver_Layer/Bmi088_Driver/bmi088.h
         2-Hardware_Driver_Layer/Bmi088_Driver/bmi088.c
         2-Hardware_Driver_Layer/Bmi088_Driver/bmi088_regNdef.h
@@ -76,6 +80,11 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/For_Testing_Task/rc_test_task.c
         4-Application_Layer/For_Testing_Task/message_test_task.h
         4-Application_Layer/For_Testing_Task/message_test_task.c
+        4-Application_Layer/For_Testing_Task/chassis_motor_integration_test.h
+        4-Application_Layer/For_Testing_Task/chassis_motor_integration_test.c
+        4-Application_Layer/Decision_Making/Decision_making_task.c
+        4-Application_Layer/Decision_Making/Decision_making_task.h
+
 
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
@@ -92,12 +101,13 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Referee/referee.h
         3-Function_Module_Layer/Shoot/shoot.c
         3-Function_Module_Layer/Shoot/shoot.h
-        4-Application_Layer/Decision_Making/Decision_making_task.c
-        4-Application_Layer/Decision_Making/Decision_making_task.h
+
         3-Function_Module_Layer/Decision_making/decision_making.c
         3-Function_Module_Layer/Decision_making/decision_making.h
         3-Function_Module_Layer/Motor_Control/motor_control.c
         3-Function_Module_Layer/Motor_Control/motor_control.h
+        3-Function_Module_Layer/Motor_Control/motor_chassis_interface.h
+        3-Function_Module_Layer/Motor_Control/motor_chassis_interface.c
         
 )
 
@@ -132,6 +142,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Gimbal_Task
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Motor_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Ins_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Referee_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
@@ -139,6 +150,14 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Bmi088_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Robot_Definitions
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Chassis
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Gimbal
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Ins
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Referee
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shoot
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Motor_Control
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
+        
 
 )
 

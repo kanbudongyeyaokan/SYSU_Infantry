@@ -6,7 +6,7 @@
  * @param motor 电机设备指针
  * @param scene 目标场景
  */
-void Djimotor_switch_scene(Djimotor_device_t *motor, Djimotor_scene_e scene) {
+void Djimotor_switch_scene(Djimotor_device_t *motor, chassis_mode_e scene) {
     if (motor == NULL || scene >= MAX_MOTOR_SCENES) {
         return;
     }
@@ -42,7 +42,7 @@ void Djimotor_switch_scene(Djimotor_device_t *motor, Djimotor_scene_e scene) {
  * @param scene 目标场景
  * @param config 新的场景配置
  */
-void Djimotor_update_scene_config(Djimotor_device_t *motor, Djimotor_scene_e scene, Djimotor_scene_config_t *config) {
+void Djimotor_update_scene_config(Djimotor_device_t *motor, chassis_mode_e scene, Djimotor_scene_config_t *config) {
     if (motor == NULL || config == NULL || scene >= MAX_MOTOR_SCENES) {
         return;
     }
@@ -62,9 +62,9 @@ void Djimotor_update_scene_config(Djimotor_device_t *motor, Djimotor_scene_e sce
  * @param motor 电机设备指针
  * @return Djimotor_scene_e 当前场景
  */
-Djimotor_scene_e Djimotor_get_current_scene(Djimotor_device_t *motor) {
+chassis_mode_e Djimotor_get_current_scene(Djimotor_device_t *motor) {
     if (motor == NULL) {
-        return SCENE_DEFAULT;
+        return CHASSIS_ZERO_FORCE;
     }
     return motor->motor_pid.current_scene;
 }
