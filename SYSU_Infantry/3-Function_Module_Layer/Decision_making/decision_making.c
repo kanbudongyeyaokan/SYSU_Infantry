@@ -52,7 +52,7 @@ void Decision_making_task_init()
 
     /***********************************初始化决策层的发布者和订阅者***************************************/
     //底盘
-    chassis_cmd_pub = Pub_register("Chassis_cmd",sizeof(Chassis_cmd_send_t));
+    chassis_cmd_pub = Pub_register("chassis_cmd",sizeof(Chassis_cmd_send_t));
     chassis_feedback_sub = Sub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));//底盘反馈数据订阅者
     //云台
     gimbal_cmd_pub = Pub_register("gimbal_cmd", sizeof(Gimbal_cmd_send_t));//云台注册的话题是gimbal_cmd

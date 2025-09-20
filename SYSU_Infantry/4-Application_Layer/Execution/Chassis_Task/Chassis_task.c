@@ -60,6 +60,9 @@ static void Chassis_handle_command(void)
 {
     // 从消息中心获取最新的底盘控制指令
     if (Sub_get_message(chassis_cmd_sub, &chassis_cmd)) {
+    // 调试输出：打印接收到的控制指令
+    printf("[SUB][chassis_cmd] mode=%d vx=%.3f vy=%.3f wz=%.3f\r\n",
+           (int)chassis_cmd.chassis_mode, chassis_cmd.vx, chassis_cmd.vy, chassis_cmd.wz);
         // 根据底盘模式可在电机层切换场景（如需要，可在此处调用 Djimotor_switch_scene 针对底盘电机）
         // 这里直接进行解算并设置目标
 
@@ -70,10 +73,13 @@ static void Chassis_handle_command(void)
         // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
         // 假设存在按照约定名称获取实例的方法，或在相关模块将实例暴露为外部指针
         extern Djimotor_device_t *chassis_motors[4];
-        for (uint8_t i = 0; i < chassis_output.motor_count && i < 4; i++) {
+    for (uint8_t i = 0; i < chassis_output.motor_count && i < 4; i++) {
             if (chassis_motors[i]) {
                 // 速度模式：rpm 目标
-                Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+        float rpm_target = chassis_output.motor_speed[i];
+        Djimotor_set_target(chassis_motors[i], rpm_target);
+        // 调试输出：打印设置的目标值
+        printf("[SET][motor_%u] rpm=%.2f\r\n", (unsigned)i, rpm_target);
             }
         }
         

@@ -15,6 +15,9 @@
 #include "Decision_making_task.h"  // 添加决策任务头文件
 #include "message_test_task.h"     // 添加消息中心测试任务头文件
 #include "chassis_motor_integration_test.h"  // 添加底盘电机集成测试
+// 新增：底盘与电机控制任务
+#include "Chassis_task.h"
+#include "motor_task.h"
 
 /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
@@ -29,10 +32,8 @@ osThreadId bmi088_test_task_handle; //bmi088测试任务
 osThreadId can_motors_test_task_handle; // can电机测试任务
 osThreadId rc_test_task_handle; //单独遥控器测试任务
 osThreadId chassis_motor_integration_test_handle; // 底盘电机集成测试任务
+osThreadId motor_task_handle;
 
-
-
-//UartInstance_t* uart_instance = {0};
 
 /**机器人任务创建**/
 void Robot_task_init(void)
@@ -42,7 +43,7 @@ void Robot_task_init(void)
     // 选择要运行的测试任务（取消注释需要的测试）
     
     // === 单元测试 ===
-    //  osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
+     osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
     //  bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
 
     // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
@@ -55,11 +56,18 @@ void Robot_task_init(void)
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
     // message_test_task_handle = osThreadCreate(osThread(message_test_task), NULL);
 
-    // === 底盘电机集成测试 ===
-    osThreadDef(chassis_motor_integration_test, Chassis_motor_integration_test_task, osPriorityNormal, 0, 2048);
-    chassis_motor_integration_test_handle = osThreadCreate(osThread(chassis_motor_integration_test), NULL);
+    // === 启动底盘与电机任务（必需） ===
+    // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
+    osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 1024);
+    chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
 
+    // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
+    osThreadDef(motor_control_task, Motor_control_task, osPriorityAboveNormal, 0, 512);
+    motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
 
+    // === 底盘电机集成测试（模拟决策层） ===
+    osThreadDef(chassis_motor_integration_test_task, Chassis_motor_integration_test_task, osPriorityNormal, 0, 2048);
+    chassis_motor_integration_test_handle = osThreadCreate(osThread(chassis_motor_integration_test_task), NULL);
 
 
     // osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
