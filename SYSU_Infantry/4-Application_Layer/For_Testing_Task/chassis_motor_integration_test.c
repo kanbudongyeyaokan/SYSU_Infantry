@@ -35,7 +35,7 @@ void Chassis_motor_integration_test_task(void const *argument)
 	// 简单的圆轨迹测试：vx, vy 正弦/余弦变化；wz 置零
 	// 该任务用于模拟“决策层”输出，验证消息中心、底盘解算与电机驱动的完整链路
 	Chassis_cmd_send_t cmd = {0};
-	const float v = 0.6f;        // 水平合速度幅值（单位按底盘实现约定）
+	const float v = 6.0f;        // 水平合速度幅值（单位按底盘实现约定）
 	const float dt_s = 0.01f;    // 发布周期：10ms
 	const unsigned int dt_ms = 10u;  // 10ms
 	float theta = 0.0f;          // 相位

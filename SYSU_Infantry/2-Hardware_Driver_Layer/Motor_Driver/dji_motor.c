@@ -142,7 +142,7 @@ void Djimotor_set_target(Djimotor_device_t *motor, float target) {
     motor->motor_pid.pid_target = target;
     // 调试输出：打印设置目标值（电机名与目标）
     if (motor) {
-        printf("[DJI][set_target] %s target=%.2f\r\n", motor->motor_name, target);
+       // printf("[DJI][set_target] %s target=%.2f\r\n", motor->motor_name, target);
     }
 }
 
