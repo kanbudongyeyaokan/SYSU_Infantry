@@ -108,7 +108,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Motor_Control/motor_control.h
         3-Function_Module_Layer/Motor_Control/motor_chassis_interface.h
         3-Function_Module_Layer/Motor_Control/motor_chassis_interface.c
-        
+
 )
 
 
@@ -157,7 +157,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Motor_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
-        
 
 )
 
