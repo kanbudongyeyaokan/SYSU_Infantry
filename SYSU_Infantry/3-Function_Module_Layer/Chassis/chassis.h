@@ -14,6 +14,7 @@
 #include "main.h"
 #include "robot_definitions.h"
 #include "decision_making.h"
+#include "dji_motor.h"
 
 /**
  * @brief 底盘物理参数结构体
@@ -58,5 +59,11 @@ void Chassis_set_type(chassis_type_e chassis_type);
  * @return chassis_type_e 当前底盘类型
  */
 chassis_type_e Chassis_get_type(void);
+
+// 底盘电机实例（由底盘模块初始化并对外暴露）
+extern Djimotor_device_t *chassis_motors[4];
+
+// 底盘电机初始化（迁移自 motor_control.c）
+void Chassis_motors_init(void);
 
 #endif //SYSU_INFANTRY_CHASSIS_FUNCTION_H

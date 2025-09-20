@@ -9,8 +9,7 @@
  */
 
 #include "motor_task.h"
-#include "motor_control.h"
-#include "motor_chassis_interface.h"
+#include "dji_motor.h"
 #include <stdio.h>
 
 /**
@@ -20,26 +19,14 @@
  */
 void Motor_control_task(void const *argument)
 {
-    // 初始化电机控制模块
-    Motor_control_init();
+    // 纯发送任务，不做设备初始化（各模块自行完成）
     
     // 任务主循环
     for (;;)
     {
-        // 处理底盘电机控制（从Chassis Task获取目标值）
-        Motor_control_handle_chassis_motors();
-        
-        // 处理云台控制指令（从决策层获取）
-        Motor_control_handle_gimbal_cmd();
-        
-        // 处理发射机构控制指令（从决策层获取）
-        Motor_control_handle_shoot_cmd();
-        
-        // 执行所有电机控制
-        Motor_control_execute();
-        
-        // 收集和发布反馈信息
-        Motor_control_collect_feedback();
+        // 纯CAN后台发送任务：所有目标值由各功能/应用模块实时更新到 dji_motor.c 的静态缓冲区
+        // 仅负责聚合并发送
+        Djimotor_control_all();
         
         // 任务延时1ms，保持1000Hz的运行频率
         osDelay(1);
