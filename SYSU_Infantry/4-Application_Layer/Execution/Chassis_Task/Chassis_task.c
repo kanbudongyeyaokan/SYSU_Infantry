@@ -41,15 +41,22 @@ static void Chassis_task_init(void)
         .chassis_type = CHASSIS_TYPE_OMNI // 全向轮底盘
     };
     Chassis_init(&chassis_params);
-    
-    // 初始化底盘电机
-    Chassis_motors_init();
-    
-    // 订阅决策层发来的底盘控制指令
+
+    // 先完成消息中心注册，避免后续大量内存分配导致订阅失败
     chassis_cmd_sub = Sub_register("chassis_cmd", sizeof(Chassis_cmd_send_t));
-    
-    // 注册底盘反馈信息发布者
+    printf("[INIT][Chassis] Subscribed 'chassis_cmd': %p\r\n", (void*)chassis_cmd_sub);
+    if (chassis_cmd_sub == NULL) {
+        printf("[ERROR][Chassis] Subscribe 'chassis_cmd' failed (NULL). Check FreeRTOS heap/config.\r\n");
+    }
+
     chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
+    printf("[INIT][Chassis] Registered Pub 'chassis_feedback': %p\r\n", (void*)chassis_feedback_pub);
+    if (chassis_feedback_pub == NULL) {
+        printf("[ERROR][Chassis] Register Pub 'chassis_feedback' failed (NULL).\r\n");
+    }
+
+    // 初始化底盘电机（放在订阅成功之后）
+    Chassis_motors_init();
 }
 
 
@@ -73,14 +80,14 @@ static void Chassis_handle_command(void)
         // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
         // 假设存在按照约定名称获取实例的方法，或在相关模块将实例暴露为外部指针
         extern Djimotor_device_t *chassis_motors[4];
-    for (uint8_t i = 0; i < chassis_output.motor_count && i < 4; i++) {
-            if (chassis_motors[i]) {
-                // 速度模式：rpm 目标
-        float rpm_target = chassis_output.motor_speed[i];
-        Djimotor_set_target(chassis_motors[i], rpm_target);
-        // 调试输出：打印设置的目标值
-        printf("[SET][motor_%u] rpm=%.2f\r\n", (unsigned)i, rpm_target);
-            }
+        for (uint8_t i = 0; i < chassis_output.motor_count && i < 4; i++) {
+                if (chassis_motors[i]) {
+                    // 速度模式：rpm 目标
+                    float rpm_target = chassis_output.motor_speed[i];
+                    Djimotor_set_target(chassis_motors[i], rpm_target);
+                    // 调试输出：打印设置的目标值
+                    printf("[SET][motor_%u] rpm=%.2f\r\n", (unsigned)i, rpm_target);
+                }
         }
         
         // 更新底盘反馈信息（这里可以添加底盘角速度的反馈）
