@@ -39,6 +39,7 @@ void Can_motors_test_task(void const *argument)
         .motor_name = "TSET_MOTOR",
         .motor_type = M3508,
         .motor_status = MOTOR_ENABLED,
+        .deadzone_compensation = 500,
         .motor_controller_init = {
             .close_loop = OPEN_LOOP,
         },

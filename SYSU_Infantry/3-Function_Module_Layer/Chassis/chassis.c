@@ -29,24 +29,28 @@ void Chassis_motors_init(void)
             .motor_name = "CHASSIS_FR",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
+            .deadzone_compensation = 500,
             .motor_controller_init = {.close_loop = OPEN_LOOP},
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 1, .rx_id = 0x201}
         },{
             .motor_name = "CHASSIS_FL",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
+            .deadzone_compensation = 500,
             .motor_controller_init = {.close_loop = OPEN_LOOP},
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 2, .rx_id = 0x202}
         },{
             .motor_name = "CHASSIS_BL",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
+            .deadzone_compensation = 500,
             .motor_controller_init = {.close_loop = OPEN_LOOP},
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 3, .rx_id = 0x203}
         },{
             .motor_name = "CHASSIS_BR",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
+            .deadzone_compensation = 500,
             .motor_controller_init = {.close_loop = OPEN_LOOP},
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 4, .rx_id = 0x204}
         }

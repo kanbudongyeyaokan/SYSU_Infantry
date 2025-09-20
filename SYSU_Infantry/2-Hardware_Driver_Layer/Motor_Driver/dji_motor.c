@@ -90,6 +90,7 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
     strncpy(motor->motor_name, config->motor_name, sizeof(motor->motor_name) - 1);//名字
     motor->motor_type = config->motor_type;//电机类型
     motor->motor_status = MOTOR_STOP;//电机运动状态
+    motor->deadzone_compensation = config->deadzone_compensation; // 初始化死区补偿值
     
     // 初始化默认场景的PID控制器
     motor->motor_pid.current_scene = CHASSIS_NO_FOLLOW;
@@ -259,6 +260,16 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
 
     // 转换为电流值
     int16_t current_val = (int16_t)(output);
+
+    // 应用死区补偿
+    if (motor->deadzone_compensation > 0) {
+        if (current_val > 0 && current_val < motor->deadzone_compensation) {
+            current_val = motor->deadzone_compensation;
+        } else if (current_val < 0 && current_val > -motor->deadzone_compensation) {
+            current_val = -motor->deadzone_compensation;
+        }
+    }
+
    // Uart_printf(uart_instance,"control output:%d\r\n",output);
     current_motor = current_val;
 
@@ -283,6 +294,22 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
         buffer_updated[buf_idx] = 1;
     }
 }
+
+// 设置电机死区补偿值
+void Djimotor_set_deadzone(Djimotor_device_t *motor, int16_t deadzone) {
+    if (motor) {
+        motor->deadzone_compensation = deadzone;
+    }
+}
+
+// 获取电机死区补偿值
+int16_t Djimotor_get_deadzone(Djimotor_device_t *motor) {
+    if (motor) {
+        return motor->deadzone_compensation;
+    }
+    return 0;
+}
+
 // 管理所有电机的控制命令发送
 void Djimotor_control_all(void) {
     // 计算所有电机的输出

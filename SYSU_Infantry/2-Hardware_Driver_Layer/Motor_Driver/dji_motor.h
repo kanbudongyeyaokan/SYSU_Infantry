@@ -1,6 +1,7 @@
 #ifndef _DJI_MOTOR_H
 #define _DJI_MOTOR_H
 
+#include <stdint.h>
 #include "bsp_can.h"
 #include "algorithm_pid.h"
 #include "string.h"
@@ -122,6 +123,7 @@ typedef struct
     Djimotor_measure_t motor_measure;   //电机自身运动信息
     Djimotor_controller_t   motor_pid;  //电机自身的PID控制器
     Can_controller_t *can_controller;   //电机自身的CAN管理者
+    int16_t deadzone_compensation;      // 电机死区补偿值
 }Djimotor_device_t;
 #pragma pack()
 
@@ -132,6 +134,7 @@ typedef struct
     char motor_name[16];                //电机名
     Djimotor_type_e motor_type;         //电机类型
     Djimotor_status_e motor_status;     //电机运动状态
+    int16_t deadzone_compensation;      // 电机死区补偿值
     Djimotor_controller_init_t motor_controller_init;
     Can_init_t can_init;
 }Djimotor_init_config_t;
@@ -164,5 +167,11 @@ void Djimotor_update_scene_config(Djimotor_device_t *motor, chassis_mode_e scene
 
 // 获取当前场景
 chassis_mode_e Djimotor_get_current_scene(Djimotor_device_t *motor);
+
+// 设置电机死区补偿值
+void Djimotor_set_deadzone(Djimotor_device_t *motor, int16_t deadzone);
+
+// 获取电机死区补偿值
+int16_t Djimotor_get_deadzone(Djimotor_device_t *motor);
 
 #endif //_DJI_MOTOR_H

@@ -39,6 +39,7 @@ void Chassis_motor_integration_test_task(void const *argument)
 	const float dt_s = 0.01f;    // 发布周期：10ms
 	const unsigned int dt_ms = 10u;  // 10ms
 	float theta = 0.0f;          // 相位
+	const float min_output_threshold = 0.3f; // 机械下限兜底阈值
 
     // 设置底盘模式与控制量
 	cmd.chassis_mode = CHASSIS_NO_FOLLOW;
@@ -52,6 +53,11 @@ void Chassis_motor_integration_test_task(void const *argument)
 		cmd.vx = v * cosf(theta);
 		cmd.vy = v * sinf(theta);
 		cmd.wz = 0.0f; // 不叠加原地旋转
+
+		// 机械下限兜底处理，低于阈值则置零，保证切换平滑
+		if (fabsf(cmd.vx) < min_output_threshold) cmd.vx = 0.0f;
+		if (fabsf(cmd.vy) < min_output_threshold) cmd.vy = 0.0f;
+		if (fabsf(cmd.wz) < min_output_threshold) cmd.wz = 0.0f;
 
 		// 发布到消息中心前打印调试信息
 		// printf("[PUB][chassis_cmd] mode=%d vx=%.3f vy=%.3f wz=%.3f\r\n", (int)cmd.chassis_mode, cmd.vx, cmd.vy, cmd.wz);
