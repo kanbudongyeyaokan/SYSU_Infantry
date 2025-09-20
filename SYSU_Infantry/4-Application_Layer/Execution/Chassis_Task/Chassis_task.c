@@ -42,7 +42,7 @@ static void Chassis_task_init(void)
     };
     Chassis_init(&chassis_params);
     
-    // 初始化底盘电机（迁移自 motor_control.c）
+    // 初始化底盘电机
     Chassis_motors_init();
     
     // 订阅决策层发来的底盘控制指令

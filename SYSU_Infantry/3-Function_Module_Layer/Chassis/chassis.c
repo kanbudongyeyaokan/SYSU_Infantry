@@ -29,25 +29,25 @@ void Chassis_motors_init(void)
             .motor_name = "CHASSIS_FR",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
-            .motor_controller_init = {.close_loop = SPEED_LOOP},
+            .motor_controller_init = {.close_loop = OPEN_LOOP},
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 1, .rx_id = 0x201}
         },{
             .motor_name = "CHASSIS_FL",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
-            .motor_controller_init = {.close_loop = SPEED_LOOP},
+            .motor_controller_init = {.close_loop = OPEN_LOOP},
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 2, .rx_id = 0x202}
         },{
             .motor_name = "CHASSIS_BL",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
-            .motor_controller_init = {.close_loop = SPEED_LOOP},
+            .motor_controller_init = {.close_loop = OPEN_LOOP},
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 3, .rx_id = 0x203}
         },{
             .motor_name = "CHASSIS_BR",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
-            .motor_controller_init = {.close_loop = SPEED_LOOP},
+            .motor_controller_init = {.close_loop = OPEN_LOOP},
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 4, .rx_id = 0x204}
         }
     };
@@ -59,19 +59,19 @@ void Chassis_motors_init(void)
     // 场景配置迁移
     for (int i = 0; i < 4; i++) {
         Djimotor_scene_config_t no_follow = {
-            .close_loop = SPEED_LOOP,
+            .close_loop = OPEN_LOOP,
             .speed_pid = {.kp = 15.f, .ki = 0.5f, .kd = 0.f, .max_out = 16000.f, .max_iout = 5000.f, .deadband = 10.f, .optimization = PID_OUTPUT_FILTER | PID_OUTPUT_LIMIT, .LPF_coefficient = 0.85f}
         };
         Djimotor_update_scene_config(chassis_motors[i], CHASSIS_NO_FOLLOW, &no_follow);
 
         Djimotor_scene_config_t follow = {
-            .close_loop = SPEED_LOOP,
+            .close_loop = OPEN_LOOP,
             .speed_pid = {.kp = 18.f, .ki = 0.6f, .kd = 0.05f, .max_out = 16000.f, .max_iout = 6000.f, .deadband = 8.f, .optimization = PID_OUTPUT_FILTER | PID_OUTPUT_LIMIT, .LPF_coefficient = 0.8f}
         };
         Djimotor_update_scene_config(chassis_motors[i], CHASSIS_FOLLOW_GIMBAL, &follow);
 
         Djimotor_scene_config_t rotate = {
-            .close_loop = SPEED_LOOP,
+            .close_loop = OPEN_LOOP,
             .speed_pid = {.kp = 20.f, .ki = 0.8f, .kd = 0.1f, .max_out = 16000.f, .max_iout = 8000.f, .deadband = 5.f, .optimization = PID_OUTPUT_FILTER | PID_OUTPUT_LIMIT, .LPF_coefficient = 0.7f}
         };
         Djimotor_update_scene_config(chassis_motors[i], CHASSIS_ROTATE, &rotate);

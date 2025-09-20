@@ -63,7 +63,7 @@ chassis_type_e Chassis_get_type(void);
 // 底盘电机实例（由底盘模块初始化并对外暴露）
 extern Djimotor_device_t *chassis_motors[4];
 
-// 底盘电机初始化（迁移自 motor_control.c）
+// 底盘电机初始化
 void Chassis_motors_init(void);
 
 #endif //SYSU_INFANTRY_CHASSIS_FUNCTION_H
