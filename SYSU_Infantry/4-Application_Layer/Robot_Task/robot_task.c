@@ -15,7 +15,6 @@
 #include "Decision_making_task.h"  // 添加决策任务头文件
 #include "message_test_task.h"     // 添加消息中心测试任务头文件
 #include "chassis_motor_integration_test.h"  // 添加底盘电机集成测试
-// 新增：底盘与电机控制任务
 #include "Chassis_task.h"
 #include "motor_task.h"
 
@@ -43,7 +42,7 @@ void Robot_task_init(void)
     // 选择要运行的测试任务（取消注释需要的测试）
     
     // === 单元测试 ===
-     osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
+    //  osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
     //  bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
 
     // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
@@ -56,20 +55,49 @@ void Robot_task_init(void)
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
     // message_test_task_handle = osThreadCreate(osThread(message_test_task), NULL);
 
-    // === 启动底盘与电机任务（必需） ===
-    // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
-    osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 1024);
-    chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
-
-    // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
-    osThreadDef(motor_control_task, Motor_control_task, osPriorityAboveNormal, 0, 512);
-    motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
-
-    // === 底盘电机集成测试（模拟决策层） ===
+    // === 集成测试 ===
+    printf("[INIT][Robot] Creating chassis_motor_integration_test_task...\r\n");
+    printf("[INIT][Robot] Free heap before test task: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
     osThreadDef(chassis_motor_integration_test_task, Chassis_motor_integration_test_task, osPriorityNormal, 0, 2048);
     chassis_motor_integration_test_handle = osThreadCreate(osThread(chassis_motor_integration_test_task), NULL);
+    if (chassis_motor_integration_test_handle == NULL) {
+        printf("[ERROR][Robot] Failed to create chassis_motor_integration_test_task\r\n");
+    } else {
+        printf("[SUCCESS][Robot] chassis_motor_integration_test_task created successfully\r\n");
+    }
+    
+    // 添加短暂延时，让任务有时间初始化
+    osDelay(100);
+
+    // === 启动底盘与电机任务（必需） ===
+    // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
+    printf("[INIT][Robot] Creating chassis_control_task...\r\n");
+    printf("[INIT][Robot] Free heap before chassis task: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
+    osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 2048);
+    chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
+    if (chassis_task_handle == NULL) {
+        printf("[ERROR][Robot] Failed to create chassis_control_task\r\n");
+    } else {
+        printf("[SUCCESS][Robot] chassis_control_task created successfully\r\n");
+    }
+    
+    // 添加短暂延时
+    osDelay(100);
+
+    // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
+    printf("[INIT][Robot] Creating motor_control_task...\r\n");
+    printf("[INIT][Robot] Free heap before motor task: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
+    osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 512);
+    motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
+    if (motor_task_handle == NULL) {
+        printf("[ERROR][Robot] Failed to create motor_control_task\r\n");
+    } else {
+        printf("[SUCCESS][Robot] motor_control_task created successfully\r\n");
+    }
 
 
     // osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
     // rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
 }
+
+

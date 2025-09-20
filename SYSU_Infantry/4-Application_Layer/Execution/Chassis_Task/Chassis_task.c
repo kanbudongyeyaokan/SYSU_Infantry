@@ -42,17 +42,26 @@ static void Chassis_task_init(void)
     };
     Chassis_init(&chassis_params);
 
+    // 打印剩余堆内存
+    // printf("[INIT][Chassis] Free heap before subscription: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
+    
     // 先完成消息中心注册，避免后续大量内存分配导致订阅失败
     chassis_cmd_sub = Sub_register("chassis_cmd", sizeof(Chassis_cmd_send_t));
-    printf("[INIT][Chassis] Subscribed 'chassis_cmd': %p\r\n", (void*)chassis_cmd_sub);
+    // printf("[INIT][Chassis] Subscribed 'chassis_cmd': %p\r\n", (void*)chassis_cmd_sub);
     if (chassis_cmd_sub == NULL) {
-        printf("[ERROR][Chassis] Subscribe 'chassis_cmd' failed (NULL). Check FreeRTOS heap/config.\r\n");
+        // printf("[ERROR][Chassis] Subscribe 'chassis_cmd' failed (NULL). Check FreeRTOS heap/config.\r\n");
+        // printf("[ERROR][Chassis] Free heap after failed subscription: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
+    } else {
+        // printf("[SUCCESS][Chassis] Subscribe 'chassis_cmd' success. Free heap: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
     }
 
     chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
-    printf("[INIT][Chassis] Registered Pub 'chassis_feedback': %p\r\n", (void*)chassis_feedback_pub);
+    // printf("[INIT][Chassis] Registered Pub 'chassis_feedback': %p\r\n", (void*)chassis_feedback_pub);
     if (chassis_feedback_pub == NULL) {
-        printf("[ERROR][Chassis] Register Pub 'chassis_feedback' failed (NULL).\r\n");
+        // printf("[ERROR][Chassis] Register Pub 'chassis_feedback' failed (NULL).\r\n");
+        // printf("[ERROR][Chassis] Free heap after failed pub registration: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
+    } else {
+        // printf("[SUCCESS][Chassis] Register Pub 'chassis_feedback' success. Free heap: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
     }
 
     // 初始化底盘电机（放在订阅成功之后）
@@ -68,8 +77,8 @@ static void Chassis_handle_command(void)
     // 从消息中心获取最新的底盘控制指令
     if (Sub_get_message(chassis_cmd_sub, &chassis_cmd)) {
     // 调试输出：打印接收到的控制指令
-    printf("[SUB][chassis_cmd] mode=%d vx=%.3f vy=%.3f wz=%.3f\r\n",
-           (int)chassis_cmd.chassis_mode, chassis_cmd.vx, chassis_cmd.vy, chassis_cmd.wz);
+    // printf("[SUB][chassis_cmd] mode=%d vx=%.3f vy=%.3f wz=%.3f\r\n",
+           // (int)chassis_cmd.chassis_mode, chassis_cmd.vx, chassis_cmd.vy, chassis_cmd.wz);
         // 根据底盘模式可在电机层切换场景（如需要，可在此处调用 Djimotor_switch_scene 针对底盘电机）
         // 这里直接进行解算并设置目标
 
@@ -86,7 +95,7 @@ static void Chassis_handle_command(void)
                     float rpm_target = chassis_output.motor_speed[i];
                     Djimotor_set_target(chassis_motors[i], rpm_target);
                     // 调试输出：打印设置的目标值
-                    printf("[SET][motor_%u] rpm=%.2f\r\n", (unsigned)i, rpm_target);
+                    // printf("[SET][motor_%u] rpm=%.2f\r\n", (unsigned)i, rpm_target);
                 }
         }
         

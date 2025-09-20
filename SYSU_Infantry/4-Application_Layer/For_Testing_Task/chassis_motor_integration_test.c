@@ -1,5 +1,5 @@
 /**
- * @file    chassis_motor_integration_test.c
+ * @file    
  * @brief   底盘电机集成测试任务源文件
  * @author  SYSU电控组
  * @date    2025-09-19
@@ -54,11 +54,11 @@ void Chassis_motor_integration_test_task(void const *argument)
 		cmd.wz = 0.0f; // 不叠加原地旋转
 
 		// 发布到消息中心前打印调试信息
-		printf("[PUB][chassis_cmd] mode=%d vx=%.3f vy=%.3f wz=%.3f\r\n", (int)cmd.chassis_mode, cmd.vx, cmd.vy, cmd.wz);
+		// printf("[PUB][chassis_cmd] mode=%d vx=%.3f vy=%.3f wz=%.3f\r\n", (int)cmd.chassis_mode, cmd.vx, cmd.vy, cmd.wz);
 
 		// 发布到消息中心，供 Chassis_task 订阅处理，并打印被推送的订阅者数量
 		uint8_t pushed = Pub_push_message(chassis_cmd_pub, &cmd);
-		printf("[PUB][chassis_cmd] pushed=%u\r\n", (unsigned)pushed);
+		// printf("[PUB][chassis_cmd] pushed=%u\r\n", (unsigned)pushed);
 
 		// 推进相位，控制“转圈”的角速度（此处约等于 2π/8s 的角速度）
 		theta += (2.0f * (float)M_PI) * dt_s / 8.0f;

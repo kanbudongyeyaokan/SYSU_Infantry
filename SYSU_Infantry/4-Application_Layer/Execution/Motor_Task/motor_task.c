@@ -31,6 +31,6 @@ void Motor_control_task(void const *argument)
         Djimotor_control_all();
         
         // 任务延时1ms，保持1000Hz的运行频率
-        osDelay(1);
+        osDelay(100);
     }
 }
