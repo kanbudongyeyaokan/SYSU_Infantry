@@ -41,10 +41,6 @@ static void Chassis_task_init(void)
         .chassis_type = CHASSIS_TYPE_OMNI // 全向轮底盘
     };
     Chassis_init(&chassis_params);
-
-    // 打印剩余堆内存
-    // printf("[INIT][Chassis] Free heap before subscription: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
-    
     // 先完成消息中心注册，避免后续大量内存分配导致订阅失败
     chassis_cmd_sub = Sub_register("chassis_cmd", sizeof(Chassis_cmd_send_t));
     // printf("[INIT][Chassis] Subscribed 'chassis_cmd': %p\r\n", (void*)chassis_cmd_sub);

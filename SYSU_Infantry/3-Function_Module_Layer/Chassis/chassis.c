@@ -162,39 +162,6 @@ static void Chassis_mecanum_kinematics(const Chassis_cmd_send_t *cmd, Chassis_ou
 }
 
 /**
- * @brief 差速轮底盘运动学解算
- * @param cmd 底盘控制指令
- * @param output 解算输出结果
- */
-static void Chassis_differential_kinematics(const Chassis_cmd_send_t *cmd, Chassis_output_t *output)
-{
-    // 差速轮布局：
-    // 左轮(0)  右轮(1)
-    //
-    // 差速轮运动学模型（只支持前进和旋转，不支持侧向移动）
-    // 左轮 = vx - wz * wheelbase / 2
-    // 右轮 = vx + wz * wheelbase / 2
-    
-    float L = chassis_params.wheel_base;
-    
-    // 计算各轮子线速度 (m/s)
-    float wheel_linear_speed[2];
-    wheel_linear_speed[0] = cmd->vx - cmd->wz * L / 2.0f; // 左轮
-    wheel_linear_speed[1] = cmd->vx + cmd->wz * L / 2.0f; // 右轮
-    
-    // 转换为角速度 (rad/s) 再转换为 rpm
-    for (int i = 0; i < 2; i++) {
-        float angular_velocity = wheel_linear_speed[i] / chassis_params.wheel_radius; // rad/s
-        output->motor_speed[i] = angular_velocity * 60.0f / (2.0f * M_PI); // rpm
-    }
-    
-    // 清零未使用的电机
-    output->motor_speed[2] = 0.0f;
-    output->motor_speed[3] = 0.0f;
-    output->motor_count = 2;
-}
-
-/**
  * @brief 底盘功能模块初始化
  * @param params 底盘物理参数
  */
@@ -241,10 +208,6 @@ void Chassis_kinematics_solve(const Chassis_cmd_send_t *cmd, Chassis_output_t *o
             
         case CHASSIS_TYPE_MECANUM:
             Chassis_mecanum_kinematics(cmd, output);
-            break;
-            
-        case CHASSIS_TYPE_DIFFERENTIAL:
-            Chassis_differential_kinematics(cmd, output);
             break;
             
         default:

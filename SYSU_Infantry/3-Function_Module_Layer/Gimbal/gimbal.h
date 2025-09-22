@@ -1,7 +1,3 @@
-//
-// Created by 26524 on 2025/9/16.
-//
-
 /**
  * @file    gimval.c
  * @brief   云台功能模块源文件

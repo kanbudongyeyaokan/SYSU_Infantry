@@ -22,7 +22,7 @@
 typedef struct {
     float wheel_radius;        // 轮子半径 (m)
     float chassis_radius;      // 底盘半径，中心到轮子距离 (m)
-    float wheel_base;          // 轮距 (m) - 用于差速底盘
+    float wheel_base;          // 轮距 (m) 
     float track_width;         // 轮宽 (m) - 用于麦克纳姆轮底盘
     chassis_type_e chassis_type; // 底盘类型
 } Chassis_params_t;

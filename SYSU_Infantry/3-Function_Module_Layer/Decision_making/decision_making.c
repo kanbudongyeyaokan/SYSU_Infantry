@@ -1,3 +1,12 @@
+/**
+ * @file    decision_making.c
+ * @brief   决策任务
+ * @author  SYSU电控组
+ * @date    2025-09-17
+ * @version 1.0
+ * 
+ * @note    决策控制模式，控制量，并传送到对应的任务
+ */
 #include "decision_making.h"
 //通信
 #include "message_center.h"
