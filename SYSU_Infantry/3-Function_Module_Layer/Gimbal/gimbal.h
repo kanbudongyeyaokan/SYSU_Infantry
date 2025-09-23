@@ -1,5 +1,5 @@
 /**
- * @file    gimval.c
+ * @file    gimbal.c
  * @brief   云台功能模块源文件
  * @author  SYSU电控组
  * @date    2025-09-20
@@ -10,22 +10,14 @@
 
 #ifndef SYSU_INFANTRY_GIMBAL_H
 #define SYSU_INFANTRY_GIMBAL_H
-#include "dji_motor.h"
 
 /**
  * @brief 云台初始化
  */
-void Gimbal_motor_init(void);
+void Gimbal_task_init(void);
 
 /**
- * @brief 获取yaw轴电机指针
- * @return yaw轴电机指针
+ * @brief 处理云台控制指令
  */
-Djimotor_device_t* Get_yaw_motor(void);
-
-/**
- * @brief 获取pitch轴电机指针
- * @return pitch轴电机指针
- */
-Djimotor_device_t* Get_pitch_motor(void) ;
+void Gimbal_handle_command(void);
 #endif //SYSU_INFANTRY_GIMBAL_H
