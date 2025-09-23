@@ -1,7 +1,6 @@
 /**
- * @Author         : Minghang Li
- * @Date           : 2022-11-25 23:01
- * @LastEditTime   : 2022-11-28 16:32
+ * @brief          : BMI088相关寄存器表
+ * @Author         : SYSU电控组
  * @Note           :
  * @Copyright(c)   : Minghang Li Copyright
  */

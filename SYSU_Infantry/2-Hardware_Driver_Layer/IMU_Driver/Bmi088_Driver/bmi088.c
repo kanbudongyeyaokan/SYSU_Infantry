@@ -66,6 +66,7 @@ static Bmi088_error_e Bmi088_init(Bmi088_device_t* bmi088) {
     return error;
 }
 
+//向加速度计写数据
 static void Write_data_to_acc(Bmi088_device_t* bmi088, uint8_t addr, uint8_t data) {
     HAL_GPIO_WritePin(bmi088->config.accel_cs_gpio_port, bmi088->config.accel_cs_gpio_pin, GPIO_PIN_RESET);
     uint8_t pTxData = (addr & BMI088_SPI_WRITE_CODE);
@@ -80,6 +81,7 @@ static void Write_data_to_acc(Bmi088_device_t* bmi088, uint8_t addr, uint8_t dat
     HAL_GPIO_WritePin(bmi088->config.accel_cs_gpio_port, bmi088->config.accel_cs_gpio_pin, GPIO_PIN_SET);
 }
 
+//向陀螺仪写数据
 static void Write_data_to_gyro(Bmi088_device_t* bmi088, uint8_t addr, uint8_t data) {
     HAL_GPIO_WritePin(bmi088->config.gyro_cs_gpio_port, bmi088->config.gyro_cs_gpio_pin, GPIO_PIN_RESET);
     uint8_t pTxData = (addr & BMI088_SPI_WRITE_CODE);
@@ -94,6 +96,7 @@ static void Write_data_to_gyro(Bmi088_device_t* bmi088, uint8_t addr, uint8_t da
     HAL_GPIO_WritePin(bmi088->config.gyro_cs_gpio_port, bmi088->config.gyro_cs_gpio_pin, GPIO_PIN_SET);
 }
 
+//向加速度计读数据
 static void Read_single_data_from_acc(Bmi088_device_t* bmi088, uint8_t addr, uint8_t *data) {
     HAL_GPIO_WritePin(bmi088->config.accel_cs_gpio_port, bmi088->config.accel_cs_gpio_pin, GPIO_PIN_RESET);
     uint8_t pTxData = (addr | BMI088_SPI_READ_CODE);
@@ -108,7 +111,7 @@ static void Read_single_data_from_acc(Bmi088_device_t* bmi088, uint8_t addr, uin
         ;
     HAL_GPIO_WritePin(bmi088->config.accel_cs_gpio_port, bmi088->config.accel_cs_gpio_pin, GPIO_PIN_SET);
 }
-
+//向陀螺仪读数据
 static void Read_single_data_from_gyro(Bmi088_device_t* bmi088, uint8_t addr, uint8_t *data) {
     HAL_GPIO_WritePin(bmi088->config.gyro_cs_gpio_port, bmi088->config.gyro_cs_gpio_pin, GPIO_PIN_RESET);
     uint8_t pTxData = (addr | BMI088_SPI_READ_CODE);
