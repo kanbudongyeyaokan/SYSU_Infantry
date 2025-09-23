@@ -137,6 +137,9 @@ typedef struct
 }Djimotor_init_config_t;
 #pragma pack()
 
+
+/****************************电机方法接口******************************/
+
 // 电机初始化函数
 Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config);
 
@@ -145,6 +148,9 @@ void Djimotor_set_target(Djimotor_device_t *motor,float target);
 
 //管理所有电机的控制命令发送，发送PID目标值到缓冲区，然后通过CAN发送出去
 void Djimotor_control_all(void);
+
+//切换电机控制模式和PID参数,目的是满足在不同模式下使用不同PID的需求
+void Djimotor_change_controller(Djimotor_device_t *motor,Djimotor_controller_init_t ctrl_params);
 
 // 获取电机状态
 Djimotor_status_e Djimotor_get_status(Djimotor_device_t *motor) ;

@@ -2,6 +2,7 @@
 #include "bsp_can.h"
 #include "stdlib.h"
 #include "bsp_usart.h"
+#include "algorithm_pid.h"
 
 // 电机实例数组,用于管理已初始化的电机列表
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
@@ -121,6 +122,20 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
     motor_instances[motor_count++] = motor;
 
     return motor;
+}
+
+//切换电机控制模式和PID参数,目的是满足在不同模式下使用不同PID的需求
+void Djimotor_change_controller(Djimotor_device_t *motor,Djimotor_controller_init_t ctrl_params)
+{
+    //模式切换，以下只需要做赋值操作即可
+    motor->motor_pid.close_loop = ctrl_params.close_loop;
+    motor->motor_pid.angle_source = ctrl_params.angle_source;
+    motor->motor_pid.speed_source = ctrl_params.speed_source;
+    motor->motor_pid.other_speed_feedback_ptr = ctrl_params.other_angle_feedback_ptr;
+    motor->motor_pid.other_angle_feedback_ptr = ctrl_params.other_angle_feedback_ptr;
+    Pid_init(&(motor->motor_pid.speed_pid),&(ctrl_params.speed_pid));
+    Pid_init(&(motor->motor_pid.angle_pid),&(ctrl_params.angle_pid));
+    Pid_init(&(motor->motor_pid.current_pid),&(ctrl_params.current_pid));
 }
 
 /****电机控制函数****/

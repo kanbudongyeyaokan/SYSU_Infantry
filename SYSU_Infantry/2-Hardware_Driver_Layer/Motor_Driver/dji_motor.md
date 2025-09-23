@@ -25,6 +25,7 @@ typedef struct
     - 接收缓冲区需要自己写好准备
 
 电机接口使用说明：
+## 控制部分接口
 1.初始化流程
 ![img_2.png](img_2.png)
 
@@ -35,10 +36,10 @@ typedef struct
     .motor_type = M3508,
     .motor_status = MOTOR_ENABLED,
     .motor_controller_init = {
-    .close_loop = ANGLE_AND_SPEED_LOOP,
-    .current_pid = {.kp = 0.5f, .ki = 0.01f, ...},
-    .angle_pid = {.kp = 5.0f, .ki = 0.1f, ...},
-    .speed_pid = {.kp = 0.8f, .ki = 0.05f, ...}
+        .close_loop = ANGLE_AND_SPEED_LOOP,
+        .current_pid = {.kp = 0.5f, .ki = 0.01f, ...},
+        .angle_pid = {.kp = 5.0f, .ki = 0.1f, ...},
+        .speed_pid = {.kp = 0.8f, .ki = 0.05f, ...}
     },
     .can_init = {
     .can_handle = &hcan1,
@@ -57,8 +58,7 @@ typedef struct
     Djimotor_set_target(lf_motor, M_PI / 2);
 ```
    
-
-3.状态设置/获取：
+## 状态设置/获取：
 代码：
 ```c++
  // 停止电机
@@ -71,4 +71,16 @@ typedef struct
     measure.current_angle, measure.angular_velocity);
     }
 ```
+
+## 电机PID参数切换
+代码：
+```c++
+    Djimotor_controller_init_t new_controller={
+        .close_loop = SPEED_LOOP,
+        .speed_pid = {.kp = 0.8f, .ki = 0.05f, ...}
+    }
+    Djimotor_change_controller(lf_motor,new_controller);
+
+```
+
    
