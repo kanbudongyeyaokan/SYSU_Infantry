@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "bmi088_regNdef.h"
+#include "bmi088_reg_def.h"
 #include "spi.h"
 #include "gpio.h"
 #include "algorithm_ekf.h"  // 包含EKF模块头文件

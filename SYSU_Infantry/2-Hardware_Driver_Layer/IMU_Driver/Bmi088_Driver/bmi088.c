@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bmi088_regNdef.h"
+#include "bmi088_reg_def.h"
 #include "gpio.h"
 #include "spi.h"
 
