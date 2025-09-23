@@ -171,7 +171,6 @@ void Djimotor_set_status(Djimotor_device_t *motor,Djimotor_status_e status) {
 
 // 计算控制输出
 static void Calculate_Motor_Output(Djimotor_device_t *motor) {
-     //  if ((motor == NULL || (motor->motor_status != MOTOR_ENABLED))) return;
 
     float output = 0.0f;
 
@@ -201,7 +200,6 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
     // 获取电流反馈值 (使用电机自身反馈)
     float current_feedback = measure->real_current;
 
-  //  Uart_printf(uart_instance,"before sw\n");
     // 根据控制类型选择控制策略
     switch (motor->motor_pid.close_loop) {
         case OPEN_LOOP: // 开环控制
@@ -271,8 +269,6 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
             current_val = -motor->deadzone_compensation;
         }
     }
-
-   // Uart_printf(uart_instance,"control output:%d\r\n",output);
     current_motor = current_val;
 
     // 获取缓冲区指针
@@ -289,6 +285,13 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
     // 写入缓冲区
     buffer[motor_num * 2] = (uint8_t)(current_val >> 8);
     buffer[motor_num * 2 + 1] = (uint8_t)(current_val & 0xFF);
+
+    //如果电机的状态为 MOTOR_STOP,则缓冲区清零，电机停止运动
+    if(motor->motor_status == MOTOR_STOP)
+    {
+        memset(buffer[motor_num*2],0,sizeof(uint16_t));
+    }
+
     // 标记缓冲区更新
     uint8_t buf_idx = Get_buffer_index(motor->can_controller->can_handle,
                                       motor->can_controller->can_id);

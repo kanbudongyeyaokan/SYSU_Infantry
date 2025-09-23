@@ -106,20 +106,38 @@ void Chassis_handle_command(void)
 {
     // 从消息中心获取最新的底盘控制指令
     if (Sub_get_message(chassis_cmd_sub, &chassis_cmd_recv)) {
-        // 这里直接进行解算并设置目标
-        // 进行底盘运动学解算
+        //底盘四个电机的输出
         static Chassis_output_t chassis_output;
-        Chassis_kinematics_solve(&chassis_cmd_recv, &chassis_output);
+        switch (chassis_cmd_recv.chassis_mode)
+        {
+        /* 底盘无力 */
+        case CHASSIS_ZERO_FORCE:
+            for (uint8_t i = 0; i < 4; i++) {
+               Djimotor_set_target(chassis_motors[i],0);
+            }    
+            break;
+        /* 底盘不跟随云台 */
+        case CHASSIS_NO_FOLLOW:
+            //底盘解算
+            Chassis_kinematics_solve(&chassis_cmd_recv, &chassis_output);
+            // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
+            for (uint8_t i = 0; i < 4; i++) {
+                // 速度模式：单位rpm
+                Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+            }
+            break;
+        /* 底盘跟随云台 */
+        case CHASSIS_FOLLOW_GIMBAL:
 
-        // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
-        for (uint8_t i = 0; i < 4; i++) {
-                if (chassis_motors[i]) {
-                    // 速度模式：rpm 目标
-                    float rpm_target = chassis_output.motor_speed[i];
-                    Djimotor_set_target(chassis_motors[i], rpm_target);
-                }
+            break;
+        /* 底盘小陀螺 */
+        case CHASSIS_ROTATE:
+
+            break;
+        default:
+            break;
         }
-        
+
         // 更新底盘反馈信息（这里可以添加底盘角速度的反馈）
         // 简化处理，假设底盘角速度直接来自控制指令
         chassis_feedback.chassis_wz = chassis_cmd_recv.wz;
