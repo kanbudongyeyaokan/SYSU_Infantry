@@ -5,102 +5,14 @@
  * @date    2025-09-19
  * @version 1.0
  * 
- * @note    负责底盘运动学解算和控制量传递
+ * @note    调用来自方法层中的底盘接口进行底盘控制
  */
 
 #include "Chassis_task.h"
 #include "chassis.h"
-#include "message_center.h"
-#include "decision_making.h"
-#include "dji_motor.h"
-#include <stdio.h>
-
-// 订阅决策层发来的底盘控制指令
-static Subscriber_t *chassis_cmd_sub;
-
-// 发布给决策层的底盘反馈信息
-static Publisher_t *chassis_feedback_pub;
-
-// 存储决策层发来的控制命令
-static Chassis_cmd_send_t chassis_cmd;
-
-// 存储发送给决策层的反馈信息
-static Chassis_feedback_info_t chassis_feedback;
-
-/**
- * @brief 底盘任务初始化
- */
-static void Chassis_task_init(void)
-{
-    // 初始化底盘功能模块
-    Chassis_params_t chassis_params = {
-        .wheel_radius = 0.076f,         // 轮子半径76mm
-        .chassis_radius = 0.2f,         // 底盘半径200mm  
-        .wheel_base = 0.4f,             // 轮距400mm
-        .track_width = 0.3f,            // 轮宽300mm
-        .chassis_type = CHASSIS_TYPE_OMNI // 全向轮底盘
-    };
-    Chassis_init(&chassis_params);
-    // 先完成消息中心注册，避免后续大量内存分配导致订阅失败
-    chassis_cmd_sub = Sub_register("chassis_cmd", sizeof(Chassis_cmd_send_t));
-    // printf("[INIT][Chassis] Subscribed 'chassis_cmd': %p\r\n", (void*)chassis_cmd_sub);
-    if (chassis_cmd_sub == NULL) {
-        // printf("[ERROR][Chassis] Subscribe 'chassis_cmd' failed (NULL). Check FreeRTOS heap/config.\r\n");
-        // printf("[ERROR][Chassis] Free heap after failed subscription: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
-    } else {
-        // printf("[SUCCESS][Chassis] Subscribe 'chassis_cmd' success. Free heap: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
-    }
-
-    chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
-    // printf("[INIT][Chassis] Registered Pub 'chassis_feedback': %p\r\n", (void*)chassis_feedback_pub);
-    if (chassis_feedback_pub == NULL) {
-        // printf("[ERROR][Chassis] Register Pub 'chassis_feedback' failed (NULL).\r\n");
-        // printf("[ERROR][Chassis] Free heap after failed pub registration: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
-    } else {
-        // printf("[SUCCESS][Chassis] Register Pub 'chassis_feedback' success. Free heap: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
-    }
-
-    // 初始化底盘电机（放在订阅成功之后）
-    Chassis_motors_init();
-}
 
 
-/**
- * @brief 处理底盘控制指令
- */
-static void Chassis_handle_command(void)
-{
-    // 从消息中心获取最新的底盘控制指令
-    if (Sub_get_message(chassis_cmd_sub, &chassis_cmd)) {
-    // 调试输出：打印接收到的控制指令
-    // printf("[SUB][chassis_cmd] mode=%d vx=%.3f vy=%.3f wz=%.3f\r\n",
-           // (int)chassis_cmd.chassis_mode, chassis_cmd.vx, chassis_cmd.vy, chassis_cmd.wz);
-        // 根据底盘模式可在电机层切换场景（如需要，可在此处调用 Djimotor_switch_scene 针对底盘电机）
-        // 这里直接进行解算并设置目标
 
-        // 进行底盘运动学解算
-        Chassis_output_t chassis_output;
-        Chassis_kinematics_solve(&chassis_cmd, &chassis_output);
-
-        // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
-        // 假设存在按照约定名称获取实例的方法，或在相关模块将实例暴露为外部指针
-        extern Djimotor_device_t *chassis_motors[4];
-        for (uint8_t i = 0; i < chassis_output.motor_count && i < 4; i++) {
-                if (chassis_motors[i]) {
-                    // 速度模式：rpm 目标
-                    float rpm_target = chassis_output.motor_speed[i];
-                    Djimotor_set_target(chassis_motors[i], rpm_target);
-                    // 调试输出：打印设置的目标值
-                    // printf("[SET][motor_%u] rpm=%.2f\r\n", (unsigned)i, rpm_target);
-                }
-        }
-        
-        // 更新底盘反馈信息（这里可以添加底盘角速度的反馈）
-        // 简化处理，假设底盘角速度直接来自控制指令
-        chassis_feedback.chassis_wz = chassis_cmd.wz;
-        Pub_push_message(chassis_feedback_pub, &chassis_feedback);
-    }
-}
 
 /**
  * @brief 底盘控制任务函数

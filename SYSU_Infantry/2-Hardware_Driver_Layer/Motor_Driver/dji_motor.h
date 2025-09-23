@@ -93,9 +93,6 @@ typedef struct
 
     float pid_target;           //PID目标量
     
-    // 场景管理
-    chassis_mode_e current_scene;                        // 当前场景
-    Djimotor_scene_config_t scene_configs[MAX_MOTOR_SCENES]; // 所有场景的配置
 }Djimotor_controller_t;
 #pragma pack()
 
@@ -123,7 +120,7 @@ typedef struct
     Djimotor_measure_t motor_measure;   //电机自身运动信息
     Djimotor_controller_t   motor_pid;  //电机自身的PID控制器
     Can_controller_t *can_controller;   //电机自身的CAN管理者
-    int16_t deadzone_compensation;      // 电机死区补偿值
+    int16_t deadzone_compensation;      // 电机死区补偿值，一般用于开环控制抵抗静摩擦
 }Djimotor_device_t;
 #pragma pack()
 
@@ -134,7 +131,7 @@ typedef struct
     char motor_name[16];                //电机名
     Djimotor_type_e motor_type;         //电机类型
     Djimotor_status_e motor_status;     //电机运动状态
-    int16_t deadzone_compensation;      // 电机死区补偿值
+    int16_t deadzone_compensation;      // 电机死区补偿值，一般用于开环控制抵抗静摩擦
     Djimotor_controller_init_t motor_controller_init;
     Can_init_t can_init;
 }Djimotor_init_config_t;
@@ -157,16 +154,6 @@ Djimotor_measure_t Djimotor_get_measure(Djimotor_device_t *motor);
 
 //设置电机状态
 void Djimotor_set_status(Djimotor_device_t *motor,Djimotor_status_e status);
-
-// 场景管理函数
-// 切换电机控制场景
-void Djimotor_switch_scene(Djimotor_device_t *motor, chassis_mode_e scene);
-
-// 更新场景PID配置
-void Djimotor_update_scene_config(Djimotor_device_t *motor, chassis_mode_e scene, Djimotor_scene_config_t *config);
-
-// 获取当前场景
-chassis_mode_e Djimotor_get_current_scene(Djimotor_device_t *motor);
 
 // 设置电机死区补偿值
 void Djimotor_set_deadzone(Djimotor_device_t *motor, int16_t deadzone);

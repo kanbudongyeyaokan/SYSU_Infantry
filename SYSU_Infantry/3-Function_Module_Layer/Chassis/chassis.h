@@ -7,7 +7,6 @@
  * 
  * @note    提供底盘运动学解算功能，支持多种底盘类型
  */
-
 #ifndef SYSU_INFANTRY_CHASSIS_FUNCTION_H
 #define SYSU_INFANTRY_CHASSIS_FUNCTION_H
 
@@ -16,11 +15,13 @@
 #include "decision_making.h"
 #include "dji_motor.h"
 
+/**********************************底盘数据结构体************************************ */
 /**
  * @brief 底盘物理参数结构体
  */
 typedef struct {
     float wheel_radius;        // 轮子半径 (m)
+    float wheel_perimeter;     // 轮子周长 (m)
     float chassis_radius;      // 底盘半径，中心到轮子距离 (m)
     float wheel_base;          // 轮距 (m) 
     float track_width;         // 轮宽 (m) - 用于麦克纳姆轮底盘
@@ -32,38 +33,34 @@ typedef struct {
  */
 typedef struct {
     float motor_speed[4];      // 四个电机的转速 (rpm)
-    uint8_t motor_count;       // 使用的电机数量
 } Chassis_output_t;
 
+
+/*********************************底盘方法接口************************************* */
 /**
  * @brief 底盘功能模块初始化
  * @param params 底盘物理参数
  */
-void Chassis_init(const Chassis_params_t *params);
+void Chassis_init();
+
+/**
+ * @brief 底盘任务初始化
+ */
+void Chassis_task_init(void);
+
+/**
+ * @brief 处理底盘控制指令
+ */
+void Chassis_handle_command(void);
 
 /**
  * @brief 底盘运动学解算
  * @param cmd 底盘控制指令
  * @param output 解算输出结果
+ * @note  将接收到的底盘控制量转换为4个电机的转速
  */
 void Chassis_kinematics_solve(const Chassis_cmd_send_t *cmd, Chassis_output_t *output);
 
-/**
- * @brief 设置底盘类型
- * @param chassis_type 底盘类型
- */
-void Chassis_set_type(chassis_type_e chassis_type);
 
-/**
- * @brief 获取当前底盘类型
- * @return chassis_type_e 当前底盘类型
- */
-chassis_type_e Chassis_get_type(void);
-
-// 底盘电机实例（由底盘模块初始化并对外暴露）
-extern Djimotor_device_t *chassis_motors[4];
-
-// 底盘电机初始化
-void Chassis_motors_init(void);
 
 #endif //SYSU_INFANTRY_CHASSIS_FUNCTION_H
