@@ -60,6 +60,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Execution/Shoot_Task/shoot_task.h
         4-Application_Layer/Execution/Motor_Task/motor_task.c
         4-Application_Layer/Execution/Motor_Task/motor_task.h
+        4-Application_Layer/Execution/Watchdog_Task/watchdog_task.h
+        4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c
 
 
         2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h
@@ -142,6 +144,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Referee_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Shoot_Task
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Watchdog_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Robot_Definitions

@@ -26,6 +26,8 @@ osThreadId ins_task_handle;    //姿态解算任务
 osThreadId decision_making_task_handle;     //决策任务
 osThreadId referee_task_handle;//裁判系统通信任务
 osThreadId others_task_handle; //处理其他任务，比如与视觉通信，电量读取等琐碎任务，后续根据实际进行修改
+osThreadId watchdog_task_handle; //看门狗任务
+
 
 osThreadId bmi088_test_task_handle; //bmi088测试任务
 osThreadId can_motors_test_task_handle; // can电机测试任务
@@ -54,6 +56,12 @@ void Robot_task_init(void)
     // === 消息中心测试 ===
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
     // message_test_task_handle = osThreadCreate(osThread(message_test_task), NULL);
+\
+
+    //看门狗任务
+    osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityNormal, 0, 512);
+    watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
+
 
     // === 集成测试 ===
     printf("[INIT][Robot] Creating chassis_motor_integration_test_task...\r\n");

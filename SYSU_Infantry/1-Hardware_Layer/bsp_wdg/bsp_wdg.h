@@ -22,10 +22,9 @@ typedef struct
 /* watchdog初始化配置 */
 typedef struct
 {
-    uint16_t reload_count;     // 实际上这是app唯一需要设置的值?
+    uint16_t reload_count;     //重载值
     offline_callback callback; // 异常处理函数,当模块发生异常时会被调用
-
-    void *owner_id;            // id取拥有watchdog的实例的地址,如DJIMotorInstance*,cast成void*类型
+    void *owner_id;            // 上下文指针，可以指向自身
 } Watchdog_init_t;
 
 /**
@@ -56,6 +55,6 @@ uint8_t Watchdog_is_online(Watchdog_device_t *instance);
  *        模块成功接受数据或成功操作则会重载temp_count的值为reload_count.
  *
  */
-void Watchdog_task();
+void Watchdog_control_all();
 
 #endif // !MONITOR_H
