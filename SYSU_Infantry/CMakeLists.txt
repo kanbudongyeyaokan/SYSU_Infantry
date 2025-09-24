@@ -62,9 +62,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Execution/Motor_Task/motor_task.h
 
 
-        2-Hardware_Driver_Layer/Bmi088_Driver/bmi088.h
-        2-Hardware_Driver_Layer/Bmi088_Driver/bmi088.c
-        2-Hardware_Driver_Layer/Bmi088_Driver/bmi088_regNdef.h
+        2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h
+        2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c
+        2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088_reg_def.h
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
         0-Middleware_Layer/Pid_Controller/algorithm_pid.c
         0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h
@@ -88,7 +88,6 @@ add_executable(${CMAKE_PROJECT_NAME}
 
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
-        2-Hardware_Driver_Layer/Motor_Driver/dji_motor_scene.c
 
         3-Function_Module_Layer/Robot_Definitions/robot_definitions.h
         3-Function_Module_Layer/Chassis/chassis.c
@@ -143,7 +142,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Referee_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Shoot_Task
-        ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Bmi088_Driver
+        ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Robot_Definitions
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Chassis

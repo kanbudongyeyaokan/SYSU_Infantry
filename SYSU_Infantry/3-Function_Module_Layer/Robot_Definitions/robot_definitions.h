@@ -4,10 +4,9 @@
 //该层只放机器人的物理参数定义，以及各个模块状态的描述
 
 /**************************Robot_physical parameters*******************************/
-#ifndef ECD_ANGLE_COEF_DJI
-#define ECD_ANGLE_COEF_DJI 0.043945f // (360/8192),将编码器值转化为角度制
-#endif
 
+#define ECD_ANGLE_COEF_DJI 0.043945f // (360/8192),将编码器值转化为角度制
+          
 // 云台参数
 #define YAW_CHASSIS_ALIGN_ECD 2711  // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
 #define YAW_ECD_GREATER_THAN_4096 0 // ALIGN_ECD值是否大于4096,是为1,否为0;用于计算云台偏转角度
