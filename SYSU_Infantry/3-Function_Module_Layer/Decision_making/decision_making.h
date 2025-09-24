@@ -99,4 +99,10 @@ void RC_command_set();
 */
 static void Keyboard_command_set();
 
+/**
+ * @brief 根据gimbal传回的当前电机角度计算和零位的误差
+ *        单圈绝对角度的范围是0~360
+ *
+ */
+void Calc_offset_angle();
 #endif //SYSU_INFANTRY_DECISION_MAKING_H

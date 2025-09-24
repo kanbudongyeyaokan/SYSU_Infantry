@@ -15,6 +15,7 @@
 #include "dji_motor.h"
 #include "decision_making.h"
 #include "message_center.h"
+#include "robot_definitions.h"
 
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
@@ -134,6 +135,10 @@ void Gimbal_task_init(void) {
 
     // 注册底盘反馈信息发布者
     gimbal_pub = Pub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
+
+    //云台归零
+    Djimotor_set_target(yaw_motor, YAW_ALIGN_ANGLE);
+    Djimotor_set_target(pitch_motor,PITCH_HORIZON_ANGLE);
 }
 
 
