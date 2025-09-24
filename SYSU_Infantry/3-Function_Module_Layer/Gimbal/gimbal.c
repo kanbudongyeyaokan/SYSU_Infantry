@@ -68,6 +68,7 @@ static void Gimbal_motor_init(void) {
             },
 
         },
+        
         .can_init = {
             .can_handle = &hcan2,
             .can_id = 0x1FF,
@@ -107,12 +108,12 @@ static void Gimbal_motor_init(void) {
             },
 
         },
-        .can_init = {
-            .can_handle = &hcan2,
-            .can_id = 0x1FF,
-            .tx_id = 2,
-            .rx_id = 0x206,
-        },
+    .can_init = {
+        .can_handle = &hcan2,
+        .can_id = 0x1FF,
+        .tx_id = 2,
+        .rx_id = 0x206,
+    },
     };
     pitch_motor = DJI_Motor_Init(&pitch_config);
 

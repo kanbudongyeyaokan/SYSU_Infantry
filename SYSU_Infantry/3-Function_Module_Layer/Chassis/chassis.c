@@ -12,10 +12,7 @@
 #include "bsp_can.h"
 #include <math.h>
 #include "message_center.h"
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include "math_lib.h"
 
 /****************接收决策层的底盘控制信息********************/
 // 订阅决策层发来的底盘控制指令
