@@ -20,6 +20,8 @@ void Decision_making_task()
         Receive_feedback_infomation();
         //决策要发的控制信息
         Robot_set_command();
+        // 根据gimbal的反馈值计算云台和底盘正方向的夹角
+        Calc_offset_angle();
         //向各个应用层传送控制信息
         Send_command_to_all_task();
         //控制频率500HZ

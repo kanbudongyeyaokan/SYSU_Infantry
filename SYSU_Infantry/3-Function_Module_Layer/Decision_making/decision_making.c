@@ -220,3 +220,30 @@ void Emergency_stop()
         robot_state = ROBOT_ON;
     }
 }
+
+/**
+ * @brief 根据gimbal传回的当前电机角度计算和零位的误差
+ *        单圈绝对角度的范围是0~360
+ *
+ */
+void Calc_offset_angle()
+{
+    // 别名angle提高可读性,不然太长了不好看,虽然基本不会动这个函数
+    static float angle;
+    angle = gimbal_feedback_recv.yaw_motor_angle; // 从云台获取的当前yaw电机单圈角度
+#if YAW_ECD_GREATER_THAN_4096                               // 如果大于180度
+    if (angle > YAW_ALIGN_ANGLE && angle <= 180.0f + YAW_ALIGN_ANGLE)
+        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE;
+    else if (angle > 180.0f + YAW_ALIGN_ANGLE)
+        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE - 360.0f;
+    else
+        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE;
+#else // 小于180度
+    if (angle > YAW_ALIGN_ANGLE)
+        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE;
+    else if (angle <= YAW_ALIGN_ANGLE && angle >= YAW_ALIGN_ANGLE - 180.0f)
+        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE;
+    else
+        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE + 360.0f;
+#endif
+}
