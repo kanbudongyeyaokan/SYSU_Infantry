@@ -44,6 +44,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         1-Hardware_Layer/bsp_usart/bsp_usart.h
         0-Middleware_Layer/Message_Center/message_center.c
         0-Middleware_Layer/Message_Center/message_center.h
+        0-Middleware_Layer/Math_lib/math_lib.h
         1-Hardware_Layer/bsp_can/bsp_can.c
         1-Hardware_Layer/bsp_can/bsp_can.h
         4-Application_Layer/Robot_Task/robot_task.h
@@ -134,6 +135,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Pid_Controller
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Message_Center
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Kalman_Fliter
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Math_lib
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
