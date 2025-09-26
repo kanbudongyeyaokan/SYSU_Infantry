@@ -74,9 +74,6 @@ void Pid_init(Pid_instance_t *pid, Pid_init_t *config)
  */
 float Pid_calculate(Pid_instance_t *pid, float measure, float target)
 {
-    // 获取两次pid计算的时间间隔,用于获取控制周期
-    pid->dt = DWT_GetDeltaT(&pid->dwt_counter);
-
     // 保存上次的测量值和误差,计算当前error
     pid->measure = measure;
     pid->target = target;
@@ -87,8 +84,8 @@ float Pid_calculate(Pid_instance_t *pid, float measure, float target)
     {
         // 基本的pid计算,使用位置式
         pid->Pout = pid->kp * pid->error;
-        pid->ITerm = pid->ki * pid->error * pid->dt;
-        pid->Dout = pid->kd * (pid->error - pid->last_error) / pid->dt;
+        pid->ITerm = pid->ki * pid->error;
+        pid->Dout = pid->kd * (pid->error - pid->last_error);
 
         // 梯形积分
         if (pid->optimization & PID_TRAPEZOID_INTERGRAL)

@@ -144,9 +144,6 @@ void Djimotor_set_target(Djimotor_device_t *motor, float target) {
     //安全检查
     motor->motor_pid.pid_target = target;
     // 调试输出：打印设置目标值（电机名与目标）
-    if (motor) {
-       // printf("[DJI][set_target] %s target=%.2f\r\n", motor->motor_name, target);
-    }
 }
 
 // 获取电机状态
@@ -262,13 +259,13 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
     int16_t current_val = (int16_t)(output);
 
     // 应用死区补偿
-    if (motor->deadzone_compensation > 0) {
-        if (current_val > 0 && current_val < motor->deadzone_compensation) {
-            current_val = motor->deadzone_compensation;
-        } else if (current_val < 0 && current_val > -motor->deadzone_compensation) {
-            current_val = -motor->deadzone_compensation;
-        }
-    }
+  //  if (motor->deadzone_compensation > 0) {
+  //      if (current_val > 0 && current_val < motor->deadzone_compensation) {
+  //          current_val = motor->deadzone_compensation;
+  //      } else if (current_val < 0 && current_val > -motor->deadzone_compensation) {
+  //          current_val = -motor->deadzone_compensation;
+  //      }
+  //  }
     current_motor = current_val;
 
     // 获取缓冲区指针

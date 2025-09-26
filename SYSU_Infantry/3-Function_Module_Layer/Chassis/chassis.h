@@ -20,11 +20,13 @@
  * @brief 底盘物理参数结构体
  */
 typedef struct {
-    float wheel_radius;        // 轮子半径 (m)
-    float wheel_perimeter;     // 轮子周长 (m)
-    float chassis_radius;      // 底盘半径，中心到轮子距离 (m)
-    float wheel_base;          // 轮距 (m) 
-    float track_width;         // 轮宽 (m) - 用于麦克纳姆轮底盘
+    float wheel_radius;        // 轮子半径 (mm)
+    float wheel_perimeter;     // 轮子周长 (mm)
+    float chassis_radius;      // 底盘半径，中心到轮子距离 (mm)
+    float wheel_base;          // 轴距 (mm)
+    float half_wheel_base;      //半轴距（mm）
+    float track_width;         //轮距 (mm)
+    float half_track_width;    // 半轮距 (mm) - 用于麦克纳姆轮底盘
     chassis_type_e chassis_type; // 底盘类型
 } Chassis_params_t;
 

@@ -11,9 +11,11 @@
 #include "chassis.h"
 #include "bsp_can.h"
 #include <math.h>
+#include <stdio.h>
+
 #include "message_center.h"
 #include "math_lib.h"
-
+#include "main.h"
 /****************接收决策层的底盘控制信息********************/
 // 订阅决策层发来的底盘控制指令
 static Subscriber_t *chassis_cmd_sub;
@@ -52,12 +54,14 @@ void Chassis_task_init(void)
 void Chassis_init()
 {
     // 设置底盘物理参数
-    chassis_params.wheel_radius = 0.076f;   // 默认轮子半径76mm
+    chassis_params.wheel_radius = 60.0f;   // 轮子半径60mm
+    chassis_params.wheel_perimeter = chassis_params.wheel_radius*2*M_PI;//轮子周长
     chassis_params.chassis_radius = 0.2f;   // 默认底盘半径200mm
-    chassis_params.wheel_base = 0.4f;       // 默认轮距400mm
-    chassis_params.track_width = 0.3f;      // 默认轮宽300mm
+    chassis_params.wheel_base = 295.0f;       // 默认轮距295mm
+    chassis_params.half_wheel_base = chassis_params.wheel_base/2.0;
+    chassis_params.track_width = 295.0f;      // 默认轮宽295mm
+    chassis_params.half_track_width = chassis_params.track_width/2.0;
     chassis_params.chassis_type=CHASSIS_TYPE_OMNI;// 全向轮底盘
-
     //设置底盘电机参数
     Djimotor_init_config_t cfg[4] = {
         {
@@ -65,28 +69,72 @@ void Chassis_init()
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
             .deadzone_compensation = 500,
-            .motor_controller_init = {.close_loop = OPEN_LOOP},
+            .motor_controller_init = {
+                .close_loop = SPEED_LOOP,
+                .speed_source = MOTOR_FEEDBACK,
+                .speed_pid = {
+                    .kp = 10,
+                    .ki = 0,
+                    .kd = 0,
+                    .max_iout = 3000,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
+                    .max_out = 15000,
+                }
+            },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 1, .rx_id = 0x201}
         },{
             .motor_name = "CHASSIS_FL",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
             .deadzone_compensation = 500,
-            .motor_controller_init = {.close_loop = OPEN_LOOP},
+            .motor_controller_init = {
+                .close_loop = SPEED_LOOP,
+                .speed_source = MOTOR_FEEDBACK,
+                .speed_pid = {
+                    .kp = 10,
+                    .ki = 0,
+                    .kd = 0,
+                    .max_iout = 3000,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
+                    .max_out = 15000,
+                }
+            },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 2, .rx_id = 0x202}
         },{
             .motor_name = "CHASSIS_BL",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
             .deadzone_compensation = 500,
-            .motor_controller_init = {.close_loop = OPEN_LOOP},
+            .motor_controller_init = {
+                .close_loop = SPEED_LOOP,
+                .speed_source = MOTOR_FEEDBACK,
+                .speed_pid = {
+                    .kp = 10,
+                    .ki = 0,
+                    .kd = 0,
+                    .max_iout = 3000,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
+                    .max_out = 15000,
+                }
+            },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 3, .rx_id = 0x203}
         },{
             .motor_name = "CHASSIS_BR",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
             .deadzone_compensation = 500,
-            .motor_controller_init = {.close_loop = OPEN_LOOP},
+            .motor_controller_init = {
+                .close_loop = SPEED_LOOP,
+                .speed_source = MOTOR_FEEDBACK,
+                .speed_pid = {
+                    .kp = 10,
+                    .ki = 0,
+                    .kd = 0,
+                    .max_iout = 3000,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
+                    .max_out = 15000,
+                }
+            },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 4, .rx_id = 0x204}
         }
     };
@@ -101,6 +149,7 @@ void Chassis_init()
  */
 void Chassis_handle_command(void)
 {
+    printf("speed is:%f",chassis_motors[0]->motor_measure.angular_velocity);
     // 从消息中心获取最新的底盘控制指令
     if (Sub_get_message(chassis_cmd_sub, &chassis_cmd_recv)) {
         //底盘四个电机的输出
@@ -125,7 +174,12 @@ void Chassis_handle_command(void)
             break;
         /* 底盘跟随云台 */
         case CHASSIS_FOLLOW_GIMBAL:
-
+             Chassis_kinematics_solve(&chassis_cmd_recv, &chassis_output);
+            // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
+            for (uint8_t i = 0; i < 4; i++) {
+                // 速度模式：单位rpm
+                Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+            }
             break;
         /* 底盘小陀螺 */
         case CHASSIS_ROTATE:
@@ -149,32 +203,16 @@ void Chassis_handle_command(void)
  */
 static void Chassis_omni_kinematics(const Chassis_cmd_send_t *cmd, Chassis_output_t *output)
 {
-    // 全向轮布局（从俯视图看）：
-    //    1(前)
-    //  2(左) 0(右)
-    //    3(后)
-    // 
-    // 全向轮运动学模型（轮子方向为90度间隔）
-    // 右轮(0) = +vy - wz*R  （贡献侧向移动和旋转）
-    // 前轮(1) = +vx - wz*R  （贡献前向移动和旋转）
-    // 左轮(2) = -vy - wz*R  （贡献侧向移动和旋转）
-    // 后轮(3) = -vx - wz*R  （贡献前向移动和旋转）
-    
-    float rotate_compensation = cmd->wz * chassis_params.chassis_radius / chassis_params.wheel_radius;
-    
-    // 计算各轮子线速度 (m/s)
+    //目前以电池所在位置为后方，其对面为正前方
+    // 计算各轮子线速度 (rad/s)
     float wheel_linear_speed[4];
-    wheel_linear_speed[0] = cmd->vy - rotate_compensation;   // 右轮
-    wheel_linear_speed[1] = cmd->vx - rotate_compensation;   // 前轮
-    wheel_linear_speed[2] = -cmd->vy - rotate_compensation;  // 左轮
-    wheel_linear_speed[3] = -cmd->vx - rotate_compensation;  // 后轮
-    
-    // 转换为角速度 (rad/s) 再转换为 rpm
+    wheel_linear_speed[0] =  -cmd->vx - cmd->vy - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;   // 左前轮
+    wheel_linear_speed[1] =  cmd->vx + cmd->vy - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;   // 右前轮
+    wheel_linear_speed[2] = -cmd->vx + cmd->vy - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;  // 左后轮
+    wheel_linear_speed[3] =  cmd->vx - cmd->vy - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;  // 右后轮
     for (int i = 0; i < 4; i++) {
-        float angular_velocity = wheel_linear_speed[i] / chassis_params.wheel_radius; // rad/s
-        output->motor_speed[i] = angular_velocity * 60.0f / (2.0f * M_PI); // rpm
+        output->motor_speed[i] = wheel_linear_speed[i];
     }
-    
 }
 
 /**

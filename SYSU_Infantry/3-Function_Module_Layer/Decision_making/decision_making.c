@@ -104,8 +104,11 @@ void Send_command_to_all_task()
 */
 void Robot_set_command()
 {
-    printf("rc_data[CURRENT].rc.Rrocker_x:%d\r\n",rc_data[CURRENT].rc.Rrocker_x);
-    printf("rc_data[CURRENT].rc.dial:%d\r\n",rc_data[CURRENT].rc.dial);
+    //printf("rc_data[CURRENT].rc.Rrocker_x:%d\r\n",rc_data[CURRENT].rc.Rrocker_x);
+    //printf("rc_data[CURRENT].rc.Rrocker_y:%d\r\n",rc_data[CURRENT].rc.Rrocker_y);
+    //printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
+    //printf("rc_data[CURRENT].rc.Lrocker_y:%d\r\n",rc_data[CURRENT].rc.Lrocker_y);
+    // printf("rc_data[CURRENT].rc.dial:%d\r\n",rc_data[CURRENT].rc.dial);
     //printf("rc_data[CURRENT].rc.Lswitch:%d\r\n",rc_data[CURRENT].rc.Lswitch);
     //printf("rc_data[CURRENT].rc.Rswitch:%d\r\n",rc_data[CURRENT].rc.Rswitch);
     //左边开关打下，进入遥控器控制模式
@@ -128,7 +131,7 @@ void Robot_set_command()
 void RC_ctrl_set()
 {
     /**根据遥控器开关状态设定模式**/
-    printf("RC_ctrl_set \n");
+   // printf("RC_ctrl_set \n");
     /**底盘/云台模式设定**/
     //如果右边开关打下，则进入底盘跟随云台模式,云台进入陀螺仪反馈模式
     if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_DOWN)
@@ -174,8 +177,12 @@ void RC_ctrl_set()
     /****************控制量设定*****************/
     //底盘控制量
      /*后续可增加死区限制，解决遥控器通道值因老化而造成的零漂问题*/
-    chassis_cmd_send.vy = -10.0f * (float)rc_data[CURRENT].rc.Lrocker_y; //数值方向
-    chassis_cmd_send.vx = -10.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
+    if (rc_data[CURRENT].rc.Lrocker_y>=-32&&rc_data[CURRENT].rc.Lrocker_y<=0)
+        chassis_cmd_send.vy=0;
+    else {
+        chassis_cmd_send.vy = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_y; //数值方向
+    }
+    chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
 
     //云台控制量
     gimbal_cmd_send.yaw += 0.0018f * (float)rc_data[CURRENT].rc.Rrocker_x;
