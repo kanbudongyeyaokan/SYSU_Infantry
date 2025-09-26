@@ -3,6 +3,8 @@
 #include "stdlib.h"
 #include "bsp_usart.h"
 #include "algorithm_pid.h"
+#include "main.h"
+#include "stdio.h"
 
 // 电机实例数组,用于管理已初始化的电机列表
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
@@ -286,7 +288,10 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
     //如果电机的状态为 MOTOR_STOP,则缓冲区清零，电机停止运动
     if(motor->motor_status == MOTOR_STOP)
     {
-        memset(buffer[motor_num*2],0,sizeof(uint16_t));
+
+        //@todo:这里如果不注释，底盘会不动，暂时不明白原因
+    //    buffer[motor_num * 2] = 0;
+    //    buffer[motor_num * 2 + 1] = 0;
     }
 
     // 标记缓冲区更新
@@ -347,6 +352,8 @@ void Djimotor_control_all(void) {
 
             // 发送数据
             if (tx_data != NULL) {
+                if (temp_can.tx_config.StdId == 0x1FF&&temp_can.can_handle == &hcan1)
+                    printf("hhhhh\r\n");
                 Can_send_data(&temp_can,tx_data);
             }
     }

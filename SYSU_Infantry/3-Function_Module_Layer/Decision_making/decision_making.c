@@ -185,8 +185,8 @@ void RC_ctrl_set()
     chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
 
     //云台控制量
-    gimbal_cmd_send.yaw += 0.0018f * (float)rc_data[CURRENT].rc.Rrocker_x;
-    gimbal_cmd_send.pitch += 0.002f * (float)(rc_data[CURRENT].rc.Rrocker_y);
+    gimbal_cmd_send.yaw += 0.018f * (float)rc_data[CURRENT].rc.Rrocker_x;
+    gimbal_cmd_send.pitch += 0.01f * (float)(rc_data[CURRENT].rc.Rrocker_y);
     
     //发射机构控制量
     // 射频控制,固定每秒1发
@@ -217,7 +217,7 @@ void Keyboard_ctrl_set()
 void Emergency_stop()
 {
     // 拨轮的向下打到底则进入急停模式
-    if (rc_data[CURRENT].rc.dial > 300 || robot_state == ROBOT_OFF)
+    if (rc_data[CURRENT].rc.dial < -300 || robot_state == ROBOT_OFF)
     {
         robot_state = ROBOT_OFF;
         gimbal_cmd_send.gimbal_mode = GIMBAL_ZERO_FORCE;

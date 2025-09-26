@@ -1,7 +1,3 @@
-//
-// Created by 26524 on 2025/9/16.
-//
-
 #ifndef SYSU_INFANTRY_INS_H
 #define SYSU_INFANTRY_INS_H
 

@@ -27,6 +27,6 @@ void Gimbal_control_task(void const *argument) {
         Gimbal_handle_command();
 
         //修改控制频率
-        osDelay(5);
+        osDelay(2);
     }
 }

@@ -7,9 +7,7 @@
  *
  * @note    云台电机初始化
  */
-//
-// Created by 26524 on 2025/9/16.
-//
+
 //
 #include "gimbal.h"
 #include "dji_motor.h"
@@ -23,28 +21,29 @@ static Djimotor_device_t *yaw_motor, *pitch_motor;
 //获取角度数据 未实现
 //static attitude_t *gimbal_imu_data;
 
-// 订阅决策层发来的底盘控制指令
+// 订阅决策层发来的云台控制指令
 static Subscriber_t *gimbal_sub;
+// 存储决策层发来的控制命令
+static Gimbal_cmd_send_t gimbal_cmd_send;
 
-// 发布给决策层的底盘反馈信息
+// 发布给决策层的云台反馈信息
 static Publisher_t*gimbal_pub;
-
 // 存储发送给决策层的反馈信息
 static Gimbal_feedback_info_t gimbal_feedback;
 
-// 存储决策层发来的控制命令
-static Gimbal_cmd_send_t gimbal_cmd_send;
+
 
 /**
  * @brief 云台初始化
  */
 static void Gimbal_motor_init(void) {
+    //YAW电机
     Djimotor_init_config_t yaw_config = {
         .motor_name = "yaw_motor",
         .motor_type = GM6020,
         .motor_status = MOTOR_ENABLED,
         .motor_controller_init = {
-            .close_loop = ANGLE_AND_SPEED_LOOP,
+            .close_loop = OPEN_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
             //完善ins task后修正下面两行
@@ -71,7 +70,7 @@ static void Gimbal_motor_init(void) {
         },
         
         .can_init = {
-            .can_handle = &hcan2,
+            .can_handle = &hcan1,
             .can_id = 0x1FF,
             .tx_id = 1,
             .rx_id = 0x205,
@@ -79,13 +78,13 @@ static void Gimbal_motor_init(void) {
     };
 
     yaw_motor = DJI_Motor_Init(&yaw_config);
-
+//PITCH电机
     Djimotor_init_config_t pitch_config = {
         .motor_name = "pitch_motor",
         .motor_type = GM6020,
         .motor_status = MOTOR_ENABLED,
         .motor_controller_init = {
-            .close_loop = ANGLE_AND_SPEED_LOOP,
+            .close_loop = OPEN_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
             //完善ins task后修正下面两行

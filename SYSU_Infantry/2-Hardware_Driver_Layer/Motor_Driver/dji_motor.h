@@ -8,7 +8,6 @@
 #include "robot_definitions.h"
 
 #define MAX_MOTOR_COUNT 16
-#define MAX_MOTOR_SCENES 5  // 最大支持的场景数量
 
 #define SPEED_SMOOTH_COEF 0.85f      // 最好大于0.85
 #define CURRENT_SMOOTH_COEF 0.9     // 必须大于0.9
