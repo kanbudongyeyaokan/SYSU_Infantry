@@ -35,6 +35,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bsp_can.h"
+#include "bsp_dwt.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -129,6 +130,7 @@ int main(void)
   MX_RNG_Init();
   /* USER CODE BEGIN 2 */
   Can_init();
+  DWT_Init(168);
 
   /* USER CODE END 2 */
 

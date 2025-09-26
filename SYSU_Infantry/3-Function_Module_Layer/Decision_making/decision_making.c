@@ -13,8 +13,11 @@
 //状态机获取
 #include "robot_definitions.h"
 //遥控器控制、
+#include <stdio.h>
+
 #include "remote_control.h"
 
+#include "main.h"
 /**********************发出决策信息***************************/
 //存储遥控器数据，CURRENT-当前数据,LAST-上一次数据
 static RC_ctrl_t *rc_data;
@@ -101,13 +104,14 @@ void Send_command_to_all_task()
 */
 void Robot_set_command()
 {
+    printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
     //左边开关打下，进入遥控器控制模式
-    if (rc_data[CURRNET].rc.Lswitch == SWITCH_IS_DOWN)
+    if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_DOWN)
     {
         RC_ctrl_set();
     }
     //左边开关打上，进入键盘控制模式
-    else if (rc_data[CURRNET].rc.Lswitch == SWITCH_IS_UP)
+    else if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_UP)
     {
         Keyboard_ctrl_set();
     }
@@ -121,29 +125,29 @@ void Robot_set_command()
 void RC_ctrl_set()
 {
     /**根据遥控器开关状态设定模式**/
-
+    printf("RC_ctrl_set \n");
     /**底盘/云台模式设定**/
     //如果右边开关打下，则进入底盘跟随云台模式,云台进入陀螺仪反馈模式
-    if (rc_data[CURRNET].rc.Rswitch == SWITCH_IS_DOWN)
+    if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_DOWN)
     {
         chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
     }
     //如果右边开关打中间，则底盘进入小陀螺模式，云台进入自由模式
-    else if (rc_data[CURRNET].rc.Rswitch == SWITCH_IS_MID)
+    else if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_MID)
     {
         chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
     }
     //如果右边开关打上，则进入底盘自由模式，此时底盘不跟随云台
-    else if (rc_data[CURRNET].rc.Rswitch == SWITCH_IS_UP)
+    else if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_UP)
     {
         chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
     }
     /**射击模式设定**/
     //左边拨轮往上打开启摩擦轮,进入准备射击模式
-    if (rc_data[CURRNET].rc.dial < -100)
+    if (rc_data[CURRENT].rc.dial < -100)
     {
         shoot_cmd_send.shoot_mode = SHOOT_ON;
     }
@@ -153,7 +157,7 @@ void RC_ctrl_set()
         shoot_cmd_send.shoot_mode = SHOOT_OFF;
     }
     //左边拨轮往上打到底，开始发射子弹
-    if (rc_data[CURRNET].rc.dial < -500)
+    if (rc_data[CURRENT].rc.dial < -500)
     {
         shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;//连发
     }
@@ -162,19 +166,17 @@ void RC_ctrl_set()
     {
         shoot_cmd_send.loader_mode = LOAD_STOP;     //
     }
-
     //急停模式
     Emergency_stop();
-
     /****************控制量设定*****************/
     //底盘控制量
      /*后续可增加死区限制，解决遥控器通道值因老化而造成的零漂问题*/
-    chassis_cmd_send.vy = -10.0f * (float)rc_data[CURRNET].rc.Lrocker_y; //数值方向
-    chassis_cmd_send.vx = -10.0f * (float)rc_data[CURRNET].rc.Lrocker_x; //水平方向
+    chassis_cmd_send.vy = -10.0f * (float)rc_data[CURRENT].rc.Lrocker_y; //数值方向
+    chassis_cmd_send.vx = -10.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
 
     //云台控制量
-     gimbal_cmd_send.yaw += 0.0018f * (float)rc_data[CURRNET].rc.Rrocker_x;
-    gimbal_cmd_send.pitch += 0.002f * (float)(rc_data[CURRNET].rc.Rrocker_y);
+    gimbal_cmd_send.yaw += 0.0018f * (float)rc_data[CURRENT].rc.Rrocker_x;
+    gimbal_cmd_send.pitch += 0.002f * (float)(rc_data[CURRENT].rc.Rrocker_y);
     
     //发射机构控制量
     // 射频控制,固定每秒1发
@@ -194,9 +196,8 @@ void Keyboard_ctrl_set()
     gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
     shoot_cmd_send.shoot_mode = SHOOT_OFF;
     shoot_cmd_send.loader_mode = LOAD_STOP;
-    
     // 这里添加键盘鼠标的具体控制逻辑
-    // ...
+
 }
 
 /**
@@ -206,7 +207,7 @@ void Keyboard_ctrl_set()
 void Emergency_stop()
 {
     // 拨轮的向下打到底则进入急停模式
-    if (rc_data[CURRNET].rc.dial > 300 || robot_state == ROBOT_OFF) 
+    if (rc_data[CURRENT].rc.dial > 300 || robot_state == ROBOT_OFF)
     {
         robot_state = ROBOT_OFF;
         gimbal_cmd_send.gimbal_mode = GIMBAL_ZERO_FORCE;
@@ -215,7 +216,7 @@ void Emergency_stop()
         shoot_cmd_send.loader_mode = LOAD_STOP;
     }
     // 遥控器右侧开关为[上],恢复正常运行
-    if (rc_data[CURRNET].rc.Rswitch == SWITCH_IS_UP)
+    if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_UP)
     {
         robot_state = ROBOT_ON;
     }

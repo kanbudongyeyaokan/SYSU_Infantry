@@ -6,6 +6,8 @@
 #include "stdbool.h"
 #include "bsp_dwt.h"
 #include "cmsis_os.h"
+#include "usart.h"
+#include "main.h"
 
 //串口实例序号
 static uint8_t uart_ix = 0;
@@ -29,6 +31,7 @@ static void Uart_init(Uart_instance_t* instance,UART_HandleTypeDef *huart) {
     //关闭DMA半传输中断
     __HAL_DMA_DISABLE_IT(instance->uart_handle->hdmarx, DMA_IT_HT);
 }
+
 //串口注册
 Uart_instance_t* Uart_register(UART_HandleTypeDef *register_huart,uart_receive_callback receive_callback)
 {
@@ -84,6 +87,10 @@ void Uart_sendData(Uart_instance_t *uart_instance,uint8_t* data,uint16_t length)
  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
+    printf("huart3\r\n");
+    if (huart == &huart3) {
+        printf("huart3\r\n");
+    }
     //检索已经注册的串口实例，调用回调函数并开启DMA空闲中断接收
     for (uint8_t i = 0; i < uart_ix; ++i)
     {

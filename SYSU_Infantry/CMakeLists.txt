@@ -47,6 +47,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/Math_lib/math_lib.h
         1-Hardware_Layer/bsp_can/bsp_can.c
         1-Hardware_Layer/bsp_can/bsp_can.h
+        1-Hardware_Layer/bsp_wdg/bsp_wdg.c
+        1-Hardware_Layer/bsp_wdg/bsp_wdg.h
         4-Application_Layer/Robot_Task/robot_task.h
         4-Application_Layer/Robot_Task/robot_task.c
         4-Application_Layer/Execution/Chassis_Task/Chassis_task.h
@@ -132,6 +134,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Decision_making
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_can
+        ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_wdg
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Pid_Controller
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Message_Center
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Kalman_Fliter

@@ -13,10 +13,10 @@ static Uart_instance_t *rc_uart;//获取遥控器数据的串口实例
 static void Rectify_rc_data() {
     for (uint8_t i = 0; i < 5; ++i)
     {
-        if (*(&rc_data[CURRNET].rc.Lrocker_x+ i) > 660)
-            *(&rc_data[CURRNET].rc.Lrocker_x + i) = 660;
-        else if (*(&rc_data[CURRNET].rc.Lrocker_x + i) < -660)
-            *(&rc_data[CURRNET].rc.Lrocker_x + i) = -660;
+        if (*(&rc_data[CURRENT].rc.Lrocker_x+ i) > 660)
+            *(&rc_data[CURRENT].rc.Lrocker_x + i) = 660;
+        else if (*(&rc_data[CURRENT].rc.Lrocker_x + i) < -660)
+            *(&rc_data[CURRENT].rc.Lrocker_x + i) = -660;
     }
 }
 
@@ -25,7 +25,7 @@ static void Rectify_rc_data() {
   * @param[in]      sbus_buf: 原生数据指针
   * @param[out]     rc_data: 遥控器数据指针
   * @retval         none
-  */
+*/
 static void sbus_to_rc(volatile const uint8_t *sbus_buf)
 {
     //安全检查
@@ -35,28 +35,27 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf)
     }
     /*数据解析与处理*/
     //摇杆数据
-    rc_data[CURRNET].rc.Lrocker_x = ((sbus_buf[0] | (sbus_buf[1] << 8)) & 0x07ff)-RC_CH_VALUE_OFFSET;        //!< Channel 0
-    rc_data[CURRNET].rc.Lrocker_y = (((sbus_buf[1] >> 3) | (sbus_buf[2] << 5)) & 0x07ff)-RC_CH_VALUE_OFFSET; //!< Channel 1
-    rc_data[CURRNET].rc.Rrocker_x= (((sbus_buf[2] >> 6) | (sbus_buf[3] << 2) |          //!< Channel 2
+    rc_data[CURRENT].rc.Lrocker_x = ((sbus_buf[0] | (sbus_buf[1] << 8)) & 0x07ff)-RC_CH_VALUE_OFFSET;        //!< Channel 0
+    rc_data[CURRENT].rc.Lrocker_y = (((sbus_buf[1] >> 3) | (sbus_buf[2] << 5)) & 0x07ff)-RC_CH_VALUE_OFFSET; //!< Channel 1
+    rc_data[CURRENT].rc.Rrocker_x= (((sbus_buf[2] >> 6) | (sbus_buf[3] << 2) |          //!< Channel 2
                          (sbus_buf[4] << 10)) &0x07ff)-RC_CH_VALUE_OFFSET;
-    rc_data[CURRNET].rc.Rrocker_y= (((sbus_buf[4] >> 1) | (sbus_buf[5] << 7)) & 0x07ff)-RC_CH_VALUE_OFFSET; //!< Channel 3
+    rc_data[CURRENT].rc.Rrocker_y= (((sbus_buf[4] >> 1) | (sbus_buf[5] << 7)) & 0x07ff)-RC_CH_VALUE_OFFSET; //!< Channel 3
     Rectify_rc_data();
     //左右开关数据
-    rc_data[CURRNET].rc.Lswitch= ((sbus_buf[5] >> 4) & 0x0003);                  //!< Switch left
-    rc_data[CURRNET].rc.Rswitch= ((sbus_buf[5] >> 4) & 0x000C) >> 2;                       //!< Switch right
+    rc_data[CURRENT].rc.Lswitch= ((sbus_buf[5] >> 4) & 0x0003);                  //!< Switch left
+    rc_data[CURRENT].rc.Rswitch= ((sbus_buf[5] >> 4) & 0x000C) >> 2;                       //!< Switch right
     //鼠标数据解析
-    rc_data[CURRNET].mouse.x = sbus_buf[6] | (sbus_buf[7] << 8);                    //!< Mouse X axis
-    rc_data[CURRNET].mouse.y = sbus_buf[8] | (sbus_buf[9] << 8);                    //!< Mouse Y axis
-    rc_data[CURRNET].mouse.z = sbus_buf[10] | (sbus_buf[11] << 8);                  //!< Mouse Z axis
-    rc_data[CURRNET].mouse.press_l = sbus_buf[12];                                  //!< Mouse Left Is Press ?
-    rc_data[CURRNET].mouse.press_r = sbus_buf[13];                                  //!< Mouse Right Is Press ?
+    rc_data[CURRENT].mouse.x = sbus_buf[6] | (sbus_buf[7] << 8);                    //!< Mouse X axis
+    rc_data[CURRENT].mouse.y = sbus_buf[8] | (sbus_buf[9] << 8);                    //!< Mouse Y axis
+    rc_data[CURRENT].mouse.z = sbus_buf[10] | (sbus_buf[11] << 8);                  //!< Mouse Z axis
+    rc_data[CURRENT].mouse.press_l = sbus_buf[12];                                  //!< Mouse Left Is Press ?
+    rc_data[CURRENT].mouse.press_r = sbus_buf[13];                                  //!< Mouse Right Is Press ?
 
     //键盘数据
-    *(uint16_t *)&rc_data[CURRNET].keyboard = (uint16_t)(sbus_buf[14] | (sbus_buf[15] << 8)); //键盘值
-
+    *(uint16_t *)&rc_data[CURRENT].keyboard = (uint16_t)(sbus_buf[14] | (sbus_buf[15] << 8)); //键盘值
 
     // 保存上一次的数据,用于按键持续按下和切换的判断
-    memcpy(&rc_data[LAST], &rc_data[CURRNET], sizeof(RC_ctrl_t));
+    memcpy(&rc_data[LAST], &rc_data[CURRENT], sizeof(RC_ctrl_t));
 
 }
 

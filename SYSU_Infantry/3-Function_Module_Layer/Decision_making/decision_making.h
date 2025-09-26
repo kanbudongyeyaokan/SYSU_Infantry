@@ -93,6 +93,12 @@ void Robot_set_command();
 */
 void RC_command_set();
 
+void RC_ctrl_set();
+
+void Keyboard_ctrl_set();
+
+
+void Emergency_stop();
 /**
  * @brief 控制输入为键鼠的模式和控制量设置，不做发送
  *

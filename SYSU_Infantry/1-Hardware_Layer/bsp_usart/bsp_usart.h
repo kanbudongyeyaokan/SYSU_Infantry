@@ -8,7 +8,7 @@
 #define RX_BUF_SIZE 128
 
 //串口实例数量
-#define UART_MAX_COUNT 3
+#define UART_MAX_COUNT 4
 
 
 // 模块回调函数,用于解析协议
