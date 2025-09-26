@@ -35,15 +35,16 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf)
     }
     /*数据解析与处理*/
     //摇杆数据
-    rc_data[CURRENT].rc.Lrocker_x = ((sbus_buf[0] | (sbus_buf[1] << 8)) & 0x07ff)-RC_CH_VALUE_OFFSET;        //!< Channel 0
-    rc_data[CURRENT].rc.Lrocker_y = (((sbus_buf[1] >> 3) | (sbus_buf[2] << 5)) & 0x07ff)-RC_CH_VALUE_OFFSET; //!< Channel 1
-    rc_data[CURRENT].rc.Rrocker_x= (((sbus_buf[2] >> 6) | (sbus_buf[3] << 2) |          //!< Channel 2
-                         (sbus_buf[4] << 10)) &0x07ff)-RC_CH_VALUE_OFFSET;
-    rc_data[CURRENT].rc.Rrocker_y= (((sbus_buf[4] >> 1) | (sbus_buf[5] << 7)) & 0x07ff)-RC_CH_VALUE_OFFSET; //!< Channel 3
+    rc_data[CURRENT].rc.Lrocker_x = -(((sbus_buf[0] | (sbus_buf[1] << 8)) & 0x07ff)-RC_CH_VALUE_OFFSET);        //!< Channel 0
+    rc_data[CURRENT].rc.Lrocker_y = -((((sbus_buf[1] >> 3) | (sbus_buf[2] << 5)) & 0x07ff)-RC_CH_VALUE_OFFSET); //!< Channel 1
+    rc_data[CURRENT].rc.Rrocker_x= -((((sbus_buf[2] >> 6) | (sbus_buf[3] << 2) |          //!< Channel 2
+                         (sbus_buf[4] << 10)) &0x07ff)-RC_CH_VALUE_OFFSET);
+    rc_data[CURRENT].rc.Rrocker_y= -((((sbus_buf[4] >> 1) | (sbus_buf[5] << 7)) & 0x07ff)-RC_CH_VALUE_OFFSET); //!< Channel 3
+    rc_data[CURRENT].rc.dial = -(((sbus_buf[16] | (sbus_buf[17] << 8)) & 0x07FF) - RC_CH_VALUE_OFFSET);
     Rectify_rc_data();
     //左右开关数据
-    rc_data[CURRENT].rc.Lswitch= ((sbus_buf[5] >> 4) & 0x0003);                  //!< Switch left
-    rc_data[CURRENT].rc.Rswitch= ((sbus_buf[5] >> 4) & 0x000C) >> 2;                       //!< Switch right
+    rc_data[CURRENT].rc.Rswitch= ((sbus_buf[5] >> 4) & 0x0003);                  //!< Switch left
+    rc_data[CURRENT].rc.Lswitch= ((sbus_buf[5] >> 4) & 0x000C) >> 2;                       //!< Switch right
     //鼠标数据解析
     rc_data[CURRENT].mouse.x = sbus_buf[6] | (sbus_buf[7] << 8);                    //!< Mouse X axis
     rc_data[CURRENT].mouse.y = sbus_buf[8] | (sbus_buf[9] << 8);                    //!< Mouse Y axis

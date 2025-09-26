@@ -104,7 +104,10 @@ void Send_command_to_all_task()
 */
 void Robot_set_command()
 {
-    printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
+    printf("rc_data[CURRENT].rc.Rrocker_x:%d\r\n",rc_data[CURRENT].rc.Rrocker_x);
+    printf("rc_data[CURRENT].rc.dial:%d\r\n",rc_data[CURRENT].rc.dial);
+    //printf("rc_data[CURRENT].rc.Lswitch:%d\r\n",rc_data[CURRENT].rc.Lswitch);
+    //printf("rc_data[CURRENT].rc.Rswitch:%d\r\n",rc_data[CURRENT].rc.Rswitch);
     //左边开关打下，进入遥控器控制模式
     if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_DOWN)
     {

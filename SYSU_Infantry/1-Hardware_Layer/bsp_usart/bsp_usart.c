@@ -87,10 +87,10 @@ void Uart_sendData(Uart_instance_t *uart_instance,uint8_t* data,uint16_t length)
  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-    printf("huart3\r\n");
-    if (huart == &huart3) {
-        printf("huart3\r\n");
-    }
+   // printf("huart3\r\n");
+   // if (huart == &huart3) {
+   //     printf("huart3\r\n");
+   // }
     //检索已经注册的串口实例，调用回调函数并开启DMA空闲中断接收
     for (uint8_t i = 0; i < uart_ix; ++i)
     {
