@@ -1,9 +1,32 @@
-//
-// Created by 26524 on 2025/8/27.
-//
+/**
+* @file    Gimbal_task.c
+ * @brief   云台控制任务源文件
+ * @author  SYSU电控组
+ * @date    2025-09-20
+ * @version 1.0
+ *
+ * @note    调用来自方法层中的云台接口进行云台控制
+ */
 
-// 暂时为空的实现，避免空翻译单元警告
-void shoot_task_placeholder(void)
-{
-    // TODO: 实现发射任务
+#include "Shoot_task.h"
+#include "shoot.h"
+#include "cmsis_os.h"
+
+
+/**
+ * @brief 发射机构控制任务函数
+ * @param argument 任务参数（未使用）
+ * @note 按照应用层设计，此任务只负责调用功能模块层接口执行控制
+ */
+void Shoot_control_task(void const *argument) {
+    //任务初始化
+    Shoot_task_init();
+
+    for (;;) {
+        //处理控制指令
+        Shoot_handle_command();
+
+        //修改控制频率
+        osDelay(2);
+    }
 }

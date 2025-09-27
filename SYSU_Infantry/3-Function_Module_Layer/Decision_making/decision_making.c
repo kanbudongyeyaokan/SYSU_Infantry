@@ -163,7 +163,7 @@ void RC_ctrl_set()
         shoot_cmd_send.shoot_mode = SHOOT_OFF;
     }
     //左边拨轮往上打到底，开始发射子弹
-    if (rc_data[CURRENT].rc.dial < -500)
+    if (rc_data[CURRENT].rc.dial < -400)
     {
         shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;//连发
     }
