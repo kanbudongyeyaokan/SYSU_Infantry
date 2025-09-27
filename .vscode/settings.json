@@ -8,7 +8,8 @@
     "motor_control.h": "c",
     "main.h": "c",
     "freertos.h": "c",
-    "bmi088.h": "c"
+    "bmi088.h": "c",
+    "decision_making_task.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

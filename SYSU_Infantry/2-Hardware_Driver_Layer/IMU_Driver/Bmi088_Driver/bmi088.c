@@ -70,7 +70,7 @@ static void Write_data_to_acc(Bmi088_device_t* bmi088, uint8_t addr, uint8_t dat
     HAL_SPI_Transmit(bmi088->config.spi_handle, &pTxData, 1, 1000);
     while (HAL_SPI_GetState(bmi088->config.spi_handle) == HAL_SPI_STATE_BUSY_TX)
         ;
-    DWT_delay_ms(1);
+    HAL_Delay(1);
     HAL_GPIO_WritePin(bmi088->config.accel_cs_gpio_port, bmi088->config.accel_cs_gpio_pin, GPIO_PIN_SET);
 }
 
@@ -85,7 +85,7 @@ static void Write_data_to_gyro(Bmi088_device_t* bmi088, uint8_t addr, uint8_t da
     HAL_SPI_Transmit(bmi088->config.spi_handle, &pTxData, 1, 1000);
     while (HAL_SPI_GetState(bmi088->config.spi_handle) == HAL_SPI_STATE_BUSY_TX)
         ;
-    DWT_delay_ms(1);
+    HAL_Delay(1);
     HAL_GPIO_WritePin(bmi088->config.gyro_cs_gpio_port, bmi088->config.gyro_cs_gpio_pin, GPIO_PIN_SET);
 }
 
@@ -156,7 +156,7 @@ static void Bmi088_conf_init(Bmi088_device_t* bmi088) {
     // 加速度计初始化
     // 先软重启，清空所有寄存器
     Write_data_to_acc(bmi088, ACC_SOFTRESET_ADDR, ACC_SOFTRESET_VAL);
-    DWT_delay_ms(50);
+    HAL_Delay(50);
     // 打开加速度计电源
     Write_data_to_acc(bmi088, ACC_PWR_CTRL_ADDR, ACC_PWR_CTRL_ON);
     // 加速度计变成正常模式
@@ -165,7 +165,7 @@ static void Bmi088_conf_init(Bmi088_device_t* bmi088) {
     // 陀螺仪初始化
     // 先软重启，清空所有寄存器
     Write_data_to_gyro(bmi088, GYRO_SOFTRESET_ADDR, GYRO_SOFTRESET_VAL);
-    DWT_delay_ms(50);
+    HAL_Delay(50);
     // 陀螺仪变成正常模式
     Write_data_to_gyro(bmi088, GYRO_LPM1_ADDR, GYRO_LPM1_NOR);
 
@@ -207,19 +207,19 @@ static Bmi088_error_e Verify_acc_self_test(Bmi088_device_t* bmi088) {
     
     Write_data_to_acc(bmi088, ACC_RANGE_ADDR, ACC_RANGE_24G);
     Write_data_to_acc(bmi088, ACC_CONF_ADDR, 0xA7);
-    DWT_delay_ms(10);
+    HAL_Delay(10);
     Write_data_to_acc(bmi088, ACC_SELF_TEST_ADDR, ACC_SELF_TEST_POS);
-    DWT_delay_ms(100);
+    HAL_Delay(100);
     data_ptr = Read_acc_data(bmi088);
     pos_data = *data_ptr;  // 复制数据，避免指针被后续调用覆盖
     
     Write_data_to_acc(bmi088, ACC_SELF_TEST_ADDR, ACC_SELF_TEST_NEG);
-    DWT_delay_ms(100);
+    HAL_Delay(100);
     data_ptr = Read_acc_data(bmi088);
     neg_data = *data_ptr;  // 复制数据，避免指针被后续调用覆盖
     
     Write_data_to_acc(bmi088, ACC_SELF_TEST_ADDR, ACC_SELF_TEST_OFF);
-    DWT_delay_ms(100);
+    HAL_Delay(100);
     if ((fabs(pos_data.x - neg_data.x) > 0.1f) || (fabs(pos_data.y - neg_data.y) > 0.1f) || (fabs(pos_data.z - neg_data.z) > 0.1f)) {
         return ACC_DATA_ERR;
     }

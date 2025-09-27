@@ -159,7 +159,7 @@ void Gimbal_handle_command(void) {
                 Djimotor_set_status(pitch_motor, MOTOR_STOP);
                 break;
 
-                //云台陀螺仪反馈模式
+            //云台陀螺仪反馈模式
             case GIMBAL_GYRO_MODE:
                 //使能电机
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
@@ -169,7 +169,7 @@ void Gimbal_handle_command(void) {
                 Djimotor_set_target(yaw_motor, gimbal_cmd_send.yaw);
                 Djimotor_set_target(pitch_motor, gimbal_cmd_send.pitch);
                 break;
-                //云台视觉模式
+            //云台视觉模式
             case GIMBAL_VISION_MODE:
                 //根据视觉补充
 
