@@ -14,7 +14,9 @@
 #define  SoFreq  784
 #define  LaFreq  880
 #define  SiFreq  988
-
+#define DoHighFreq 1047  // C6
+#define ReHighFreq 1175 // D6
+#define MiHighFreq 1319 // E6
 /**********************蜂鸣器配置***************************/
 //蜂鸣器音量设置
 typedef enum {

@@ -1,6 +1,7 @@
 #include "buzzer_driver.h"
-
+#include "tim.h"
 #include <string.h>
+#include "main.h"
 
 // 音量级别对应的占空比映射
 static const float volume_duty_cycle[] = {
@@ -20,13 +21,14 @@ static const float volume_duty_cycle[] = {
  */
 void Buzzer_init(Buzzer_device_t *buzzer, TIM_HandleTypeDef *htim, uint32_t tim_channel)
 {
-    // 启动PWM输出
-    HAL_TIM_PWM_Start(buzzer->htim, buzzer->tim_channel);
+
     //清零
     memset(buzzer, 0, sizeof(Buzzer_device_t));
     // 保存配置参数
     buzzer->htim = htim;
     buzzer->tim_channel = tim_channel;
+    // 启动PWM输出
+    HAL_TIM_PWM_Start(buzzer->htim, buzzer->tim_channel);
     // 设置默认音量
     buzzer->buzzer_volume = MEDIUM;
     //开启蜂鸣器
@@ -43,11 +45,11 @@ void Buzzer_init(Buzzer_device_t *buzzer, TIM_HandleTypeDef *htim, uint32_t tim_
  */
 void Buzzer_set_frequency(Buzzer_device_t *buzzer, uint32_t freq)
 {
-    if (freq == 0 || buzzer->buzzer_state == BUZZER_OFF) {
-        // 静音 - 停止PWM输出
-        HAL_TIM_PWM_Stop(buzzer->htim, buzzer->tim_channel);
-        return;
-    }
+   // if (freq == 0 || buzzer->buzzer_state == BUZZER_OFF) {
+   //     // 静音 - 停止PWM输出
+   //     HAL_TIM_PWM_Stop(buzzer->htim, buzzer->tim_channel);
+   //     return;
+  //  }
 
     // 计算自动重载值 (ARR)
     uint32_t period = (TIMER_CLOCK_FREQ / freq) - 1;
