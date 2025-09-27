@@ -110,7 +110,11 @@ add_executable(${CMAKE_PROJECT_NAME}
 
         3-Function_Module_Layer/Decision_making/decision_making.c
         3-Function_Module_Layer/Decision_making/decision_making.h
-        
+        2-Hardware_Driver_Layer/Buzzer_Driver/buzzer_driver.h
+        2-Hardware_Driver_Layer/Buzzer_Driver/buzzer_driver.c
+        2-Hardware_Driver_Layer/Buzzer_Driver/buzzer_music.h
+        2-Hardware_Driver_Layer/Buzzer_Driver/buzzer_music.c
+
 )
 
 
@@ -144,6 +148,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
+        ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Buzzer_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Gimbal_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Motor_Task

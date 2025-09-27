@@ -128,9 +128,12 @@ int main(void)
   MX_USART6_UART_Init();
   MX_CRC_Init();
   MX_RNG_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   Can_init();
   DWT_Init(168);
+
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
 
   /* USER CODE END 2 */
 

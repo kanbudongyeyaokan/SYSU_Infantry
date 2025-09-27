@@ -4,6 +4,8 @@
 //API调用
 #include "decision_making.h"
 
+#include "main.h"
+#include "tim.h"
 
 /**
  * @brief 机器人决策任务,500Hz频率运行

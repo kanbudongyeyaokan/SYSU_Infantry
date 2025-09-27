@@ -1,0 +1,8 @@
+//
+// Created by 26524 on 2025/9/27.
+//
+
+#ifndef SYSU_INFANTRY_BUZZER_MUSIC_H
+#define SYSU_INFANTRY_BUZZER_MUSIC_H
+
+#endif //SYSU_INFANTRY_BUZZER_MUSIC_H
