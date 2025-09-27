@@ -19,8 +19,8 @@
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
 
-//云台模块的姿态数据副本
-static attitude_t gimbal_imu_data;
+//云台模块的姿态数据指针，指向ins模块的全局变量
+static const attitude_t *gimbal_imu_data;
 
 // 订阅决策层发来的云台控制指令
 static Subscriber_t *gimbal_sub;
@@ -47,9 +47,9 @@ static void Gimbal_motor_init(void) {
             .close_loop = OPEN_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
-            //使用本地姿态数据作为反馈
-            .other_angle_feedback_ptr = &(gimbal_imu_data.euler_angles.yaw),
-            .other_speed_feedback_ptr = &(gimbal_imu_data.gyro_raw.yaw),
+            //使用ins模块姿态数据作为反馈
+            .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.yaw),
+            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.yaw),
             .angle_pid = {
                 .kp = 8,
                 .ki = 0,
@@ -88,9 +88,9 @@ static void Gimbal_motor_init(void) {
             .close_loop = OPEN_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
-            //使用本地姿态数据作为反馈
-            .other_angle_feedback_ptr = &(gimbal_imu_data.euler_angles.pitch),
-            .other_speed_feedback_ptr = &(gimbal_imu_data.gyro_raw.pitch),
+            //使用ins模块姿态数据作为反馈
+            .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.pitch),
+            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.pitch),
             .angle_pid = {
                 .kp = 10,
                 .ki = 0,
@@ -127,6 +127,9 @@ static void Gimbal_motor_init(void) {
  * @brief 云台任务初始化
  */
 void Gimbal_task_init(void) {
+    // 获取ins模块的姿态数据指针
+    gimbal_imu_data = get_attitude_data();
+    
     //初始化云台电机
     Gimbal_motor_init();
 
@@ -141,28 +144,11 @@ void Gimbal_task_init(void) {
     Djimotor_set_target(pitch_motor,PITCH_HORIZON_ANGLE);
 }
 
-/**
- * @brief 更新云台模块的姿态数据
- * @note 该函数应该在云台任务中定期调用，从ins模块获取最新的姿态数据
- */
-static void Gimbal_update_imu_data(void) {
-    // 从ins模块获取最新姿态数据的指针
-    const attitude_t *latest_attitude = get_attitude_data();
-    
-    // 将数据复制到本地静态变量（值拷贝，而非指针）
-    if (latest_attitude != NULL) {
-        gimbal_imu_data = *latest_attitude;
-    }
-}
-
 
 /**
  * @brief 处理云台控制指令
  */
 void Gimbal_handle_command(void) {
-    // 首先更新本地的姿态数据
-    Gimbal_update_imu_data();
-    
     // 从消息中心获取最新的控制指令
     if (Sub_get_message(gimbal_sub, (void *) (&gimbal_cmd_send))) {
         // 根据控制模式进行处理

@@ -1,7 +1,7 @@
 #include "ins.h"
 #include <string.h>
 
-// 全局唯一的姿态数据实例
+// 姿态数据实例
 static attitude_t g_attitude;
 
 /**
