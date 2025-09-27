@@ -17,7 +17,7 @@ typedef struct {
  * @return 返回一个指向全局姿态数据结构体的常量指针
  * @note 返回的是一个指针，指向的数据会由ins_task实时更新
  */
-const attitude_t* get_attitude_data(void);
+attitude_t* get_attitude_data(void);
 
 /**
  * @brief 更新姿态数据（由Ins_task调用）

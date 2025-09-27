@@ -1,10 +1,3 @@
-/**
- * @Author         : Minghang Li
- * @Date           : 2022-11-25 22:54
- * @LastEditTime   : 2025-09-14
- * @Note           : 重构支持多实例
- * @Copyright(c)   : Minghang Li Copyright
- */
 #include "bmi088.h"
 #include "bsp_dwt.h"
 #include <math.h>

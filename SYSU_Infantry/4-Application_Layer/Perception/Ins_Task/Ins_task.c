@@ -1,7 +1,11 @@
 #include "Ins_task.h"
+
+#include <stdio.h>
+
 #include "cmsis_os.h"
 #include "ins.h"
 #include "bmi088.h"
+#include "main.h"
 
 // BMI088设备实例
 static Bmi088_device_t *bmi088_device;
@@ -57,6 +61,9 @@ void Ins_task(void const *argument)
             {
                 update_attitude_data(acc_data, gyro_data, euler_angles);
             }
+            printf("euler_yaw:%f\r\n",euler_angles->yaw);
+           // printf("euler_pitch:%f\r\n",euler_angles->pitch);
+           // printf("euler_roll:%f\r\n",euler_angles->roll);
         }
         // 1000Hz
         osDelay(1);

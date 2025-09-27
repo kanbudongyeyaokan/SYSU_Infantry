@@ -149,7 +149,7 @@ void Chassis_init()
  */
 void Chassis_handle_command(void)
 {
-    printf("speed is:%f",chassis_motors[0]->motor_measure.angular_velocity);
+   // printf("speed is:%f",chassis_motors[0]->motor_measure.angular_velocity);
     // 从消息中心获取最新的底盘控制指令
     if (Sub_get_message(chassis_cmd_sub, &chassis_cmd_recv)) {
         //底盘四个电机的输出

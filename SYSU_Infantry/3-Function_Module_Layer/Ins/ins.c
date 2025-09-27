@@ -8,7 +8,7 @@ static attitude_t g_attitude;
  * @brief 获取最新的姿态数据
  * @return 返回一个指向全局姿态数据结构体的常量指针
  */
-const attitude_t* get_attitude_data(void)
+attitude_t* get_attitude_data(void)
 {
     return &g_attitude;
 }

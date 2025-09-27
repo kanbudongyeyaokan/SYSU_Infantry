@@ -20,7 +20,7 @@
 static Djimotor_device_t *yaw_motor, *pitch_motor;
 
 //云台模块的姿态数据指针，指向ins模块的全局变量
-static const attitude_t *gimbal_imu_data;
+static attitude_t *gimbal_imu_data;
 
 // 订阅决策层发来的云台控制指令
 static Subscriber_t *gimbal_sub;
@@ -60,8 +60,8 @@ static void Gimbal_motor_init(void) {
                 //可补充
             },
             .speed_pid = {
-                .kp = 50,
-                .ki = 200,
+                .kp = 5,
+                .ki = 0,
                 .kd = 0,
                 .deadband = 0.1f,
                 .max_out = 3000,
@@ -100,8 +100,8 @@ static void Gimbal_motor_init(void) {
                 //可补充
             },
             .speed_pid = {
-                .kp = 50,
-                .ki = 350,
+                .kp = 5,
+                .ki = 0,
                 .kd = 0,
                 .deadband = 0.1f,
                 .max_out = 2500,
