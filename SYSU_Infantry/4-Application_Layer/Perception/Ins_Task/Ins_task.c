@@ -61,9 +61,34 @@ void Ins_task(void const *argument)
             {
                 update_attitude_data(acc_data, gyro_data, euler_angles);
             }
-            printf("euler_yaw:%f\r\n",euler_angles->yaw);
-           // printf("euler_pitch:%f\r\n",euler_angles->pitch);
-           // printf("euler_roll:%f\r\n",euler_angles->roll);
+            
+            // 调试打印 - 欧拉角
+            printf("euler_yaw:%f\r\n", euler_angles->yaw);
+            
+            // 调试打印 - 原始陀螺仪数据
+            printf("gyro_raw: x:%f, y:%f, z:%f\r\n", 
+                   gyro_data->roll, gyro_data->pitch, gyro_data->yaw);
+            
+            // 调试打印 - 四元数
+            printf("quaternion: q0:%f, q1:%f, q2:%f, q3:%f\r\n", 
+                   bmi088_device->data.ekf_state.quaternion.q0,
+                   bmi088_device->data.ekf_state.quaternion.q1,
+                   bmi088_device->data.ekf_state.quaternion.q2,
+                   bmi088_device->data.ekf_state.quaternion.q3);
+            
+            // 调试打印 - 陀螺仪零偏
+            printf("gyro_bias: x:%f, y:%f, z:%f\r\n", 
+                   bmi088_device->data.ekf_state.gyro_bias[0],
+                   bmi088_device->data.ekf_state.gyro_bias[1],
+                   bmi088_device->data.ekf_state.gyro_bias[2]);
+            
+            // 调试打印 - 静态状态
+            printf("is_static:%d, static_count:%d\r\n", 
+                   bmi088_device->data.ekf_state.is_static,
+                   bmi088_device->data.ekf_state.static_count);
+                   
+            printf("===================\r\n");
+
         }
         // 1000Hz
         osDelay(1);
