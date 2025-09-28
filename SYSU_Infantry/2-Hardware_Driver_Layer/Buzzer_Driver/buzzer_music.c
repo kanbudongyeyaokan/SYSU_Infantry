@@ -3,8 +3,6 @@
 #include "buzzer_music.h"
 #include "tim.h"
 
-// 定义蜂鸣器实例
-Buzzer_device_t system_buzzer;
 // 《小星星》乐谱
 static const Note_t twinkle_twinkle[] = {
     // 第一句：一闪一闪亮晶晶
@@ -46,6 +44,7 @@ static const Note_t super_mario[] = {
     {0, 0}
 };
 
+/*播放小星星*/
 void Play_Twinkle_Twinkle(Buzzer_device_t* buzzer)
 {
     // 设置中高音量
@@ -66,7 +65,7 @@ void Play_Twinkle_Twinkle(Buzzer_device_t* buzzer)
     // 停止蜂鸣器
     Buzzer_set_frequency(buzzer, 0);
 }
-
+/*播放马里奥*/
 void Play_Super_Mario(Buzzer_device_t* buzzer) {
     // 设置中高音量
     Buzzer_set_volume(buzzer, MEDIUM);

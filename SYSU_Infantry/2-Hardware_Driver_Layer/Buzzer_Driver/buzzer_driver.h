@@ -50,9 +50,10 @@ void Buzzer_set_frequency(Buzzer_device_t *buzzer,uint32_t freq);
 void Buzzer_set_volume(Buzzer_device_t *buzzer,Buzzer_volume_e volume);
 
 //蜂鸣器开启
-void Buzzer_Start(Buzzer_device_t *buzzer);
+void Buzzer_start(Buzzer_device_t *buzzer);
+
 //蜂鸣器停止
-void Buzzer_Stop(Buzzer_device_t *buzzer);
+void Buzzer_stop(Buzzer_device_t *buzzer);
 
 
 

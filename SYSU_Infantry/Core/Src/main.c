@@ -131,6 +131,7 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   Can_init();
+
   DWT_Init(168);
 
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);

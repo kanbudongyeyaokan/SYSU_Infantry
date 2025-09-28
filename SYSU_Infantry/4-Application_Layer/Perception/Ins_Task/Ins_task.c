@@ -6,6 +6,7 @@
 #include "ins.h"
 #include "bmi088.h"
 #include "main.h"
+#include "bsp_dwt.h"
 
 // BMI088设备实例
 static Bmi088_device_t *bmi088_device;
@@ -63,8 +64,11 @@ void Ins_task(void const *argument)
             }
             
             // 调试打印 - 欧拉角
-            printf("euler_yaw:%f\r\n", euler_angles->yaw);
-            
+           // printf("yaw:%f\r\n", euler_angles->yaw);
+            printf("pitch:%f\r\n", euler_angles->pitch);
+           // printf("roll:%f\r\n", euler_angles->roll);
+            //DWT_delay_ms(0);
+            /*
             // 调试打印 - 原始陀螺仪数据
             printf("gyro_raw: x:%f, y:%f, z:%f\r\n", 
                    gyro_data->roll, gyro_data->pitch, gyro_data->yaw);
@@ -88,7 +92,7 @@ void Ins_task(void const *argument)
                    bmi088_device->data.ekf_state.static_count);
                    
             printf("===================\r\n");
-
+            */
         }
         // 1000Hz
         osDelay(1);
