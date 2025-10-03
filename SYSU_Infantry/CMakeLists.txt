@@ -130,11 +130,15 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         # Add user sources here
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task/robot_task.c
+        ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c
+        ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_sin_f32.c
+        ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Source/CommonTables/arm_common_tables.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         # Add user defined include paths
+        ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Include
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usart
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_dwt
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
@@ -173,11 +177,15 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
         # Add user defined symbols
+        ARM_MATH_CM4
+        ARM_MATH_MATRIX_CHECK
+        __FPU_PRESENT=1
 )
 
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
-        stm32cubemx
+                stm32cubemx
 
-        # Add user defined libraries
+                # Add user defined libraries
+                m
 )

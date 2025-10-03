@@ -6,6 +6,7 @@
 #include "algorithm_pid.h"
 #include "string.h"
 #include "robot_definitions.h"
+#include <stdbool.h>
 
 #define MAX_MOTOR_COUNT 16
 
@@ -52,21 +53,22 @@ typedef enum
 }Djimotor_feedback_source_e;
 
 /**DJI电机反馈信息**/
-#pragma pack(1)
 typedef struct
 {
     uint16_t last_ecd;          //上一次记录的编码器值，编码器值（0-8191）
     uint16_t current_ecd;       //当前编码器值
     float current_angle;        //当前电机角度
+    float angle_single_round;   // 单圈角度（0-360）
+    int32_t total_round;        // 累积圈数
+    float total_angle;          // 多圈角度
     float angular_velocity;     //电机转速，单位：【rpm】
     float linear_velocity;      //电机线速度
     int16_t real_current;       //电机实际电流
     uint8_t  motor_temperature;//电机实际温度
+    bool total_angle_initialized; // 多圈角度是否初始化
 }Djimotor_measure_t;
-#pragma pack()
 
 /**单个场景的PID配置**/
-#pragma pack(1)
 typedef struct
 {
     Djimotor_closeloop_e close_loop;       //电机控制模式
@@ -74,10 +76,8 @@ typedef struct
     Pid_init_t angle_pid;       //角度PID参数
     Pid_init_t speed_pid;       //速度PID参数
 }Djimotor_scene_config_t;
-#pragma pack()
 
 /**DJI电机控制器结构体**/
-#pragma pack(1)
 typedef struct
 {
     Djimotor_closeloop_e close_loop;       //当前电机模式
@@ -93,9 +93,7 @@ typedef struct
     float pid_target;           //PID目标量
     
 }Djimotor_controller_t;
-#pragma pack()
 
-#pragma pack(1)
 typedef struct
 {
     Djimotor_closeloop_e close_loop;       //电机模式
@@ -107,10 +105,8 @@ typedef struct
     Pid_init_t angle_pid;       //角度PID初始化
     Pid_init_t speed_pid;       //速度PID初始化
 }Djimotor_controller_init_t;
-#pragma pack()
 
 /**DJI电机实例**/
-#pragma pack(1)
 typedef struct
 {
     char motor_name[16];                //电机名
@@ -121,10 +117,8 @@ typedef struct
     Can_controller_t *can_controller;   //电机自身的CAN管理者
     int16_t deadzone_compensation;      // 电机死区补偿值，一般用于开环控制抵抗静摩擦
 }Djimotor_device_t;
-#pragma pack()
 
 /**电机初始化结构体**/
-#pragma pack(1)
 typedef struct
 {
     char motor_name[16];                //电机名
@@ -134,7 +128,6 @@ typedef struct
     Djimotor_controller_init_t motor_controller_init;
     Can_init_t can_init;
 }Djimotor_init_config_t;
-#pragma pack()
 
 
 /****************************电机方法接口******************************/

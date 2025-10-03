@@ -10,6 +10,10 @@ typedef struct {
     Acc_raw_data_t accel_raw;       // 加速度计原始数据
     Gyro_raw_data_t gyro_raw;       // 陀螺仪原始数据
     Euler_angles_t euler_angles;    // 解算后的欧拉角 (Roll, Pitch, Yaw)
+    float yaw_total_angle;          // 累积多圈的Yaw角（单位：度）
+    float yaw_rate_dps;             // Yaw角速度（单位：度/秒）
+    int32_t yaw_round_count;        // 累积圈数
+    Imu_state_e state;              // IMU整体状态
 } attitude_t;
 
 /**
@@ -25,6 +29,15 @@ attitude_t* get_attitude_data(void);
  * @param gyro 最新的陀螺仪数据
  * @param euler 最新的欧拉角数据
  */
-void update_attitude_data(const Acc_raw_data_t* acc, const Gyro_raw_data_t* gyro, const Euler_angles_t* euler);
+void update_attitude_data(const Acc_raw_data_t* acc,
+                          const Gyro_raw_data_t* gyro,
+                          const Euler_angles_t* euler,
+                          const float* yaw_total_angle,
+                          Imu_state_e state);
+
+/**
+ * @brief 查询INS当前状态
+ */
+Imu_state_e ins_get_state(void);
 
 #endif //SYSU_INFANTRY_INS_H

@@ -26,6 +26,8 @@ typedef struct {
     uint16_t gyro_cs_gpio_pin;            /*!< 陀螺仪片选GPIO引脚 */
     bool enable_accel_self_test;          /*!< 启用加速度计自检 */
     bool enable_gyro_self_test;           /*!< 启用陀螺仪自检 */
+    float accel_rotation[3][3];           /*!< 加速度计->机体系旋转矩阵 */
+    float gyro_rotation[3][3];            /*!< 陀螺仪->机体系旋转矩阵 */
 } Bmi088_config_t;
 
 typedef struct {
@@ -62,11 +64,19 @@ typedef enum {
     GYRO_DATA_ERR = 0x08,
 } Bmi088_error_e;
 
+typedef enum {
+    IMU_STATE_INIT = 0,
+    IMU_STATE_CALIBRATING,
+    IMU_STATE_READY,
+    IMU_STATE_ERROR
+} Imu_state_e;
+
 typedef struct {
     Acc_data_t acc_data;
     Gyro_data_t gyro_data;      /*!< 陀螺仪数据 */
-    Ekf_state_t ekf_state;      /*!< EKF状态 */
+    Ekf_state_t ekf_state;      /*!< EKF计算用状态 */
     Bmi088_error_e bmi088_error;
+    Imu_state_e state;          /*!< IMU/EKF是否就绪的状态 */
 } Bmi088_data_t;
 
 /**
@@ -130,7 +140,33 @@ float* Read_acc_sensor_time(Bmi088_device_t* bmi088);
  */
 float* Read_acc_temperature(Bmi088_device_t* bmi088);
 
+/**
+ * @brief 获取BMI088当前温度（用于EKF温度补偿）
+ * @param bmi088 BMI088设备结构体指针
+ * @return 当前温度值（摄氏度），如果设备无效则返回25.0f
+ * @note 这是对Read_acc_temperature的简单封装，方便INS任务调用
+ */
+float Bmi088_get_temperature(Bmi088_device_t* bmi088);
+
 // EKF相关函数
+
+/**********************************************************************************************************
+ * @attention
+ * 
+ * IMU坐标系与机体坐标系转换:
+ * 为了适应不同的IMU安装方向，从传感器读取的原始数据需要先转换到机体坐标系(Body Frame)，
+ * 然后再送入EKF进行姿态解算。
+ * 
+ * 机体坐标系 (Body Frame) 定义:
+ *   - X轴: 指向机器人前方
+ *   - Y轴: 指向机器人左侧
+ *   - Z轴: 垂直向上
+ * 
+ * 坐标变换在 `Bmi088_ekf_update` 函数中实现。
+ * 请根据IMU模块在您机器人上的实际安装方向，修改该函数中的坐标映射关系。
+ * 
+ ***********************************************************************************************************/
+
 /**
  * @brief 初始化EKF参数和状态
  * @param bmi088 BMI088设备结构体指针

@@ -9,12 +9,15 @@
  */
 
 //
+#include <stdbool.h>
+
 #include "gimbal.h"
 #include "dji_motor.h"
 #include "decision_making.h"
 #include "message_center.h"
 #include "ins.h"
 #include "robot_definitions.h"
+
 
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
@@ -32,6 +35,9 @@ static Publisher_t*gimbal_pub;
 // 存储发送给决策层的反馈信息
 static Gimbal_feedback_info_t gimbal_feedback;
 
+// 记录 INS 是否已进入 READY 状态
+static bool gimbal_ins_ready = false;
+
 
 
 /**
@@ -42,14 +48,14 @@ static void Gimbal_motor_init(void) {
     Djimotor_init_config_t yaw_config = {
         .motor_name = "yaw_motor",
         .motor_type = GM6020,
-        .motor_status = MOTOR_ENABLED,
+        .motor_status = MOTOR_STOP,
         .motor_controller_init = {
-            .close_loop = OPEN_LOOP,
+            .close_loop = ANGLE_AND_SPEED_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
             //使用ins模块姿态数据作为反馈
-            .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.yaw),
-            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.yaw),
+            .other_angle_feedback_ptr = &(gimbal_imu_data->yaw_total_angle),
+            .other_speed_feedback_ptr = &(gimbal_imu_data->yaw_rate_dps),
             .angle_pid = {
                 .kp = 8,
                 .ki = 0,
@@ -83,16 +89,16 @@ static void Gimbal_motor_init(void) {
     Djimotor_init_config_t pitch_config = {
         .motor_name = "pitch_motor",
         .motor_type = GM6020,
-        .motor_status = MOTOR_ENABLED,
+        .motor_status = MOTOR_STOP,
         .motor_controller_init = {
-            .close_loop = OPEN_LOOP,
+            .close_loop = ANGLE_AND_SPEED_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
             //使用ins模块姿态数据作为反馈
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.pitch),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.pitch),
             .angle_pid = {
-                .kp = 10,
+                .kp = 2,
                 .ki = 0,
                 .kd = 0,
                 .max_out = 500,
@@ -100,7 +106,7 @@ static void Gimbal_motor_init(void) {
                 //可补充
             },
             .speed_pid = {
-                .kp = 5,
+                .kp = 2,
                 .ki = 0,
                 .kd = 0,
                 .deadband = 0.1f,
@@ -140,8 +146,8 @@ void Gimbal_task_init(void) {
     gimbal_pub = Pub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
 
     //云台归零
-    Djimotor_set_target(yaw_motor, YAW_ALIGN_ANGLE);
-    Djimotor_set_target(pitch_motor,PITCH_HORIZON_ANGLE);
+    // Djimotor_set_target(yaw_motor, YAW_ALIGN_ANGLE);
+    // Djimotor_set_target(pitch_motor,PITCH_HORIZON_ANGLE);
 }
 
 
@@ -149,6 +155,26 @@ void Gimbal_task_init(void) {
  * @brief 处理云台控制指令
  */
 void Gimbal_handle_command(void) {
+    Imu_state_e imu_state = ins_get_state();
+
+    if (imu_state == IMU_STATE_READY) {
+        if (!gimbal_ins_ready) {
+            gimbal_ins_ready = true;
+            // 首次进入 READY，重新对齐机械零位并使能闭环
+            Djimotor_set_target(yaw_motor, YAW_ALIGN_ANGLE);
+            Djimotor_set_target(pitch_motor, PITCH_HORIZON_ANGLE);
+            Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
+            Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
+        }
+    } else {
+        if (gimbal_ins_ready) {
+            gimbal_ins_ready = false;
+            // IMU 未就绪时停机，避免错误姿态参与闭环
+            Djimotor_set_status(yaw_motor, MOTOR_STOP);
+            Djimotor_set_status(pitch_motor, MOTOR_STOP);
+        }
+    }
+
     // 从消息中心获取最新的控制指令
     if (Sub_get_message(gimbal_sub, (void *) (&gimbal_cmd_send))) {
         // 根据控制模式进行处理
@@ -161,6 +187,7 @@ void Gimbal_handle_command(void) {
 
             //云台陀螺仪反馈模式
             case GIMBAL_GYRO_MODE:
+
                 //使能电机
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
@@ -168,6 +195,7 @@ void Gimbal_handle_command(void) {
                 //设置电机目标值
                 Djimotor_set_target(yaw_motor, gimbal_cmd_send.yaw);
                 Djimotor_set_target(pitch_motor, gimbal_cmd_send.pitch);
+            
                 break;
             //云台视觉模式
             case GIMBAL_VISION_MODE:
@@ -178,10 +206,17 @@ void Gimbal_handle_command(void) {
             default:
                 break;
         }
-        //反馈数据
-        gimbal_feedback.yaw_motor_angle = yaw_motor->motor_measure.current_angle;
+    }
 
-        //推送消息
+    //反馈数据
+    gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.angle_single_round;
+    gimbal_feedback.yaw_motor_total_angle = yaw_motor->motor_measure.total_angle;
+    gimbal_feedback.imu_yaw_total_angle = gimbal_imu_data->yaw_total_angle;
+    gimbal_feedback.imu_yaw_rate = gimbal_imu_data->yaw_rate_dps;
+    gimbal_feedback.imu_state = imu_state;
+
+    //推送消息
+    if (gimbal_pub != NULL) {
         Pub_push_message(gimbal_pub, (void *) &gimbal_feedback);
     }
 }

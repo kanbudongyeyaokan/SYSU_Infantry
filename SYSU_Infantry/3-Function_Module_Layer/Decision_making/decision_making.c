@@ -12,12 +12,15 @@
 #include "message_center.h"
 //状态机获取
 #include "robot_definitions.h"
-//遥控器控制、
+//遥控器控制
 #include <stdio.h>
-
 #include "remote_control.h"
-
 #include "main.h"
+#include <stdbool.h>
+#include <math.h>
+
+
+
 /**********************发出决策信息***************************/
 //存储遥控器数据，CURRENT-当前数据,LAST-上一次数据
 static RC_ctrl_t *rc_data;
@@ -48,6 +51,9 @@ static Chassis_feedback_info_t chassis_feedback_recv;   //存储底盘应用层�
 static Subscriber_t *gimbal_feedback_sub;                //云台反馈信息订阅者
 static Gimbal_feedback_info_t  gimbal_feedback_recv;    //存储云台应用层发给决策层的信息
 
+static bool gimbal_yaw_initialized = false;
+
+
 //发射机构反馈数据读取
 static Subscriber_t *shoot_feedback_sub;                 //发射反馈信息订阅者
 static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层发给决策层的信息
@@ -76,6 +82,12 @@ void Decision_making_task_init()
     //机器人开始工作
     robot_state = ROBOT_ON;
 
+    gimbal_cmd_send.yaw = 0.0f;
+    gimbal_cmd_send.pitch = 0.0f;
+    gimbal_yaw_initialized = false;
+    chassis_cmd_send.gimbal_yaw_total_angle = 0.0f;
+    chassis_cmd_send.gimbal_yaw_rate = 0.0f;
+
 }
 
 void Receive_feedback_infomation()
@@ -84,6 +96,11 @@ void Receive_feedback_infomation()
     Sub_get_message(chassis_feedback_sub,(void *)(&chassis_feedback_recv));
     //获取云台反馈信息
     Sub_get_message(gimbal_feedback_sub,(void *)(&gimbal_feedback_recv));
+    if (!gimbal_yaw_initialized)
+    {
+        gimbal_cmd_send.yaw = gimbal_feedback_recv.yaw_motor_total_angle;
+        gimbal_yaw_initialized = true;
+    }
     //获取发射机构反馈信息
     Sub_get_message(shoot_feedback_sub,(void *)(&shoot_feedback_recv));
 }
@@ -111,18 +128,17 @@ void Robot_set_command()
     // printf("rc_data[CURRENT].rc.dial:%d\r\n",rc_data[CURRENT].rc.dial);
     //printf("rc_data[CURRENT].rc.Lswitch:%d\r\n",rc_data[CURRENT].rc.Lswitch);
     //printf("rc_data[CURRENT].rc.Rswitch:%d\r\n",rc_data[CURRENT].rc.Rswitch);
-    //左边开关打下，进入遥控器控制模式
-    if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_DOWN)
-    {
+     //左边开关打下，进入遥控器控制模式
+   if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_DOWN)
+   {
         RC_ctrl_set();
     }
-    //左边开关打上，进入键盘控制模式
-    else if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_UP)
+    //左边开关打上，进入单发模式
+      else if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_UP)
     {
         Keyboard_ctrl_set();
-    }
+    } 
 }
-
 
 /**
  * @brief 控制输入为遥控器(调试时)的模式和控制量设置
@@ -139,21 +155,21 @@ void RC_ctrl_set()
         chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
     }
-    //如果右边开关打中间，则底盘进入小陀螺模式，云台进入自由模式
+    //如果右边开关打上，则进入底盘自由模式，此时底盘不跟随云台
     else if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_MID)
     {
-        chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
-        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
+        chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
     }
-    //如果右边开关打上，则进入底盘自由模式，此时底盘不跟随云台
+    //如果右边开关打中间，则底盘进入小陀螺模式，云台进入自由模式
     else if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_UP)
     {
-        chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
-        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
+        chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
     }
     /**射击模式设定**/
     //左边拨轮往上打开启摩擦轮,进入准备射击模式
-    if (rc_data[CURRENT].rc.dial < -100)
+    if (rc_data[CURRENT].rc.dial > 150)
     {
         shoot_cmd_send.shoot_mode = SHOOT_ON;
     }
@@ -162,16 +178,24 @@ void RC_ctrl_set()
     {
         shoot_cmd_send.shoot_mode = SHOOT_OFF;
     }
-    //左边拨轮往上打到底，开始发射子弹
-    if (rc_data[CURRENT].rc.dial < -400)
-    {
-        shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;//连发
-    }
+     //左边拨轮往上打到底，开始发射子弹
+ 
+     if (rc_data[CURRENT].rc.dial > 450)
+        {
+            shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;//连发
+            shoot_cmd_send.shoot_rate = 8;//每分钟80发
+        }
+        //正常情况下不发射子弹
+        else
+        {
+            shoot_cmd_send.loader_mode = LOAD_STOP;     //
+        }
+    
+    
+
+
     //正常情况下不发射子弹
-    else
-    {
-        shoot_cmd_send.loader_mode = LOAD_STOP;     //
-    }
+
     //急停模式
     Emergency_stop();
     /****************控制量设定*****************/
@@ -185,12 +209,11 @@ void RC_ctrl_set()
     chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
 
     //云台控制量
-    gimbal_cmd_send.yaw += 0.018f * (float)rc_data[CURRENT].rc.Rrocker_x;
+    gimbal_cmd_send.yaw += 0.005f * (float)rc_data[CURRENT].rc.Rrocker_x;
     gimbal_cmd_send.pitch += 0.01f * (float)(rc_data[CURRENT].rc.Rrocker_y);
+
     
-    //发射机构控制量
-    // 射频控制,固定每秒1发
-    shoot_cmd_send.shoot_rate = 10; 
+   
 
 }
 
@@ -200,13 +223,71 @@ void RC_ctrl_set()
 */
 void Keyboard_ctrl_set()
 {
+     if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_DOWN)
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
+    }
+    //如果右边开关打上，则进入底盘自由模式，此时底盘不跟随云台
+    else if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_MID)
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
+    }
+    //如果右边开关打中间，则底盘进入小陀螺模式，云台进入自由模式
+    else if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_UP)
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
+    }
+     /**射击模式设定**/
+    //左边拨轮往上打开启摩擦轮,进入准备射击模式
+    if (rc_data[CURRENT].rc.dial > 150)
+    {
+        shoot_cmd_send.shoot_mode = SHOOT_ON;
+    }
+    //正常情况下不打开摩擦轮
+    else
+    {
+        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+    }
+//正常情况下不发射子弹
+  
+    if (rc_data[CURRENT].rc.dial > 300 ){
+        shoot_cmd_send.loader_mode =  LOAD_1_BULLET;//单发
+    }
+  else
+    {
+        shoot_cmd_send.loader_mode = LOAD_STOP;     //
+    }
+    
+    //急停模式
+    Emergency_stop();
+    /****************控制量设定*****************/
+    //底盘控制量
+     /*后续可增加死区限制，解决遥控器通道值因老化而造成的零漂问题*/
+    if (rc_data[CURRENT].rc.Lrocker_y>=-32&&rc_data[CURRENT].rc.Lrocker_y<=0)
+        chassis_cmd_send.vy=0;
+    else {
+        chassis_cmd_send.vy = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_y; //竖直方向
+    }
+    chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
+
+    //云台控制量
+    gimbal_cmd_send.yaw += 0.005f * (float)rc_data[CURRENT].rc.Rrocker_x;
+    gimbal_cmd_send.pitch += 0.01f * (float)(rc_data[CURRENT].rc.Rrocker_y);
+
     // 键盘控制设置的临时实现
     // 默认模式设置
-    chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
-    gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
-    shoot_cmd_send.shoot_mode = SHOOT_OFF;
-    shoot_cmd_send.loader_mode = LOAD_STOP;
+   // chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+    //gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
+   // shoot_cmd_send.shoot_mode = SHOOT_OFF;
+   // shoot_cmd_send.loader_mode = LOAD_STOP;
     // 这里添加键盘鼠标的具体控制逻辑
+
+    // float yaw_delta = (float)rc_data[TEMP].mouse.x / 660.0f * 10.0f;
+    // gimbal_cmd_send.yaw += yaw_delta;
+    // gimbal_cmd_send.pitch += (float)rc_data[TEMP].mouse.y / 660.0f * 10.0f;
 
 }
 
@@ -225,8 +306,8 @@ void Emergency_stop()
         shoot_cmd_send.shoot_mode = SHOOT_OFF;
         shoot_cmd_send.loader_mode = LOAD_STOP;
     }
-    // 遥控器右侧开关为[上],恢复正常运行
-    if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_UP)
+    // 遥控器右侧开关为[中],恢复正常运行
+    if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_MID)
     {
         robot_state = ROBOT_ON;
     }
@@ -239,22 +320,54 @@ void Emergency_stop()
  */
 void Calc_offset_angle()
 {
+    // 如果机器人处于急停状态，不计算偏差角，直接清零
+    if (robot_state == ROBOT_OFF) {
+        chassis_cmd_send.offset_angle = 0.0f;
+        chassis_cmd_send.gimbal_yaw_total_angle = 0.0f;
+        chassis_cmd_send.gimbal_yaw_rate = 0.0f;
+        return;
+    }
+    
     // 别名angle提高可读性,不然太长了不好看,虽然基本不会动这个函数
     static float angle;
-    angle = gimbal_feedback_recv.yaw_motor_angle; // 从云台获取的当前yaw电机单圈角度
+    static float last_offset_angle = 0.0f; // 记录上一次的偏差角
+    angle = gimbal_feedback_recv.yaw_motor_single_round_angle; // 从云台获取的当前yaw电机单圈角度
+    
+    float temp_offset_angle;
 #if YAW_ECD_GREATER_THAN_4096                               // 如果大于180度
     if (angle > YAW_ALIGN_ANGLE && angle <= 180.0f + YAW_ALIGN_ANGLE)
-        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE;
+        temp_offset_angle = angle - YAW_ALIGN_ANGLE;
     else if (angle > 180.0f + YAW_ALIGN_ANGLE)
-        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE - 360.0f;
+        temp_offset_angle = angle - YAW_ALIGN_ANGLE - 360.0f;
     else
-        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE;
+        temp_offset_angle = angle - YAW_ALIGN_ANGLE;
 #else // 小于180度
     if (angle > YAW_ALIGN_ANGLE)
-        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE;
+        temp_offset_angle = angle - YAW_ALIGN_ANGLE;
     else if (angle <= YAW_ALIGN_ANGLE && angle >= YAW_ALIGN_ANGLE - 180.0f)
-        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE;
+        temp_offset_angle = angle - YAW_ALIGN_ANGLE;
     else
-        chassis_cmd_send.offset_angle = angle - YAW_ALIGN_ANGLE + 360.0f;
+        temp_offset_angle = angle - YAW_ALIGN_ANGLE + 360.0f;
 #endif
+
+    // 检测角度跳变，如果跳变超过180度，说明发生了0/360度边界跨越
+    float angle_diff = temp_offset_angle - last_offset_angle;
+    if (angle_diff > 180.0f) {
+        temp_offset_angle -= 360.0f;
+    } else if (angle_diff < -180.0f) {
+        temp_offset_angle += 360.0f;
+    }
+    
+    // 限制偏差角在-180到180度之间
+    if (temp_offset_angle > 180.0f) {
+        temp_offset_angle -= 360.0f;
+    } else if (temp_offset_angle < -180.0f) {
+        temp_offset_angle += 360.0f;
+    }
+    
+    chassis_cmd_send.offset_angle = temp_offset_angle;
+    last_offset_angle = temp_offset_angle;
+
+    chassis_cmd_send.gimbal_yaw_total_angle = gimbal_feedback_recv.imu_yaw_total_angle;
+    chassis_cmd_send.gimbal_yaw_rate = gimbal_feedback_recv.imu_yaw_rate;
 }

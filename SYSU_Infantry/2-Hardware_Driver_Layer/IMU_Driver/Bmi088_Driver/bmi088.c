@@ -2,6 +2,7 @@
 #include "bsp_dwt.h"
 #include <math.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "bmi088_reg_def.h"
@@ -10,10 +11,32 @@
 
 // 包含EKF模块头文件
 #include "algorithm_ekf.h"
+#include "main.h"
 
 // 静态BMI088设备实例存储区
 static Bmi088_device_t bmi088_instances[1]; // 可以根据需要增加
 static uint8_t bmi088_instance_count = 0;
+
+#define BMI088_INIT_MAX_ATTEMPTS        3U
+#define BMI088_READY_TIMEOUT_MS       300U
+#define BMI088_READY_STABLE_COUNT      10U
+
+static void Bmi088_set_identity_matrix(float matrix[3][3]) {
+    memset(matrix, 0, sizeof(float) * 9);
+    matrix[0][0] = 1.0f;
+    matrix[1][1] = 1.0f;
+    matrix[2][2] = 1.0f;
+}
+
+static bool Bmi088_is_matrix_zero(const float matrix[3][3]) {
+    float sum = 0.0f;
+    for (uint8_t i = 0; i < 3; ++i) {
+        for (uint8_t j = 0; j < 3; ++j) {
+            sum += fabsf(matrix[i][j]);
+        }
+    }
+    return sum < 1e-6f;
+}
 
 /**
  * @brief BMI088设备初始化
@@ -32,30 +55,111 @@ Bmi088_device_t* Bmi088_device_init(Bmi088_config_t* config)
     
     // 复制配置
     bmi088->config = *config;
+    if (Bmi088_is_matrix_zero(bmi088->config.accel_rotation)) {
+        Bmi088_set_identity_matrix(bmi088->config.accel_rotation);
+    }
+    if (Bmi088_is_matrix_zero(bmi088->config.gyro_rotation)) {
+        Bmi088_set_identity_matrix(bmi088->config.gyro_rotation);
+    }
     bmi088->last_error = NO_ERROR;
 
     // 初始化BMI088
+    bmi088->data.bmi088_error = NO_ERROR;
+    bmi088->data.state = IMU_STATE_INIT;
+
     bmi088->last_error = Bmi088_init(bmi088);
-    
+    bmi088->data.bmi088_error = bmi088->last_error;
+    if (bmi088->last_error != NO_ERROR) {
+        bmi088->data.state = IMU_STATE_ERROR;
+    }
+
     return bmi088;
+}
+
+static bool Bmi088_is_sample_valid(const Acc_raw_data_t* acc, const Gyro_raw_data_t* gyro) {
+    if (acc == NULL || gyro == NULL) {
+        return false;
+    }
+    if (!isfinite(acc->x) || !isfinite(acc->y) || !isfinite(acc->z) ||
+        !isfinite(gyro->roll) || !isfinite(gyro->pitch) || !isfinite(gyro->yaw)) {
+        return false;
+    }
+    if (fabsf(acc->x) > 200.0f || fabsf(acc->y) > 200.0f || fabsf(acc->z) > 200.0f) {
+        return false;
+    }
+    if (fabsf(gyro->roll) > 2000.0f || fabsf(gyro->pitch) > 2000.0f || fabsf(gyro->yaw) > 2000.0f) {
+        return false;
+    }
+    return true;
+}
+
+static Bmi088_error_e Bmi088_wait_device_ready(Bmi088_device_t* bmi088, uint32_t timeout_ms) {
+    uint32_t start_tick = HAL_GetTick();
+    uint32_t stable_count = 0U;
+
+    while ((HAL_GetTick() - start_tick) < timeout_ms) {
+        Acc_raw_data_t* acc = Read_acc_data(bmi088);
+        Gyro_raw_data_t* gyro = Read_gyro_data(bmi088);
+
+        if (Bmi088_is_sample_valid(acc, gyro)) {
+            stable_count++;
+            if (stable_count >= BMI088_READY_STABLE_COUNT) {
+                return NO_ERROR;
+            }
+        } else {
+            stable_count = 0U;
+        }
+
+        HAL_Delay(2);
+    }
+
+    return ACC_DATA_ERR;
 }
 
 static Bmi088_error_e Bmi088_init(Bmi088_device_t* bmi088) {
     Bmi088_error_e error = NO_ERROR;
 
-    Bmi088_conf_init(bmi088);
+    bmi088->data.state = IMU_STATE_INIT;
 
-    error |= Verify_acc_chip_id(bmi088);
-    error |= Verify_gyro_chip_id(bmi088);
-    
-    if (bmi088->config.enable_accel_self_test) {
-        error |= Verify_acc_self_test(bmi088);
+    for (uint8_t attempt = 0U; attempt < BMI088_INIT_MAX_ATTEMPTS; ++attempt) {
+        Bmi088_conf_init(bmi088);
+
+        error = Verify_acc_chip_id(bmi088);
+        if (error != NO_ERROR) {
+            HAL_Delay(10);
+            continue;
+        }
+
+        error = Verify_gyro_chip_id(bmi088);
+        if (error != NO_ERROR) {
+            HAL_Delay(10);
+            continue;
+        }
+
+        if (bmi088->config.enable_accel_self_test) {
+            error |= Verify_acc_self_test(bmi088);
+        }
+
+        if (bmi088->config.enable_gyro_self_test) {
+            error |= Verify_gyro_self_test(bmi088);
+        }
+
+        if (error != NO_ERROR) {
+            HAL_Delay(20);
+            continue;
+        }
+
+        error = Bmi088_wait_device_ready(bmi088, BMI088_READY_TIMEOUT_MS);
+        if (error == NO_ERROR) {
+            bmi088->data.state = IMU_STATE_CALIBRATING;
+            break;
+        }
     }
-    
-    if (bmi088->config.enable_gyro_self_test) {
-        error |= Verify_gyro_self_test(bmi088);
+
+    if (error != NO_ERROR) {
+        bmi088->data.state = IMU_STATE_ERROR;
     }
-    
+
     return error;
 }
 
@@ -354,6 +458,11 @@ Bmi088_error_e Bmi088_ekf_init(Bmi088_device_t* bmi088, Ekf_config_t* ekf_config
         return ACC_DATA_ERR; // 使用现有错误类型
     }
     
+    // 确保配置参数完整，特别是fading_factor
+    if (ekf_config->fading_factor <= 0.99f || ekf_config->fading_factor > 1.0f) {
+        ekf_config->fading_factor = 0.9996f; // 使用默认优化值
+    }
+    
     // 调用EKF模块初始化函数
     Ekf_error_e ekf_err = Ekf_init(&bmi088->data.ekf_state, ekf_config);
     if (ekf_err != EKF_NO_ERROR) {
@@ -367,28 +476,69 @@ Bmi088_error_e Bmi088_ekf_init(Bmi088_device_t* bmi088, Ekf_config_t* ekf_config
  * @brief 使用新的传感器数据更新EKF
  */
 Bmi088_error_e Bmi088_ekf_update(Bmi088_device_t* bmi088) {
-    if (bmi088 == NULL || !bmi088->data.ekf_state.is_initialized) {
+    if (bmi088 == NULL ||
+        bmi088->data.state == IMU_STATE_INIT ||
+        bmi088->data.state == IMU_STATE_ERROR ||
+        !bmi088->data.ekf_state.is_initialized) {
+        if (bmi088 != NULL) {
+            bmi088->data.bmi088_error = ACC_DATA_ERR;
+            bmi088->data.state = IMU_STATE_ERROR;
+        }
         return ACC_DATA_ERR;
     }
     
+    static uint32_t last_update_time = 0;
+    uint32_t now = DWT_GetTimeline_ms(); // 使用DWT计时器
+    float dt;
+    
+    if (last_update_time == 0) {
+        dt = 0.001f; // 首次运行使用默认值 1ms
+    } else {
+        dt = (now - last_update_time) * 0.001f; // 转换为秒
+        // 限制dt范围，避免异常值
+        if (dt > 0.1f) dt = 0.001f;   // 最大100ms，超过则使用默认值
+        if (dt < 0.0001f) dt = 0.001f; // 最小0.1ms，小于则使用默认值
+    }
+    last_update_time = now;
+
     // 读取传感器数据
     Acc_raw_data_t* acc_data = Read_acc_data(bmi088);
     Gyro_raw_data_t* gyro_data = Read_gyro_data(bmi088);
     
     if (acc_data == NULL || gyro_data == NULL) {
+        bmi088->data.state = IMU_STATE_ERROR;
+        bmi088->data.bmi088_error = ACC_DATA_ERR;
         return ACC_DATA_ERR;
     }
     
-    // 转换为数组格式
-    float acc[3] = {acc_data->x, acc_data->y, acc_data->z};
-    float gyro[3] = {gyro_data->roll * EKF_DEG_TO_RAD, 
-                     gyro_data->pitch * EKF_DEG_TO_RAD, 
-                     gyro_data->yaw * EKF_DEG_TO_RAD};
+    //----------------- IMU坐标系到机体坐标系转换 -----------------
+    float acc[3];
+    const float (*acc_rot)[3] = bmi088->config.accel_rotation;
+    for (uint8_t i = 0; i < 3; ++i) {
+        acc[i] = acc_rot[i][0] * acc_data->x +
+                 acc_rot[i][1] * acc_data->y +
+                 acc_rot[i][2] * acc_data->z;
+    }
+
+    float gyro[3];
+    const float (*gyro_rot)[3] = bmi088->config.gyro_rotation;
+    for (uint8_t i = 0; i < 3; ++i) {
+        gyro[i] = gyro_rot[i][0] * gyro_data->roll +
+                  gyro_rot[i][1] * gyro_data->pitch +
+                  gyro_rot[i][2] * gyro_data->yaw;
+    }
     
     // 调用EKF模块更新函数
-    Ekf_error_e ekf_err = Ekf_update(&bmi088->data.ekf_state, acc, gyro);
+    Ekf_error_e ekf_err = Ekf_update(&bmi088->data.ekf_state, acc, gyro, dt);
     if (ekf_err != EKF_NO_ERROR) {
+        bmi088->data.state = IMU_STATE_ERROR;
+        bmi088->data.bmi088_error = ACC_DATA_ERR;
         return ACC_DATA_ERR;  // 使用现有错误类型
+    }
+    
+    bmi088->data.bmi088_error = NO_ERROR;
+    if (bmi088->data.state == IMU_STATE_ERROR) {
+        bmi088->data.state = IMU_STATE_CALIBRATING;
     }
     
     return NO_ERROR;
@@ -412,6 +562,18 @@ Euler_angles_t* Bmi088_get_euler_angles(Bmi088_device_t* bmi088) {
         return NULL;
     }
     return &bmi088->data.ekf_state.euler;
+}
+
+/**
+ * @brief 获取BMI088当前温度（用于EKF温度补偿）
+ */
+float Bmi088_get_temperature(Bmi088_device_t* bmi088) {
+    if (bmi088 == NULL) {
+        return 25.0f; // 默认返回25°C
+    }
+    
+    float* temp_ptr = Read_acc_temperature(bmi088);
+    return temp_ptr ? *temp_ptr : 25.0f;
 }
 
 // ===================== 辅助函数实现 =====================

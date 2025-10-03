@@ -16,6 +16,13 @@
 #include "message_center.h"
 #include "math_lib.h"
 #include "main.h"
+#include "arm_math.h"
+
+#define CHASSIS_FOLLOW_YAW_GAIN 0.5f
+#define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
+#define CHASSIS_ROTATE_WZ 400.0f
+#define CHASSIS_MOTOR_PID_MAX_OUT 15000.0f
+
 /****************接收决策层的底盘控制信息********************/
 // 订阅决策层发来的底盘控制指令
 static Subscriber_t *chassis_cmd_sub;
@@ -33,7 +40,6 @@ static Chassis_params_t chassis_params = {0};
 
 /****************底盘电机实例*******************************/
 static Djimotor_device_t *chassis_motors[4] = {0};
-
 
 /*********************************底盘方法接口**************************************/
 /**
@@ -78,7 +84,7 @@ void Chassis_init()
                     .kd = 0,
                     .max_iout = 3000,
                     .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                    .max_out = 15000,
+                    .max_out = CHASSIS_MOTOR_PID_MAX_OUT,
                 }
             },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 1, .rx_id = 0x201}
@@ -96,7 +102,7 @@ void Chassis_init()
                     .kd = 0,
                     .max_iout = 3000,
                     .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                    .max_out = 15000,
+                    .max_out = CHASSIS_MOTOR_PID_MAX_OUT,
                 }
             },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 2, .rx_id = 0x202}
@@ -114,7 +120,7 @@ void Chassis_init()
                     .kd = 0,
                     .max_iout = 3000,
                     .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                    .max_out = 15000,
+                    .max_out = CHASSIS_MOTOR_PID_MAX_OUT,
                 }
             },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 3, .rx_id = 0x203}
@@ -132,7 +138,7 @@ void Chassis_init()
                     .kd = 0,
                     .max_iout = 3000,
                     .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                    .max_out = 15000,
+                    .max_out = CHASSIS_MOTOR_PID_MAX_OUT,
                 }
             },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 4, .rx_id = 0x204}
@@ -156,37 +162,86 @@ void Chassis_handle_command(void)
         static Chassis_output_t chassis_output;
         switch (chassis_cmd_recv.chassis_mode)
         {
-        /* 底盘无力 */
-        case CHASSIS_ZERO_FORCE:
-            for (uint8_t i = 0; i < 4; i++) {
-               Djimotor_set_target(chassis_motors[i],0);
-            }    
-            break;
-        /* 底盘不跟随云台 */
-        case CHASSIS_NO_FOLLOW:
-            //底盘解算
-            Chassis_kinematics_solve(&chassis_cmd_recv, &chassis_output);
-            // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
-            for (uint8_t i = 0; i < 4; i++) {
-                // 速度模式：单位rpm
-                Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
-            }
-            break;
-        /* 底盘跟随云台 */
-        case CHASSIS_FOLLOW_GIMBAL:
-             Chassis_kinematics_solve(&chassis_cmd_recv, &chassis_output);
-            // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
-            for (uint8_t i = 0; i < 4; i++) {
-                // 速度模式：单位rpm
-                Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
-            }
-            break;
-        /* 底盘小陀螺 */
-        case CHASSIS_ROTATE:
+            /* 底盘无力 */
+            case CHASSIS_ZERO_FORCE:
+                for (uint8_t i = 0; i < 4; i++) {
+                    Djimotor_set_status(chassis_motors[i], MOTOR_STOP);
+                    Djimotor_set_target(chassis_motors[i], 0);
+                }
+                break;
+            /* 底盘不跟随云台 */
+            case CHASSIS_NO_FOLLOW:
+                for (uint8_t i = 0; i < 4; i++) {
+                    Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
+                }
+                chassis_cmd_recv.wz = 0; //不旋转
+                //底盘解算
+                Chassis_kinematics_solve(&chassis_cmd_recv, &chassis_output);
+                // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
+                for (uint8_t i = 0; i < 4; i++) {
+                    // 速度模式：单位rpm
+                    Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+                }
+                break;
+            /* 底盘跟随云台 */
+            case CHASSIS_FOLLOW_GIMBAL:
+            {
+                for (uint8_t i = 0; i < 4; i++) {
+                    Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
+                }
+                 // @TODO，不知道为什么云台相对底盘朝向差
+                float angle_error = chassis_cmd_recv.offset_angle + 90.0f; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
+                
+                // 这里的符号是 +，否则会进入正反馈
+                float wz_cmd = CHASSIS_FOLLOW_YAW_GAIN * angle_error * fabsf(angle_error);
+                chassis_cmd_recv.wz = clamp_float(wz_cmd, -CHASSIS_FOLLOW_WZ_LIMIT, CHASSIS_FOLLOW_WZ_LIMIT);
+                
+                // 添加死区处理，避免小角度时的震荡
+                if (fabsf(angle_error) < 2.0f) {
+                    chassis_cmd_recv.wz = 0;
+                }
 
-            break;
-        default:
-            break;
+                float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);
+                float sin_theta = arm_sin_f32(angle_error * MATH_DEG2RAD);
+
+                Chassis_cmd_send_t follow_cmd = chassis_cmd_recv;
+                follow_cmd.vx = chassis_cmd_recv.vx * cos_theta - chassis_cmd_recv.vy * sin_theta;
+                follow_cmd.vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
+
+                Chassis_kinematics_solve(&follow_cmd, &chassis_output);
+                for (uint8_t i = 0; i < 4; i++) {
+                    Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+                }
+                break;
+            }
+            /* 底盘小陀螺 */
+            case CHASSIS_ROTATE:
+            {
+                for (uint8_t i = 0; i < 4; i++) {
+                    Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
+                }
+                chassis_cmd_recv.wz = CHASSIS_ROTATE_WZ;   //设置小陀螺转速
+                // @TODO，不知道为什么云台相对底盘朝向差和这里的指令杆量
+                float angle_error = chassis_cmd_recv.offset_angle + 90.0f; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
+
+                // 直接将云台坐标系下的杆量转换到底盘坐标系
+                float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);
+                float sin_theta = arm_sin_f32(angle_error * MATH_DEG2RAD);
+
+                Chassis_cmd_send_t rotate_cmd = chassis_cmd_recv; // 复制一份指令
+                rotate_cmd.vx = chassis_cmd_recv.vx * cos_theta - chassis_cmd_recv.vy * sin_theta;
+                rotate_cmd.vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
+
+                Chassis_kinematics_solve(&rotate_cmd, &chassis_output);
+                // 直接将目标写入各底盘电机实例
+                for (uint8_t i = 0; i < 4; i++) {
+                    Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+                }
+
+                break;
+            }
+            default:
+                break;
         }
 
         // 更新底盘反馈信息（这里可以添加底盘角速度的反馈）

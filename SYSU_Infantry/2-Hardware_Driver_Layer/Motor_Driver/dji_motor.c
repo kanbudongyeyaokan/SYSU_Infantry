@@ -65,9 +65,28 @@ static void Decode_djimotor(Can_controller_t* can_dev,void *context)
     Djimotor_measure_t *measure = &(motor->motor_measure); // 保存了当前电机的所有信息
 
     // 解析数据
-    measure->current_ecd = ((uint16_t)rxbuff[0]) << 8 | rxbuff[1];//当前电机编码器值
-    measure->last_ecd = measure->current_ecd;
-    measure->current_angle = ECD_ANGLE_COEF_DJI * (float)measure->current_ecd;
+    uint16_t new_ecd = ((uint16_t)rxbuff[0]) << 8 | rxbuff[1];
+    float new_angle_single_round = ECD_ANGLE_COEF_DJI * (float)new_ecd;
+
+    uint16_t previous_ecd = measure->current_ecd;
+    if (!measure->total_angle_initialized) {
+        previous_ecd = new_ecd;
+        measure->total_round = 0;
+        measure->total_angle_initialized = true;
+    }
+
+    measure->last_ecd = previous_ecd;
+    measure->current_ecd = new_ecd;
+    measure->angle_single_round = new_angle_single_round;
+    measure->current_angle = new_angle_single_round;
+
+    int32_t diff = (int32_t)new_ecd - (int32_t)previous_ecd;
+    if (diff > 4096) {
+        measure->total_round--;
+    } else if (diff < -4096) {
+        measure->total_round++;
+    }
+    measure->total_angle = measure->total_round * 360.0f + measure->angle_single_round;
 
     measure->angular_velocity = (float)((int16_t)(rxbuff[2] << 8 | rxbuff[3]));//角速度
 
@@ -133,8 +152,8 @@ void Djimotor_change_controller(Djimotor_device_t *motor,Djimotor_controller_ini
     motor->motor_pid.close_loop = ctrl_params.close_loop;
     motor->motor_pid.angle_source = ctrl_params.angle_source;
     motor->motor_pid.speed_source = ctrl_params.speed_source;
-    motor->motor_pid.other_speed_feedback_ptr = ctrl_params.other_angle_feedback_ptr;
     motor->motor_pid.other_angle_feedback_ptr = ctrl_params.other_angle_feedback_ptr;
+    motor->motor_pid.other_speed_feedback_ptr = ctrl_params.other_speed_feedback_ptr;
     Pid_init(&(motor->motor_pid.speed_pid),&(ctrl_params.speed_pid));
     Pid_init(&(motor->motor_pid.angle_pid),&(ctrl_params.angle_pid));
     Pid_init(&(motor->motor_pid.current_pid),&(ctrl_params.current_pid));
@@ -166,11 +185,84 @@ Djimotor_measure_t Djimotor_get_measure(Djimotor_device_t *motor) {
 //设置电机状态
 void Djimotor_set_status(Djimotor_device_t *motor,Djimotor_status_e status) {
     motor->motor_status = status;
+    
+    // 如果设置为MOTOR_STOP，立即清零目标值和PID状态
+    if (status == MOTOR_STOP) {
+        motor->motor_pid.pid_target = 0;
+        
+        // 立即清零PID状态
+        motor->motor_pid.speed_pid.ITerm = 0;
+        motor->motor_pid.speed_pid.Iout = 0;
+        motor->motor_pid.speed_pid.last_error = 0;
+        motor->motor_pid.speed_pid.Output = 0;
+        motor->motor_pid.speed_pid.Last_Output = 0;
+        
+        motor->motor_pid.current_pid.ITerm = 0;
+        motor->motor_pid.current_pid.Iout = 0;
+        motor->motor_pid.current_pid.last_error = 0;
+        motor->motor_pid.current_pid.Output = 0;
+        motor->motor_pid.current_pid.Last_Output = 0;
+        
+        motor->motor_pid.angle_pid.ITerm = 0;
+        motor->motor_pid.angle_pid.Iout = 0;
+        motor->motor_pid.angle_pid.last_error = 0;
+        motor->motor_pid.angle_pid.Output = 0;
+        motor->motor_pid.angle_pid.Last_Output = 0;
+    }
 }
 
 // 计算控制输出
 static void Calculate_Motor_Output(Djimotor_device_t *motor) {
 
+    // 首先检查电机状态，如果是MOTOR_STOP，直接清零并返回
+    if(motor->motor_status == MOTOR_STOP)
+    {
+        // 获取缓冲区指针
+        uint8_t *buffer = Get_buffer_pointer(motor->can_controller->can_handle,
+                                            motor->can_controller->can_id);
+        if (buffer == NULL) return;
+
+        // 获取电机在缓冲区中的位置 (1-8对应0-7)
+        uint8_t motor_num = motor->can_controller->tx_id - 1;
+        if (motor->can_controller->tx_id > 4)
+            motor_num -= 4;
+            
+        // 强制清零缓冲区，确保电机停止
+        buffer[motor_num * 2] = 0;
+        buffer[motor_num * 2 + 1] = 0;
+        
+        // 重置PID控制器的状态，清零积分项和历史值
+        motor->motor_pid.speed_pid.ITerm = 0;
+        motor->motor_pid.speed_pid.Iout = 0;
+        motor->motor_pid.speed_pid.last_error = 0;
+        motor->motor_pid.speed_pid.last_measure = 0;
+        motor->motor_pid.speed_pid.Output = 0;
+        motor->motor_pid.speed_pid.Last_Output = 0;
+        
+        motor->motor_pid.current_pid.ITerm = 0;
+        motor->motor_pid.current_pid.Iout = 0;
+        motor->motor_pid.current_pid.last_error = 0;
+        motor->motor_pid.current_pid.last_measure = 0;
+        motor->motor_pid.current_pid.Output = 0;
+        motor->motor_pid.current_pid.Last_Output = 0;
+        
+        motor->motor_pid.angle_pid.ITerm = 0;
+        motor->motor_pid.angle_pid.Iout = 0;
+        motor->motor_pid.angle_pid.last_error = 0;
+        motor->motor_pid.angle_pid.last_measure = 0;
+        motor->motor_pid.angle_pid.Output = 0;
+        motor->motor_pid.angle_pid.Last_Output = 0;
+        
+        // 标记缓冲区更新
+        uint8_t buf_idx = Get_buffer_index(motor->can_controller->can_handle,
+                                          motor->can_controller->can_id);
+        if (buf_idx != 0xFF) {
+            buffer_updated[buf_idx] = 1;
+        }
+        return; // 直接返回，不进行PID计算
+    }
+
+    // 只有在电机ENABLED状态下才进行PID计算
     float output = 0.0f;
 
     Djimotor_measure_t *measure = &motor->motor_measure;
@@ -178,7 +270,7 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
     // 获取角度反馈值
     float angle_feedback = 0.0f;
     if (motor->motor_pid.angle_source == MOTOR_FEEDBACK) {
-        angle_feedback = measure->current_angle;
+        angle_feedback = measure->total_angle;
     } else if (motor->motor_pid.angle_source == OTHER_FEEDBACK) {
         if (motor->motor_pid.other_angle_feedback_ptr != NULL) {
             angle_feedback = *(motor->motor_pid.other_angle_feedback_ptr);
@@ -284,15 +376,6 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
     // 写入缓冲区
     buffer[motor_num * 2] = (uint8_t)(current_val >> 8);
     buffer[motor_num * 2 + 1] = (uint8_t)(current_val & 0xFF);
-
-    //如果电机的状态为 MOTOR_STOP,则缓冲区清零，电机停止运动
-    if(motor->motor_status == MOTOR_STOP)
-    {
-
-        //@todo:这里如果不注释，底盘会不动，暂时不明白原因
-    //    buffer[motor_num * 2] = 0;
-    //    buffer[motor_num * 2 + 1] = 0;
-    }
 
     // 标记缓冲区更新
     uint8_t buf_idx = Get_buffer_index(motor->can_controller->can_handle,

@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include "robot_definitions.h"
+#include "ins.h"
 
 /**************决策*****************/
 
@@ -19,6 +20,8 @@ typedef struct
     float vy;           // 横移方向速度
     float wz;           // 旋转速度
     float offset_angle; // 底盘和归中位置的夹角
+    float gimbal_yaw_total_angle; // 云台多圈角度
+    float gimbal_yaw_rate;        // 云台角速度
     chassis_mode_e chassis_mode;        //底盘控制模式
 }Chassis_cmd_send_t;
 
@@ -52,7 +55,15 @@ typedef struct
     //接收云台陀螺仪反馈数据
 
     //YAW轴电机的单圈角度---由编码器得来
-    uint16_t yaw_motor_angle;
+    float yaw_motor_single_round_angle;
+    //YAW轴电机的多圈角度---由多圈解算得来
+    float yaw_motor_total_angle;
+    //IMU输出的Yaw多圈角度（度）
+    float imu_yaw_total_angle;
+    //IMU输出的Yaw角速度（度/秒）
+    float imu_yaw_rate;
+    //IMU状态
+    Imu_state_e imu_state;
 }Gimbal_feedback_info_t;
 //发射机构
 typedef struct 

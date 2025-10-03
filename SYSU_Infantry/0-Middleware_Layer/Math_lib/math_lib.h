@@ -55,6 +55,40 @@
 #define MATH_SQRT(x) (1.0f / MATH_INV_SQRT(x))
 
 
+// ===================== 常用函数 =====================
+static inline float wrap_angle_360(float angle)
+{
+    while (angle >= 360.0f)
+    {
+        angle -= 360.0f;
+    }
+    while (angle < 0.0f)
+    {
+        angle += 360.0f;
+    }
+    return angle;
+}
+
+static inline float wrap_angle_180(float angle)
+{
+    angle = wrap_angle_360(angle + 180.0f) - 180.0f;
+    return angle;
+}
+
+static inline float clamp_float(float value, float min_value, float max_value)
+{
+    if (value < min_value)
+    {
+        return min_value;
+    }
+    if (value > max_value)
+    {
+        return max_value;
+    }
+    return value;
+}
+
+
 
 
 #endif // MATH_LIB
