@@ -40,22 +40,22 @@ osThreadId chassis_motor_integration_test_handle; // 底盘电机集成测试任
 osThreadId motor_task_handle;
 
 
+
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
-
-
     // 选择要运行的测试任务（取消注释需要的测试）
     
     // === 单元测试 ===
     //  osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
     //  bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
 
-    // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
-    // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
-    // osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
-    // rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
+     //osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
+     //can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
+
+     osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
+     rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
 
     // === 消息中心测试 ===
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
@@ -68,8 +68,6 @@ void Robot_task_init(void)
 
 
     // === 集成测试 ===
-  //  printf("[INIT][Robot] Creating chassis_motor_integration_test_task...\r\n");
-  //  printf("[INIT][Robot] Free heap before test task: %u bytes\r\n", (unsigned)xPortGetFreeHeapSize());
    // osThreadDef(chassis_motor_integration_test_task, Chassis_motor_integration_test_task, osPriorityNormal, 0, 2048);
    // chassis_motor_integration_test_handle = osThreadCreate(osThread(chassis_motor_integration_test_task), NULL);
     

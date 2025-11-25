@@ -123,15 +123,18 @@ static void Can_fifo_callback(CAN_HandleTypeDef *hcan, uint32_t fifox)
 /**
  * @brief CAN FIFO0接收回调函数
  */
+/*
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
     Can_fifo_callback(hcan, CAN_RX_FIFO0); // 调用用户自定义函数来处理消息
 }
-
+*/
 /**
  * @brief CAN FIFO1接收回调函数
  */
+/*
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
     Can_fifo_callback(hcan, CAN_RX_FIFO1); // 调用我们自己写的函数来处理消息
 }
+*/
