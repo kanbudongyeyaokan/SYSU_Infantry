@@ -1,8 +1,16 @@
-#ifndef MONITOR_H
-#define MONITOR_H
+/**
+* @file    bsp_wdg.h
+ * @brief   软件看门狗模块
+ * @author  SYSU电控组
+ * @date    2025-09-24
+ * @version 2.0
+ */
+
+#ifndef BSP_WDG_H
+#define BSP_WDG_H
 
 #include "stdint.h"
-#include "string.h"
+#include "stdlib.h"
 
 #define WATCHDOG_MX_NUM 64
 
@@ -10,51 +18,41 @@
 typedef void (*offline_callback)(void *);
 
 /* watchdog结构体定义 */
-typedef struct 
+typedef struct
 {
-    uint16_t reload_count;     // 重载值
-    offline_callback callback; // 异常处理函数,当模块发生异常时会被调用
+    uint16_t reload_count;     // 重载值 (超时时间 = reload_count * 任务周期)
+    uint16_t temp_count;       // 当前倒计时
 
-    uint16_t temp_count; // 当前值,减为零说明模块离线或异常
-    void *owner_id;      // watchdog实例的地址,初始化的时候填入
+    uint8_t  is_offline;       // 离线标志位: 0-在线, 1-离线 (新增，用于防止回调重复触发)
+
+    offline_callback callback; // 异常处理函数
+    void *owner_id;            // 被监控对象的指针(如电机结构体)
 } Watchdog_device_t;
 
 /* watchdog初始化配置 */
 typedef struct
 {
-    uint16_t reload_count;     //重载值
-    offline_callback callback; // 异常处理函数,当模块发生异常时会被调用
-    void *owner_id;            // 上下文指针，可以指向自身
+    uint16_t reload_count;
+    offline_callback callback;
+    void *owner_id;
 } Watchdog_init_t;
 
 /**
  * @brief 注册一个watchdog实例
- *
  * @param config 初始化配置
  * @return Watchdog_device_t* 返回实例指针
  */
 Watchdog_device_t *Watchdog_register(Watchdog_init_t *config);
 
 /**
- * @brief 当模块收到新的数据或进行其他动作时,调用该函数重载temp_count,相当于"喂狗"
- *
+ * @brief 喂狗：在收到数据时调用
  * @param instance watchdog实例指针
  */
 void Watchdog_feed(Watchdog_device_t *instance);
 
 /**
- * @brief 确认模块是否离线
- *
- * @param instance watchdog实例指针
- * @return uint8_t 若在线且工作正常,返回1;否则返回零. 后续根据异常类型和离线状态等进行优化.
+ * @brief 全局控制函数，需放入RTOS任务中循环调用
  */
-uint8_t Watchdog_is_online(Watchdog_device_t *instance);
+void Watchdog_control_all(void);
 
-/**
- * @brief 放入rtos中,会给每个watchdog实例的temp_count按频率进行递减操作.
- *        模块成功接受数据或成功操作则会重载temp_count的值为reload_count.
- *
- */
-void Watchdog_control_all();
-
-#endif // !MONITOR_H
+#endif // BSP_WDG_H

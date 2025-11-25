@@ -1,175 +1,142 @@
 /**
- ******************************************************************************
- * @file	bsp_dwt.c
- * @brief   STM32内置的DWT计时器，用于更加精确的计时,时间戳记录
+ * @file    bsp_dwt.c
+ * @brief   STM32 DWT高精度计时实现
  */
 
 #include "bsp_dwt.h"
-#include "cmsis_os.h"
 
-static DWT_Time_t SysTime;
-static uint32_t CPU_FREQ_Hz, CPU_FREQ_Hz_ms, CPU_FREQ_Hz_us;
-static uint32_t CYCCNT_RountCount;
-static uint32_t CYCCNT_LAST;
-static uint64_t CYCCNT64;
+static DWT_Time_t SysTime = {0};
+static uint32_t CPU_FREQ_Hz = 0;
+static uint32_t CPU_FREQ_Hz_ms = 0;
+static uint32_t CPU_FREQ_Hz_us = 0;
+static uint32_t CYCCNT_RountCount = 0;
+static uint32_t CYCCNT_LAST = 0;
+static uint64_t CYCCNT64 = 0;
+static uint8_t  dt_initialized = 0; // 初始化标志位
 
 /**
- * @brief 私有函数,用于检查DWT CYCCNT寄存器是否溢出,并更新CYCCNT_RountCount
- * @attention 此函数假设两次调用之间的时间间隔不超过一次溢出
+ * @brief 初始化DWT
  */
-static void DWT_CNT_Update(void)
-{
-    static volatile uint8_t bit_locker = 0;
-    if (!bit_locker)
-    {
-        bit_locker = 1;
-        volatile uint32_t cnt_now = DWT->CYCCNT;
-        if (cnt_now < CYCCNT_LAST)
-            CYCCNT_RountCount++;
-
-        CYCCNT_LAST = DWT->CYCCNT;
-        bit_locker = 0;
-    }
-}
-
 void DWT_Init(uint32_t CPU_Freq_mHz)
 {
-    /* 使能DWT外设 */
+    /* 1. 使能DWT外设 (DEMCR: Debug Exception and Monitor Control Register) */
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 
-    /* DWT CYCCNT寄存器计数清0 */
-    DWT->CYCCNT = (uint32_t)0u;
+    /* 2. 清零计数器 */
+    DWT->CYCCNT = 0;
 
-    /* 使能Cortex-M DWT CYCCNT寄存器 */
+    /* 3. 启动计数器 */
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
+    /* 4. 设置频率参数 */
     CPU_FREQ_Hz = CPU_Freq_mHz * 1000000;
     CPU_FREQ_Hz_ms = CPU_FREQ_Hz / 1000;
     CPU_FREQ_Hz_us = CPU_FREQ_Hz / 1000000;
-    CYCCNT_RountCount = 0;
 
-    DWT_CNT_Update();
+    CYCCNT_RountCount = 0;
+    CYCCNT_LAST = 0;
+    dt_initialized = 1; // 标记初始化完成
 }
 
 /**
- * @brief 获取两次调用之间的时间间隔,单位为秒/s
- *
- * @param cnt_last 上一次调用的时间戳
- * @return float 时间间隔,单位为秒/s
+ * @brief 内部函数：更新64位计数器
+ * @note  加入临界区保护，防止中断打断导致计数错乱
+ */
+static void DWT_CNT_Update(void)
+{
+    if (!dt_initialized) return;
+
+    // 进入临界区 (关中断)
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+
+    volatile uint32_t cnt_now = DWT->CYCCNT;
+
+    // 检测是否发生溢出 (当前值小于上次值，说明绕了一圈)
+    if (cnt_now < CYCCNT_LAST)
+    {
+        CYCCNT_RountCount++;
+    }
+    CYCCNT_LAST = cnt_now;
+
+    // 更新64位总计数值
+    CYCCNT64 = ((uint64_t)CYCCNT_RountCount * (uint64_t)UINT32_MAX) + (uint64_t)cnt_now;
+
+    // 退出临界区 (恢复中断状态)
+    if (!primask) __enable_irq();
+}
+
+/**
+ * @brief 获取两次调用之间的时间间隔 (秒)
  */
 float DWT_GetDeltaT(uint32_t *cnt_last)
 {
+    // 如果未初始化，返回一个安全的非零值，防止PID除零崩溃
+    if (!dt_initialized) return 0.001f;
+
     volatile uint32_t cnt_now = DWT->CYCCNT;
+
+    // 32位无符号减法会自动处理溢出回绕，无需额外判断
+    // 前提：两次调用间隔不能超过 2^32 / CPU_FREQ 秒 (约25秒)
     float dt = ((uint32_t)(cnt_now - *cnt_last)) / ((float)(CPU_FREQ_Hz));
+
     *cnt_last = cnt_now;
 
-    DWT_CNT_Update();
+    DWT_CNT_Update(); // 顺便更新一下总时间轴
 
     return dt;
 }
 
-/**
- * @brief DWT更新时间轴函数,会被三个timeline函数调用
- * @attention 如果长时间不调用timeline函数,则需要手动调用该函数更新时间轴,否则CYCCNT溢出后定时和时间轴不准确
- */
 void DWT_SysTimeUpdate(void)
 {
-    volatile uint32_t cnt_now = DWT->CYCCNT;
-    static uint64_t CNT_TEMP1, CNT_TEMP2, CNT_TEMP3;
+    if (!dt_initialized || CPU_FREQ_Hz == 0) return;
 
     DWT_CNT_Update();
 
-    CYCCNT64 = (uint64_t)CYCCNT_RountCount * (uint64_t)UINT32_MAX + (uint64_t)cnt_now;
-    CNT_TEMP1 = CYCCNT64 / CPU_FREQ_Hz;
-    CNT_TEMP2 = CYCCNT64 - CNT_TEMP1 * CPU_FREQ_Hz;
-    SysTime.s = CNT_TEMP1;
-    SysTime.ms = CNT_TEMP2 / CPU_FREQ_Hz_ms;
-    CNT_TEMP3 = CNT_TEMP2 - SysTime.ms * CPU_FREQ_Hz_ms;
-    SysTime.us = CNT_TEMP3 / CPU_FREQ_Hz_us;
+    // 更新结构体时间 (除法运算较慢，仅在需要时计算)
+    uint64_t temp_cyc = CYCCNT64;
+
+    SysTime.s = temp_cyc / CPU_FREQ_Hz;
+    uint64_t remain = temp_cyc % CPU_FREQ_Hz;
+
+    SysTime.ms = remain / CPU_FREQ_Hz_ms;
+    remain = remain % CPU_FREQ_Hz_ms;
+
+    SysTime.us = remain / CPU_FREQ_Hz_us;
 }
-/**
- * @brief 获取当前时间,单位为秒/s,即初始化后的时间
- *
- * @return float 时间轴
- */
+
 float DWT_GetTimeline_s(void)
 {
     DWT_SysTimeUpdate();
-
-    float DWT_Timelinef32 = SysTime.s + SysTime.ms * 0.001f + SysTime.us * 0.000001f;
-
-    return DWT_Timelinef32;
+    return SysTime.s + SysTime.ms * 0.001f + SysTime.us * 0.000001f;
 }
-/**
- * @brief 获取当前时间,单位为毫秒/ms,即初始化后的时间
- *
- * @return float
- */
-float DWT_GetTimeline_ms(void)
-{
-    DWT_SysTimeUpdate();
 
-    float DWT_Timelinef32 = SysTime.s * 1000 + SysTime.ms + SysTime.us * 0.001f;
+/* --- 优化后的延时函数 (去除浮点运算，防止卡死) --- */
 
-    return DWT_Timelinef32;
-}
-/**
- * @brief 获取当前时间,单位为微秒/us,即初始化后的时间
- *
- * @return uint64_t
- */
-uint64_t DWT_GetTimeline_us(void)
-{
-    DWT_SysTimeUpdate();
-
-    uint64_t DWT_Timelinef32 = SysTime.s * 1000000 + SysTime.ms * 1000 + SysTime.us;
-
-    return DWT_Timelinef32;
-}
-/**
- * @brief DWT延时函数,单位为 s
- * @attention 该函数不受中断是否开启的影响,可以在临界区和关闭中断时使用
- * @note 禁止在__disable_irq()和__enable_irq()之间使用HAL_Delay()函数,应使用本函数
- *
- * @param Delay 延时时间,单位为s
- */
 void DWT_Delay(float Delay)
 {
+    if (!dt_initialized) return;
     uint32_t tickstart = DWT->CYCCNT;
-    float wait = Delay;
+    // 预先计算需要的 tick 数，避免在循环中做浮点乘法
+    uint32_t wait = (uint32_t)(Delay * (float)CPU_FREQ_Hz);
 
-    while ((DWT->CYCCNT - tickstart) < wait * (float)CPU_FREQ_Hz)
-        ;
+    while ((DWT->CYCCNT - tickstart) < wait);
 }
 
-/**
- * @brief DWT延时函数,单位为ms
- * @attention 该函数不受中断是否开启的影响,可以在临界区和关闭中断时使用
- * @note 禁止在__disable_irq()和__enable_irq()之间使用HAL_Delay()函数,应使用本函数
- *
- * @param Delay 延时时间,单位为ms
- */
-void DWT_delay_ms(uint32_t delay_ms)
+void DWT_Delay_ms(uint32_t delay_ms)
 {
+    if (!dt_initialized) return;
     uint32_t tickstart = DWT->CYCCNT;
-    float wait = delay_ms;
+    uint32_t wait = delay_ms * CPU_FREQ_Hz_ms;
 
-    while ((DWT->CYCCNT - tickstart) < wait * CPU_FREQ_Hz/1000)
-        ;
+    while ((DWT->CYCCNT - tickstart) < wait);
 }
 
-/**
- * @brief DWT延时函数,单位为us
- * @attention 该函数不受中断是否开启的影响,可以在临界区和关闭中断时使用
- * @note 禁止在__disable_irq()和__enable_irq()之间使用HAL_Delay()函数,应使用本函数
- *
- * @param Delay 延时时间,单位为us
- */
-void DWT_delay_us(uint32_t delay_us)
+void DWT_Delay_us(uint32_t delay_us)
 {
+    if (!dt_initialized) return;
     uint32_t tickstart = DWT->CYCCNT;
-    float wait = delay_us;
-    //空循环等待
-    while ((DWT->CYCCNT - tickstart) < wait * CPU_FREQ_Hz/1000000)
-        ;
+    uint32_t wait = delay_us * CPU_FREQ_Hz_us;
+
+    while ((DWT->CYCCNT - tickstart) < wait);
 }
