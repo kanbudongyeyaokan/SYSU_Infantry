@@ -22,6 +22,7 @@
 #include "Ins_task.h"
 #include "shoot_task.h"
 
+
 /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
 osThreadId gimbal_task_handle; //云台任务
@@ -41,6 +42,7 @@ osThreadId motor_task_handle;
 
 
 
+
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
@@ -51,11 +53,15 @@ void Robot_task_init(void)
     //  bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
 
 
-     //osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
-     //can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
+    // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
+    // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
      osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
      rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
+
+    // // === 3508电机开环测试 ===
+    // osThreadDef(m3508_openloop_test_task, M3508_openloop_test_task, osPriorityNormal, 0, 512);
+    // m3508_openloop_test_task_handle = osThreadCreate(osThread(m3508_openloop_test_task), NULL);
 
     // === 消息中心测试 ===
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
