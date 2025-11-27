@@ -22,6 +22,7 @@
 #include "Ins_task.h"
 #include "shoot_task.h"
 
+
 /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
 osThreadId gimbal_task_handle; //云台任务
@@ -41,6 +42,7 @@ osThreadId motor_task_handle;
 
 
 
+
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
@@ -51,11 +53,15 @@ void Robot_task_init(void)
     //  bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
 
 
-     //osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
-     //can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
+    // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
+    // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
      osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
      rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
+
+    // // === 3508电机开环测试 ===
+    // osThreadDef(m3508_openloop_test_task, M3508_openloop_test_task, osPriorityNormal, 0, 512);
+    // m3508_openloop_test_task_handle = osThreadCreate(osThread(m3508_openloop_test_task), NULL);
 
     // === 消息中心测试 ===
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
@@ -75,8 +81,8 @@ void Robot_task_init(void)
    // osDelay(100);
 
     //决策任务
-   // osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
-   // decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
+  // osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
+  // decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
 
     //ins任务
    // osThreadDef(ins_task,Ins_task,osPriorityNormal,0,512);
@@ -84,11 +90,11 @@ void Robot_task_init(void)
 
     // === 启动底盘与电机任务（必需） ===
     // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
-   // osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
-   // chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
+  // osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
+   //chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
 
-   // osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
-   // gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
+   //osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
+   //gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
 
    // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
    // shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
@@ -96,7 +102,7 @@ void Robot_task_init(void)
   //  osDelay(100);
 
     // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
-   // osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 512);
+  //  osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 512);
   //  motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
 
 }

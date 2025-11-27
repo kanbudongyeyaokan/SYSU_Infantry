@@ -113,7 +113,7 @@ static void CAN_Polling_Check(void)
         }
     }
 }
-
+/*
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
     CAN_RxHeaderTypeDef RxHeader;
@@ -126,7 +126,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
         }
     }
 }
-
+*/
 /* ================= 底层发送与配置 ================= */
 
 static void CAN_Filter_Config(void)

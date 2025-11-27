@@ -80,6 +80,7 @@ void Decision_making_task_init()
 
 void Receive_feedback_infomation()
 {
+
     //获取底盘反馈信息
     Sub_get_message(chassis_feedback_sub,(void *)(&chassis_feedback_recv));
     //获取云台反馈信息
@@ -104,13 +105,13 @@ void Send_command_to_all_task()
 */
 void Robot_set_command()
 {
-    //printf("rc_data[CURRENT].rc.Rrocker_x:%d\r\n",rc_data[CURRENT].rc.Rrocker_x);
-    //printf("rc_data[CURRENT].rc.Rrocker_y:%d\r\n",rc_data[CURRENT].rc.Rrocker_y);
-    //printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
-    //printf("rc_data[CURRENT].rc.Lrocker_y:%d\r\n",rc_data[CURRENT].rc.Lrocker_y);
-    // printf("rc_data[CURRENT].rc.dial:%d\r\n",rc_data[CURRENT].rc.dial);
-    //printf("rc_data[CURRENT].rc.Lswitch:%d\r\n",rc_data[CURRENT].rc.Lswitch);
-    //printf("rc_data[CURRENT].rc.Rswitch:%d\r\n",rc_data[CURRENT].rc.Rswitch);
+   // printf("rc_data[CURRENT].rc.Rrocker_x:%d\r\n",rc_data[CURRENT].rc.Rrocker_x);
+   // printf("rc_data[CURRENT].rc.Rrocker_y:%d\r\n",rc_data[CURRENT].rc.Rrocker_y);
+   // printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
+   // printf("rc_data[CURRENT].rc.Lrocker_y:%d\r\n",rc_data[CURRENT].rc.Lrocker_y);
+   //  printf("rc_data[CURRENT].rc.dial:%d\r\n",rc_data[CURRENT].rc.dial);
+   // printf("rc_data[CURRENT].rc.Lswitch:%d\r\n",rc_data[CURRENT].rc.Lswitch);
+   // printf("rc_data[CURRENT].rc.Rswitch:%d\r\n",rc_data[CURRENT].rc.Rswitch);
     //左边开关打下，进入遥控器控制模式
     if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_DOWN)
     {

@@ -353,7 +353,6 @@ void Djimotor_control_all(void) {
             // 发送数据
             if (tx_data != NULL) {
                 if (temp_can.tx_config.StdId == 0x1FF&&temp_can.can_handle == &hcan1)
-                    printf("hhhhh\r\n");
                 Can_send_data(&temp_can,tx_data);
             }
     }

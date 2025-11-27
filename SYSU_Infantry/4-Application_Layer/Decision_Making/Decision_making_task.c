@@ -26,11 +26,6 @@ void Decision_making_task()
     //Buzzer_init(&test_buzzer,&htim4,TIM_CHANNEL_3);
     for (;;)
     {
-        //Play_Twinkle_Twinkle(&test_buzzer);
-        //Play_Super_Mario(&test_buzzer);
-        //printf("HELLO WORLD \r\n");
-        //DWT_delay_ms(500);
-        /*
         //接收应用层的反馈数据
         Receive_feedback_infomation();
         //决策要发的控制信息
@@ -40,7 +35,7 @@ void Decision_making_task()
         //向各个应用层传送控制信息
         Send_command_to_all_task();
         //控制频率500HZ
-        */
+
         osDelay(2);
     }
 
