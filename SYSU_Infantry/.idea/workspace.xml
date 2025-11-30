@@ -38,14 +38,12 @@
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Pid_Controller/algorithm_pid.c" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Pid_Controller/algorithm_pid.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Pid_Controller/algorithm_pid.h" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Pid_Controller/algorithm_pid.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.c" beforeDir="false" afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.h" beforeDir="false" afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/1-Hardware_Layer/bsp_wdg/bsp_wdg.c" beforeDir="false" afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_wdg/bsp_wdg.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/For_Testing_Task/can_motors_test_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/For_Testing_Task/can_motors_test_task.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/For_Testing_Task/debug.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/4-Application_Layer/For_Testing_Task/rc_test_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/For_Testing_Task/rc_test_task.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" afterDir="false" />
     </list>
@@ -138,7 +136,8 @@
       <workItem from="1760862530443" duration="442000" />
       <workItem from="1764069457607" duration="693000" />
       <workItem from="1764079210194" duration="4028000" />
-      <workItem from="1764164727210" duration="13279000" />
+      <workItem from="1764164727210" duration="17507000" />
+      <workItem from="1764336007588" duration="4629000" />
     </task>
     <servers />
   </component>

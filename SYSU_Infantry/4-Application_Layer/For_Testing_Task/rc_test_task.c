@@ -1,144 +1,175 @@
 /**
  * @file    rc_test_task.c
- * @brief   GM6020电机 电流环(转矩环) PID 测试任务 - 强力前馈版
+ * @brief   DJI Motor Lib 全功能验收测试 (Final Acceptance Test)
  * @author  SYSU电控组
- * @note    针对实际电流幅值仅为目标一半的问题，大幅倍增前馈系数和积分增益
+ * @note    这是一个自动化测试脚本，将依次测试电机库的各项功能。
+ * 请连接好 GM6020 (ID 1) 并确保电源开启。
  */
 
 #include "rc_test_task.h"
 #include "bsp_dwt.h"
 #include "main.h"
-#include "algorithm_pid.h"
+#include "dji_motor.h"
+#include "bsp_can.h"
 #include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
 #include <math.h>
-
-/* === 配置区域 === */
-#define CAN_HANDLE          &hcan1
-#define TEST_MOTOR_ID       1
-
-/* GM6020 协议常量 */
-#define GM6020_TX_ID_GROUP  0x1FF
-#define GM6020_RX_ID_BASE   0x204
 
 extern CAN_HandleTypeDef hcan1;
 
-static int16_t output_voltage = 0;
-static float current_torque_current = 0.0f; // 当前实际电流
-static float target_torque_current = 0.0f;  // 目标电流
+// 测试电机指针
+static Djimotor_device_t *test_motor = NULL;
 
-static Pid_instance_t current_pid; // 电流环 PID
+/* 测试阶段枚举 */
+typedef enum {
+    STAGE_INIT = 0,
+    STAGE_SPEED_SINE,   // 1. 速度环正弦波 (测试 PID 和基本控制)
+    STAGE_POS_STEP,     // 2. 位置环阶跃 (测试多圈角度和串级 PID)
+    STAGE_TIMEOUT,      // 3. 超时保护 (测试看门狗)
+    STAGE_RECOVERY,     // 4. 恢复控制 (测试重连)
+    STAGE_END
+} Test_Stage_e;
 
-/* === 辅助函数 === */
+static char *Stage_Names[] = {
+    "INIT",
+    "SPEED SINE WAVE",
+    "POSITION STEP (Multi-Turn)",
+    "WATCHDOG TIMEOUT SIMULATION",
+    "RECOVERY & END"
+};
 
-static void CAN_Force_Reset_And_Config(void)
-{
-    CAN_FilterTypeDef sFilterConfig;
-    HAL_CAN_Stop(CAN_HANDLE);
-    sFilterConfig.FilterBank = 0;
-    sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
-    sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
-    sFilterConfig.FilterIdHigh = 0x0000;
-    sFilterConfig.FilterIdLow = 0x0000;
-    sFilterConfig.FilterMaskIdHigh = 0x0000;
-    sFilterConfig.FilterMaskIdLow = 0x0000;
-    sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
-    sFilterConfig.FilterActivation = ENABLE;
-    sFilterConfig.SlaveStartFilterBank = 14;
-    HAL_CAN_ConfigFilter(CAN_HANDLE, &sFilterConfig);
-    HAL_CAN_Start(CAN_HANDLE);
-    HAL_CAN_ActivateNotification(CAN_HANDLE, CAN_IT_RX_FIFO0_MSG_PENDING);
-}
-
-static void GM6020_Send_Voltage(int16_t voltage)
-{
-    static uint8_t tx_data[8];
-    static uint32_t tx_mailbox;
-    static CAN_TxHeaderTypeDef tx_header;
-
-    tx_header.StdId = GM6020_TX_ID_GROUP;
-    tx_header.IDE = CAN_ID_STD;
-    tx_header.RTR = CAN_RTR_DATA;
-    tx_header.DLC = 8;
-
-    memset(tx_data, 0, 8);
-    tx_data[(TEST_MOTOR_ID - 1) * 2]     = (uint8_t)(voltage >> 8);
-    tx_data[(TEST_MOTOR_ID - 1) * 2 + 1] = (uint8_t)(voltage);
-
-    if (HAL_CAN_GetTxMailboxesFreeLevel(CAN_HANDLE) == 0) {
-        HAL_CAN_AbortTxRequest(CAN_HANDLE, CAN_TX_MAILBOX0 | CAN_TX_MAILBOX1 | CAN_TX_MAILBOX2);
-        return;
-    }
-    HAL_CAN_AddTxMessage(CAN_HANDLE, &tx_header, tx_data, &tx_mailbox);
-}
-/*
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
-    CAN_RxHeaderTypeDef rx_header;
-    uint8_t rx_data[8];
-
-    if (hcan->Instance == CAN1)
-    {
-        HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data);
-        if (rx_header.StdId == (GM6020_RX_ID_BASE + TEST_MOTOR_ID))
-        {
-            int16_t raw_current = (int16_t)((rx_data[4] << 8) | rx_data[5]);
-            current_torque_current = (float)raw_current;
-        }
-    }
-}
-*/
 void Rc_test_task(void const *argument)
 {
-    osDelay(200);
-    CAN_Force_Reset_And_Config();
+    osDelay(1000); // 等待系统稳定
 
-    printf("\r\n=== GM6020 CURRENT LOOP TEST (Power Boost) ===\r\n");
+    // 如果 main.c 没调 Can_init，这里调一次
+    Can_init();
 
-    Pid_init_t current_conf = {0};
+    printf("\r\n=============================================\r\n");
+    printf("    DJI MOTOR LIB ACCEPTANCE TEST START\r\n");
+    printf("=============================================\r\n");
 
-    // [1. 参数大幅增强]
-    current_conf.kp = 2.0f;      // 1.2 -> 1.5 (微调)
-    current_conf.ki = 1200.0f;   // 800 -> 2000 (大幅增强积分，消除幅度差)
-    current_conf.kd = 0.0f;
+    // --- 1. 初始化 ---
+    Djimotor_init_config_t init_conf = {0};
+    init_conf.motor_type = GM6020;
+    init_conf.can_init.can_handle = &hcan1;
+    init_conf.can_init.can_id = 0x1FF; // TX Group
+    init_conf.can_init.tx_id = 1;      // ID 1
+    init_conf.can_init.rx_id = 0x205;  // RX ID
+    strcpy(init_conf.motor_name, "Test_GM6020");
 
-    current_conf.optimization = PID_OUTPUT_LIMIT | PID_TRAPEZOID_INTERGRAL | PID_FEEDFOWARD | PID_OUTPUT_FILTER;
+    // 初始 PID (速度环)
+    // 使用我们之前调好的参数
+    init_conf.motor_controller_init.close_loop = SPEED_LOOP;
+    init_conf.motor_controller_init.speed_pid.kp = 1.2f;
+    init_conf.motor_controller_init.speed_pid.ki = 800.0f;
+    init_conf.motor_controller_init.speed_pid.max_out = 28000.0f;
+    init_conf.motor_controller_init.speed_pid.max_iout = 10000.0f;
+    init_conf.motor_controller_init.speed_pid.optimization = PID_OUTPUT_LIMIT | PID_TRAPEZOID_INTERGRAL | PID_FEEDFOWARD;
+    init_conf.motor_controller_init.speed_pid.feedfoward_coefficient = 12.0f;
 
-    // [2. 前馈系数翻倍]
-    // 实测幅度比 0.47，需要放大 2.1 倍
-    // 12.0 * 2.1 ≈ 25.2 -> 取 25.0
-    current_conf.feedfoward_coefficient = 12.0f;
+    test_motor = DJI_Motor_Init(&init_conf);
 
-    // 滤波系数保持
-    current_conf.LPF_coefficient = 0.002f;
-
-    current_conf.max_out = 28000.0f;
-    current_conf.max_iout = 10000.0f;
-
-    Pid_init(&current_pid, &current_conf);
+    if (test_motor == NULL) {
+        printf("[FAIL] Motor Init Failed!\r\n");
+        for(;;) osDelay(1000);
+    }
+    printf("[PASS] Motor Init Success. Ptr: %p\r\n", test_motor);
 
     uint32_t tick = 0;
-    float time_s = 0.0f;
-    uint32_t previous_wake_time = osKernelSysTick();
+    uint32_t stage_timer = 0;
+    Test_Stage_e current_stage = STAGE_SPEED_SINE;
+
+    // 预备位置环参数 (供后面切换用)
+    Djimotor_controller_init_t pos_conf = init_conf.motor_controller_init;
+    pos_conf.close_loop = ANGLE_LOOP;
+    pos_conf.angle_pid.kp = 12.0f;
+    pos_conf.angle_pid.max_out = 500.0f; // 限制最大转速
+    pos_conf.angle_pid.deadband = 0.2f;
+
+    printf("\r\n>>> Stage 1: %s <<<\r\n", Stage_Names[current_stage]);
 
     for(;;)
     {
-        time_s += 0.001f;
-        target_torque_current = 1500.0f * sinf(2.0f * 3.14159f * 0.5f * time_s);
+        // --- 状态机切换逻辑 (每 5 秒切一次) ---
+        if (stage_timer > 5000) {
+            stage_timer = 0;
+            current_stage++;
 
-        float pid_out = Pid_calculate(&current_pid, current_torque_current, target_torque_current);
-        output_voltage = (int16_t)pid_out;
+            if (current_stage < STAGE_END) {
+                printf("\r\n>>> Switch to Stage %d: %s <<<\r\n", current_stage, Stage_Names[current_stage]);
 
-        GM6020_Send_Voltage(output_voltage);
+                // 阶段初始化
+                if (current_stage == STAGE_POS_STEP) {
+                    // 切到位置环
+                    Djimotor_change_controller(test_motor, pos_conf);
+                    // 将当前角度设为目标，防止突变
+                    Djimotor_measure_t m = Djimotor_get_measure(test_motor);
+                    Djimotor_set_target(test_motor, m.total_angle);
+                }
+                else if (current_stage == STAGE_TIMEOUT) {
+                    printf("   -> Simulating app freeze (stop calling set_target)...\r\n");
+                }
+                else if (current_stage == STAGE_RECOVERY) {
+                    // 恢复速度环
+                    Djimotor_change_controller(test_motor, init_conf.motor_controller_init);
+                    printf("   -> Recovering control...\r\n");
+                }
+            } else {
+                // 测试结束，从头开始
+                current_stage = STAGE_SPEED_SINE;
+                Djimotor_change_controller(test_motor, init_conf.motor_controller_init);
+                printf("\r\n>>> Loop Restart <<<\r\n");
+            }
+        }
 
-        if (tick % 20 == 0)
-        {
-            // 打印
-            printf("C:%.2f,%.2f,%.2f\n", target_torque_current, current_torque_current, output_voltage / 10.0f);
+        // --- 业务逻辑 ---
+
+        if (current_stage == STAGE_SPEED_SINE) {
+            // 速度环：正弦波 +/- 50rpm
+            float target = 50.0f * sinf(tick * 0.002f);
+            Djimotor_set_target(test_motor, target);
+        }
+        else if (current_stage == STAGE_POS_STEP) {
+            // 位置环：0 -> 360 -> 720 -> 0 (多圈测试)
+            // 每 1.25s 变一次
+            float target = 0;
+            if (stage_timer < 1250) target = 0;
+            else if (stage_timer < 2500) target = 360;
+            else if (stage_timer < 3750) target = 720;
+            else target = 0;
+
+            Djimotor_set_target(test_motor, target);
+        }
+        else if (current_stage == STAGE_TIMEOUT) {
+            // 模拟死机：**故意不调用** Djimotor_set_target
+            // 预期：在 100ms 后，电机应自动停止 (Current=0)
+        }
+        else if (current_stage == STAGE_RECOVERY) {
+            // 恢复控制
+            Djimotor_set_target(test_motor, 30.0f); // 恒定低速转
+        }
+
+        // --- 底层发送 (模拟 1kHz 任务) ---
+        // 在你的实际工程中，这行代码在 motor_task.c 里
+      //  Djimotor_control_all();
+
+        // --- 打印反馈 (每 100ms) ---
+        if (tick % 100 == 0) {
+            Djimotor_measure_t m = Djimotor_get_measure(test_motor);
+            Djimotor_status_e status = Djimotor_get_status(test_motor);
+
+            // 打印: 阶段 | 状态(1=En, 0=Stop) | 目标 | 实际角度 | 实际速度 | 输出电流
+            printf("S:%d | St:%d | Tgt:%.1f | Ang:%.1f | Spd:%.1f | Out:%d\r\n",
+                   current_stage,
+                   status == MOTOR_ENABLED,
+                   test_motor->motor_pid.pid_target,
+                   m.total_angle,
+                   m.angular_velocity,
+                   test_motor->motor_measure.real_current);
         }
 
         tick++;
-        osDelayUntil(&previous_wake_time, 5);
+        stage_timer++;
+        osDelay(1); // 1000Hz
     }
 }
