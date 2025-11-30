@@ -1,6 +1,6 @@
 /**
-* @file    bsp_wdg.c
- * @brief   软件看门狗实现
+ * @file    bsp_wdg.c
+ * @brief   软件看门狗实现 (补充完整接口)
  */
 
 #include "bsp_wdg.h"
@@ -11,10 +11,10 @@ static uint8_t idx = 0;
 
 Watchdog_device_t *Watchdog_register(Watchdog_init_t *config)
 {
-    if (idx >= WATCHDOG_MX_NUM) return NULL; // 防止越界
+    if (idx >= WATCHDOG_MX_NUM) return NULL;
 
     Watchdog_device_t *instance = (Watchdog_device_t *)malloc(sizeof(Watchdog_device_t));
-    if (instance == NULL) return NULL; // 防止内存分配失败
+    if (instance == NULL) return NULL;
 
     memset(instance, 0, sizeof(Watchdog_device_t));
 
@@ -22,9 +22,9 @@ Watchdog_device_t *Watchdog_register(Watchdog_init_t *config)
     instance->reload_count = config->reload_count == 0 ? 100 : config->reload_count;
     instance->callback = config->callback;
 
-    // 初始化时默认为离线还是在线？通常设为最大值，等待第一次喂狗
+    // 初始化状态
     instance->temp_count = instance->reload_count;
-    instance->is_offline = 0; // 默认在线，或者可以设为1等待第一次数据
+    instance->is_offline = 0; // 默认在线
 
     wdg_register[idx++] = instance;
     return instance;
@@ -34,11 +34,12 @@ void Watchdog_feed(Watchdog_device_t *instance)
 {
     if (instance == NULL) return;
 
-    // 重载计数器
+    // 1. 重载计数器
     instance->temp_count = instance->reload_count;
 
-    // 恢复在线状态
-    // 这里不需要立即调用“上线回调”，通常只需要处理“离线异常”
+    // 2. 标记为在线
+    // 这里非常重要：如果之前是离线的，现在收到了数据，说明“重连”了
+    // 可以在这里加一个“上线回调”，但目前我们只需要把状态置0
     instance->is_offline = 0;
 }
 
@@ -59,8 +60,7 @@ void Watchdog_control_all(void)
         else
         {
             // 计数归零，说明超时
-
-            // 核心修复：只有当状态是“在线”转为“离线”的那一次，才执行回调
+            // 只有当状态从“在线(0)”转为“离线(1)”的那一次，才执行回调
             if (current_dog->is_offline == 0)
             {
                 current_dog->is_offline = 1; // 标记为已离线
@@ -72,4 +72,17 @@ void Watchdog_control_all(void)
             }
         }
     }
+}
+
+/**
+ * @brief 检查设备是否在线
+ * @return 1:在线, 0:离线
+ */
+uint8_t Watchdog_is_online(Watchdog_device_t *instance)
+{
+    if (instance == NULL) return 0;
+
+    // 如果 is_offline == 0，说明在线，返回 1
+    // 如果 is_offline == 1，说明离线，返回 0
+    return (instance->is_offline == 0) ? 1 : 0;
 }

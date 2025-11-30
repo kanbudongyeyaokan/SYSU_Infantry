@@ -69,8 +69,8 @@ void Robot_task_init(void)
 
 
     //看门狗任务
-  //  osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityNormal, 0, 512);
-  //  watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
+    osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityNormal, 0, 512);
+    watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
 
 
     // === 集成测试 ===

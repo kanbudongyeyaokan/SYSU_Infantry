@@ -20,7 +20,7 @@ void Watchdog_control_task(void const *argument)
         Watchdog_control_all();
         
         // 任务延时10ms，保持100Hz的运行频率
-        osDelay(10);
+        osDelay(20);
     }
 
 }
