@@ -20,6 +20,9 @@
   <component name="CMakeRunConfigurationManager">
     <generated>
       <config projectName="SYSU_Infantry" targetName="SYSU_Infantry" />
+      <config projectName="SYSU_Infantry" targetName="STM32_Drivers" />
+      <config projectName="SYSU_Infantry" targetName="FreeRTOS" />
+      <config projectName="SYSU_Infantry" targetName="USB_Device_Library" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -37,17 +40,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.c" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/For_Testing_Task/bmi088_test_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/For_Testing_Task/bmi088_test_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Inc/stm32f4xx_it.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Inc/stm32f4xx_it.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Inc/tim.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Inc/tim.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/main.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Src/tim.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/tim.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c" beforeDir="false" afterPath="$PROJECT_DIR$/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c" beforeDir="false" afterPath="$PROJECT_DIR$/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_mmc.c" beforeDir="false" afterPath="$PROJECT_DIR$/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_mmc.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SYSU_Infantry.ioc" beforeDir="false" afterPath="$PROJECT_DIR$/SYSU_Infantry.ioc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/USB_DEVICE/App/usbd_cdc_if.h" beforeDir="false" afterPath="$PROJECT_DIR$/USB_DEVICE/App/usbd_cdc_if.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/USB_DEVICE/App/usbd_desc.h" beforeDir="false" afterPath="$PROJECT_DIR$/USB_DEVICE/App/usbd_desc.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake/stm32cubemx/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake/stm32cubemx/CMakeLists.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -116,10 +130,20 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+  <component name="RunManager" selected="CMake 应用程序.SYSU_Infantry">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="FreeRTOS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="FreeRTOS" CONFIG_NAME="Debug-STM32">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="STM32_Drivers" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="STM32_Drivers" CONFIG_NAME="Debug-STM32">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
     <configuration name="SYSU_Infantry" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="SYSU_Infantry" CONFIG_NAME="Debug-STM32" RUN_TARGET_PROJECT_NAME="SYSU_Infantry" RUN_TARGET_NAME="SYSU_Infantry">
@@ -127,6 +151,17 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="USB_Device_Library" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="USB_Device_Library" CONFIG_NAME="Debug-STM32">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="CMake 应用程序.SYSU_Infantry" />
+      <item itemvalue="CMake 应用程序.FreeRTOS" />
+      <item itemvalue="CMake 应用程序.STM32_Drivers" />
+      <item itemvalue="CMake 应用程序.USB_Device_Library" />
+    </list>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="默认任务">
@@ -147,7 +182,8 @@
       <workItem from="1764336007588" duration="4629000" />
       <workItem from="1764507564258" duration="1248000" />
       <workItem from="1764565050856" duration="1234000" />
-      <workItem from="1764589039515" duration="3722000" />
+      <workItem from="1764589039515" duration="5304000" />
+      <workItem from="1764604611246" duration="3662000" />
     </task>
     <servers />
   </component>

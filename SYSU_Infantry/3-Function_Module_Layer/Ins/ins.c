@@ -1,123 +1,121 @@
 #include "ins.h"
 #include "bmi088.h"
 #include "bsp_dwt.h"
-#include "imu_temp.h" // 引用温控头文件
-#include "string.h"
-#include "main.h"     // 获取 hspi1 定义
+#include "imu_temp.h"
+#include "MahonyAHRS.h"
+#include "main.h"
 
-// 全局句柄
+extern SPI_HandleTypeDef hspi1;
+
 static Bmi088_device_t *bmi088_dev;
 static attitude_t g_attitude;
 static uint32_t last_dwt_cnt = 0;
+static float gyro_offset[3] = {0}; // 零偏校准数据
 
-// 外部引用的 SPI 句柄 (CubeMX 生成)
-extern SPI_HandleTypeDef hspi1;
+// 声明阻塞读取函数 (在bmi088.c中定义)
+extern void Bmi088_read_gyro_blocking(Bmi088_device_t* dev);
 
-/**
- * @brief INS 模块初始化
- */
 void INS_Init(void)
 {
-    // 1. 确保 DWT 已开启 (在 main.c 中可能已调用，这里防守性调用)
-    // DWT_Init(168);
-
-    // 2. 初始化温控 (PID & PWM)
+    DWT_Init(168);
     Imu_Temp_Init();
 
-    // 3. 配置并初始化 BMI088
     Bmi088_config_t bmi_conf = {
         .spi_handle = &hspi1,
-        // 请根据实际硬件原理图确认 CS 引脚
         .accel_cs_gpio_port = GPIOA,
         .accel_cs_gpio_pin = GPIO_PIN_4,
         .gyro_cs_gpio_port = GPIOB,
         .gyro_cs_gpio_pin = GPIO_PIN_0,
-        // 生产环境可以关闭自检以加快启动
-        .enable_accel_self_test = false,
-        .enable_gyro_self_test = false
     };
-
     bmi088_dev = Bmi088_device_init(&bmi_conf);
 
-    // 4. 初始化 EKF
-    if (bmi088_dev != NULL) {
-        Ekf_config_t ekf_conf = {
-            .process_noise_q = 0.001f,
-            .measurement_noise_r = 0.1f,
-            .gyro_bias_noise = 0.0001f,
-            .dt = 0.001f, // 初始 dt
-            .enable_bias_correction = true,
-            .static_threshold = 0.2f
-        };
-        Ekf_init(bmi088_dev, &ekf_conf);
+    // --- 启动校准 ---
+    if(bmi088_dev) {
+        const int CALIB_COUNT = 1000;
+        float gyro_sum[3] = {0};
+
+        // 循环读取，确保机器人静止
+        for(int i=0; i<CALIB_COUNT; i++) {
+            Bmi088_read_gyro_blocking(bmi088_dev);
+            gyro_sum[0] += bmi088_dev->data.gyro_data.gyro_raw_data.roll;
+            gyro_sum[1] += bmi088_dev->data.gyro_data.gyro_raw_data.pitch;
+            gyro_sum[2] += bmi088_dev->data.gyro_data.gyro_raw_data.yaw;
+
+            // 顺便跑一下温控
+            Bmi088_read_temp(bmi088_dev);
+            Imu_Temp_Control(bmi088_dev->data.acc_data.temperature);
+
+            HAL_Delay(1);
+        }
+
+        gyro_offset[0] = gyro_sum[0] / CALIB_COUNT;
+        gyro_offset[1] = gyro_sum[1] / CALIB_COUNT;
+        gyro_offset[2] = gyro_sum[2] / CALIB_COUNT;
     }
 
-    // 5. 预热传感器 (丢弃前 50 组数据)
-    for(int i=0; i<50; i++) {
-        Bmi088_read_acc_dma(bmi088_dev);
-        Bmi088_read_gyro_dma(bmi088_dev);
-        HAL_Delay(2); // 初始化阶段可以使用 HAL_Delay
-    }
-
-    // 初始化时间戳
-    DWT_GetDeltaT(&last_dwt_cnt);
+    DWT_GetDeltaT(&last_dwt_cnt); // 重置时间戳
 }
 
-/**
- * @brief INS 任务主循环逻辑
- * @note 此函数内部包含阻塞等待(信号量)，调用者不需要额外 delay (取决于具体实现)
- * 如果 Bmi088_read_xxx_dma 内部是阻塞的，则此函数耗时约 DMA传输时间 + 计算时间
- */
 void INS_Task(void)
 {
     if (bmi088_dev == NULL) return;
 
-    // 1. 获取真实时间间隔 dt
+    // 1. 计算dt
     float dt = DWT_GetDeltaT(&last_dwt_cnt);
-    g_attitude.dt = dt;
+    // dt保护：调试暂停或任务卡死时防止数据发散
+    if(dt > 0.01f) dt = 0.01f;
 
-    // 2. 读取传感器数据 (DMA模式)
-    // 注意：这两个函数内部会挂起任务等待 DMA 中断，释放 CPU
+    // 2. 读取数据
     Bmi088_read_acc_dma(bmi088_dev);
     Bmi088_read_gyro_dma(bmi088_dev);
 
-    // 3. 温控逻辑
+    // 3. 温控
     Bmi088_read_temp(bmi088_dev);
     Imu_Temp_Control(bmi088_dev->data.acc_data.temperature);
 
-    // 4. EKF 姿态解算
-    Bmi088_ekf_update(bmi088_dev, dt);
+    // 4. 准备算法数据 (扣除零偏)
+    // 注意：bmi088.c 中已经转换了坐标系和单位，这里直接使用
+    float ax = bmi088_dev->data.acc_data.acc_raw_data.x;
+    float ay = bmi088_dev->data.acc_data.acc_raw_data.y;
+    float az = bmi088_dev->data.acc_data.acc_raw_data.z;
 
-    // 5. 更新全局数据给应用层使用
-    Euler_angles_t* euler = Bmi088_get_euler_angles(bmi088_dev);
-    Acc_raw_data_t* acc = &bmi088_dev->data.acc_data.acc_raw_data;
-    Gyro_raw_data_t* gyro = &bmi088_dev->data.gyro_data.gyro_raw_data;
+    float gx = bmi088_dev->data.gyro_data.gyro_raw_data.roll  - gyro_offset[0];
+    float gy = bmi088_dev->data.gyro_data.gyro_raw_data.pitch - gyro_offset[1];
+    float gz = bmi088_dev->data.gyro_data.gyro_raw_data.yaw   - gyro_offset[2];
 
-    if (acc && gyro && euler) {
-        memcpy(&g_attitude.accel_raw, acc, sizeof(Acc_raw_data_t));
-        memcpy(&g_attitude.gyro_raw, gyro, sizeof(Gyro_raw_data_t));
-        memcpy(&g_attitude.euler_angles, euler, sizeof(Euler_angles_t));
-        g_attitude.temperature = bmi088_dev->data.acc_data.temperature;
-    }
+    // 5. 姿态解算 (Mahony)
+    MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az, dt);
+
+    // 6. 获取欧拉角并填充结构体
+    float p, r, y;
+    Mahony_GetEulerAngle(&p, &r, &y); // 输出为弧度
+
+    // 赋值给子结构体 euler_angles (转换为角度)
+    g_attitude.euler_angles.pitch = p * 57.29578f;
+    g_attitude.euler_angles.roll  = r * 57.29578f;
+    g_attitude.euler_angles.yaw   = y * 57.29578f;
+
+    // 填充原始数据
+    g_attitude.accel_raw.x = ax;
+    g_attitude.accel_raw.y = ay;
+    g_attitude.accel_raw.z = az;
+
+    g_attitude.gyro_raw.roll  = gx;
+    g_attitude.gyro_raw.pitch = gy;
+    g_attitude.gyro_raw.yaw   = gz;
+
+    g_attitude.temperature = bmi088_dev->data.acc_data.temperature;
+    g_attitude.dt = dt;
 }
 
-/**
- * @brief 获取姿态数据接口
- */
 const attitude_t* INS_Get_Attitude(void)
 {
     return &g_attitude;
 }
 
-/**
- * @brief SPI 接收完成中断回调
- * @note  此函数由 HAL 库在 DMA 中断中调用
- */
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-    // 判断是否是 BMI088 使用的 SPI 接口
     if (hspi == &hspi1) {
-        // 调用 BMI088 驱动层提供的回调，释放信号量唤醒任务
         Bmi088_DMA_RxCpltCallback(bmi088_dev);
     }
 }

@@ -69,8 +69,8 @@ void Robot_task_init(void)
 
 
     //看门狗任务
-    osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityNormal, 0, 512);
-    watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
+    //osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityNormal, 0, 512);
+    //watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
 
 
     // === 集成测试 ===
@@ -85,7 +85,7 @@ void Robot_task_init(void)
   // decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
 
     //ins任务
-    osThreadDef(ins_task,Ins_task,osPriorityNormal,0,512);
+    osThreadDef(ins_task,Ins_task,osPriorityNormal,0,1024);
     ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
 
     // === 启动底盘与电机任务（必需） ===
@@ -102,8 +102,8 @@ void Robot_task_init(void)
   //  osDelay(100);
 
     // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
-    osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 512);
-    motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
+   // osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 512);
+   // motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
 
 }
 
