@@ -56,8 +56,8 @@ void Robot_task_init(void)
     // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
     // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
-     osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
-     rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
+    // osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
+    // rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
 
     // // === 3508电机开环测试 ===
     // osThreadDef(m3508_openloop_test_task, M3508_openloop_test_task, osPriorityNormal, 0, 512);
@@ -85,8 +85,8 @@ void Robot_task_init(void)
   // decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
 
     //ins任务
-   // osThreadDef(ins_task,Ins_task,osPriorityNormal,0,512);
-   // ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
+    osThreadDef(ins_task,Ins_task,osPriorityNormal,0,512);
+    ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
 
     // === 启动底盘与电机任务（必需） ===
     // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
