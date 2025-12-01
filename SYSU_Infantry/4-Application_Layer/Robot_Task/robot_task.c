@@ -56,8 +56,8 @@ void Robot_task_init(void)
     // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
     // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
 
-     osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
-     rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
+    // osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
+    // rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
 
     // // === 3508电机开环测试 ===
     // osThreadDef(m3508_openloop_test_task, M3508_openloop_test_task, osPriorityNormal, 0, 512);

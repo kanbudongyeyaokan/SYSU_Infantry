@@ -114,6 +114,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         2-Hardware_Driver_Layer/Buzzer_Driver/buzzer_driver.c
         2-Hardware_Driver_Layer/Buzzer_Driver/buzzer_music.h
         2-Hardware_Driver_Layer/Buzzer_Driver/buzzer_music.c
+        3-Function_Module_Layer/Ins/imu_temp.c
+        3-Function_Module_Layer/Ins/imu_temp.h
 
 )
 

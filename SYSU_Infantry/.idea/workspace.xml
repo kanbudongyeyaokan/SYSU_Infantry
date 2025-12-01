@@ -37,15 +37,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
+      <change afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.c" beforeDir="false" afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.h" beforeDir="false" afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/1-Hardware_Layer/bsp_wdg/bsp_wdg.c" beforeDir="false" afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_wdg/bsp_wdg.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/For_Testing_Task/rc_test_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/For_Testing_Task/rc_test_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -115,6 +117,11 @@
   }
 }</component>
   <component name="RunManager">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="SYSU_Infantry" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="SYSU_Infantry" CONFIG_NAME="Debug-STM32" RUN_TARGET_PROJECT_NAME="SYSU_Infantry" RUN_TARGET_NAME="SYSU_Infantry">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -138,6 +145,9 @@
       <workItem from="1764079210194" duration="4028000" />
       <workItem from="1764164727210" duration="17507000" />
       <workItem from="1764336007588" duration="4629000" />
+      <workItem from="1764507564258" duration="1248000" />
+      <workItem from="1764565050856" duration="1234000" />
+      <workItem from="1764589039515" duration="3722000" />
     </task>
     <servers />
   </component>
