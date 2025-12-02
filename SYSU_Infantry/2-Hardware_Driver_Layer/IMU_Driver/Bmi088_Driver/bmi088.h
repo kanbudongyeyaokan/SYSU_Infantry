@@ -1,9 +1,7 @@
 /**
- * @Author         : Minghang Li
- * @Date           : 2022-11-25 22:54
- * @LastEditTime   : 2025-09-14
- * @Note           : 重构支持多实例
- * @Copyright(c)   : Minghang Li Copyright
+ * @Author         : SYSU电控组
+ * @Date           : 2025-12-1
+ * @Note           : C板BMI088驱动库
  */
 #pragma once
 

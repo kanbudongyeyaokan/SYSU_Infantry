@@ -42,12 +42,13 @@
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/main.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Src/tim.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/tim.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SYSU_Infantry.ioc" beforeDir="false" afterPath="$PROJECT_DIR$/SYSU_Infantry.ioc" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

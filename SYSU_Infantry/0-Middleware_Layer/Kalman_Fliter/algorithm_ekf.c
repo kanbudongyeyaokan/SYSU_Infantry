@@ -21,8 +21,6 @@
 // 私有函数声明
 static float inv_sqrt(float x);
 static void matrix_multiply(float* A, float* B, float* C, int m, int n, int p);
-static void matrix_add(float* A, float* B, float* C, int m, int n);
-static void matrix_subtract(float* A, float* B, float* C, int m, int n);
 static void matrix_transpose(float* A, float* B, int m, int n);
 static int matrix_inverse_3x3(float* src, float* dst);
 
@@ -102,8 +100,10 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
     float acc_norm_val, gyro_norm_val;
     float half_T = 0.5f * dt;
 
-    // [移植点 1] 强制去除Z轴零偏，防止Yaw漂移
-    ekf_state->gyro_bias[2] = 0.0f;
+    // [关键修改] 删除"强制去除Z轴零偏"的代码
+    // 我们将通过Ins_task在启动时计算Z轴静态零偏，并填入 gyro_bias[2]
+    // 之后该值保持不变（因为dx[3]和dx[5]逻辑不更新它），从而持续扣除静态漂移
+    // ekf_state->gyro_bias[2] = 0.0f; <--- 删除这行
 
     // 1. 去除零偏后的角速度
     float gx = gyro[0] - ekf_state->gyro_bias[0];
@@ -303,16 +303,11 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
     matrix_multiply(PHT, S_inv, K, 6, 3, 3);
 
     // [移植点 4] 应用自适应增益和方向余弦修正
-    // 计算方向余弦：重力在各轴分量的反余弦，用于衡量该轴是否可观测
-    // 当重力垂直于某轴时，该轴的陀螺仪零偏最可观测
     for(int i=0; i<18; i++) K[i] *= gain_scale;
 
     for(int i=4; i<6; i++) { // 对零偏部分(x,y)进行修正
         for(int j=0; j<3; j++) {
-            // OrientationCosine[i-4] logic in source
-            // 这里的逻辑是：如果重力分量接近1，acos接近0，权重降低。如果重力分量接近0，acos接近PI/2，权重增加。
-            // 简化逻辑：直接用方向余弦调整
-             float cos_val = fabsf(g_pred[i-4]); // g_pred[0] is gravity on X
+             float cos_val = fabsf(g_pred[i-4]);
              float angle = acosf(cos_val);
              K[i*3+j] *= angle / 1.5707963f;
         }
@@ -331,17 +326,8 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
         if (dx[5] < -limit) dx[5] = -limit;
     }
 
-    // 不修正Z轴零偏 (强制为0)
-    dx[3] = 0.0f; // 修正yaw的四元数分量吗？不，这里是状态向量。K*y得到的是状态增量。
-    // 注意：Successful code 中 dx[3] = 0 注释是 "不修正yaw轴数据"。
-    // 在四元数误差状态中，这可能对应不同的物理意义。
-    // 但在直接状态EKF中，dx[0-3]是四元数增量。
-    // 原代码逻辑：kf->temp_vector.pData[3] = 0;
-    // 这意味着不直接通过加速度计修正q3分量？或者说防止yaw被强拉？
-    // 让我们照做。
-    // dx[3] 对应 q3 的增量。
-    // 实际上，重力加速度确实无法观测Yaw，所以限制它是合理的。
-    // dx[3] = 0.0f; // 暂时保留，根据源程序逻辑
+    // 不更新Z轴零偏 (仅依靠外部校准)
+    dx[3] = 0.0f;
 
     ekf_state->quaternion.q0 += dx[0];
     ekf_state->quaternion.q1 += dx[1];
@@ -395,20 +381,6 @@ void Ekf_quaternion_to_euler(Quaternion_t* q, Euler_angles_t* euler) {
     euler->yaw = atan2f(2.0f * (q0*q3 + q1*q2), 2.0f * (q0*q0 + q1*q1) - 1.0f) * EKF_RAD_TO_DEG;
     euler->pitch = atan2f(2.0f * (q0*q1 + q2*q3), 2.0f * (q0*q0 + q3*q3) - 1.0f) * EKF_RAD_TO_DEG;
     euler->roll = asinf(-2.0f * (q1*q3 - q0*q2)) * EKF_RAD_TO_DEG;
-
-    // 限制 Pitch 范围 (源程序逻辑) - 注意：源程序Pitch计算公式略有不同，这里使用标准转换
-    // 为了完全复刻源程序：
-    // Source: Pitch = atan2(..., ...)
-    // Source: Roll = asin(...)
-    // 你的原代码：Pitch = asin, Roll = atan2
-    // RoboMaster通常定义：绕X是Roll，绕Y是Pitch，绕Z是Yaw。
-    // BMI088数据：通常X向前，Y向左，Z向上。
-    // 源程序 QuaternionEKF.c 中:
-    // Yaw = atan2...
-    // Pitch = atan2...
-    // Roll = asin...
-    // 这意味着它的定义可能略有不同。但我将保持标准的ZYX解算，或者沿用你之前的解算以防坐标系混乱。
-    // 鉴于你之前的代码是标准的，这里保持不变。
 }
 
 void Ekf_update_yaw_continuity(Ekf_state_t* ekf_state) {
