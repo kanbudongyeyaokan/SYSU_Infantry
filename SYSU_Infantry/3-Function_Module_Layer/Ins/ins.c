@@ -1,121 +1,106 @@
 #include "ins.h"
-#include "bmi088.h"
-#include "bsp_dwt.h"
-#include "imu_temp.h"
-#include "MahonyAHRS.h"
+#include <string.h>
+#include <stdbool.h>
+#include <math.h>
+#include <stdint.h>
 #include "main.h"
+#include "bsp_dwt.h"
+#include "math_lib.h"
 
-extern SPI_HandleTypeDef hspi1;
+// 双缓冲姿态数据
+static attitude_t g_attitude_buffer[2];
+static volatile uint8_t g_active_buffer_index = 0U;
 
-static Bmi088_device_t *bmi088_dev;
-static attitude_t g_attitude;
-static uint32_t last_dwt_cnt = 0;
-static float gyro_offset[3] = {0}; // 零偏校准数据
+static float g_yaw_total_deg = 0.0f;
+static int32_t g_yaw_round_count = 0;
+static bool g_yaw_total_valid = false;
+static uint64_t g_last_update_timestamp_us = 0ULL;
+static Imu_state_e g_ins_state = IMU_STATE_INIT;
 
-// 声明阻塞读取函数 (在bmi088.c中定义)
-extern void Bmi088_read_gyro_blocking(Bmi088_device_t* dev);
-
-void INS_Init(void)
+/**
+ * @brief 获取最新的姿态数据
+ * @return 返回一个指向全局姿态数据结构体的常量指针
+ */
+attitude_t* get_attitude_data(void)
 {
-    DWT_Init(168);
-    Imu_Temp_Init();
+    return (attitude_t *)&g_attitude_buffer[g_active_buffer_index];
+}
 
-    Bmi088_config_t bmi_conf = {
-        .spi_handle = &hspi1,
-        .accel_cs_gpio_port = GPIOA,
-        .accel_cs_gpio_pin = GPIO_PIN_4,
-        .gyro_cs_gpio_port = GPIOB,
-        .gyro_cs_gpio_pin = GPIO_PIN_0,
-    };
-    bmi088_dev = Bmi088_device_init(&bmi_conf);
+/**
+ * @brief 更新姿态数据（由Ins_task调用）
+ * @param acc 最新的加速度数据
+ * @param gyro 最新的陀螺仪数据
+ * @param euler 最新的欧拉角数据
+ */
+void update_attitude_data(const Acc_raw_data_t* acc,
+                          const Gyro_raw_data_t* gyro,
+                          const Euler_angles_t* euler,
+                          const float* yaw_total_angle,
+                          Imu_state_e state)
+{
+    uint8_t inactive_index = g_active_buffer_index ^ 1U;
+    attitude_t *target = &g_attitude_buffer[inactive_index];
+    float dt = 0.001f; // 默认1ms
+    uint64_t now_us;
 
-    // --- 启动校准 ---
-    if(bmi088_dev) {
-        const int CALIB_COUNT = 1000;
-        float gyro_sum[3] = {0};
+    g_ins_state = state;
+    target->state = g_ins_state;
 
-        // 循环读取，确保机器人静止
-        for(int i=0; i<CALIB_COUNT; i++) {
-            Bmi088_read_gyro_blocking(bmi088_dev);
-            gyro_sum[0] += bmi088_dev->data.gyro_data.gyro_raw_data.roll;
-            gyro_sum[1] += bmi088_dev->data.gyro_data.gyro_raw_data.pitch;
-            gyro_sum[2] += bmi088_dev->data.gyro_data.gyro_raw_data.yaw;
+    if (g_ins_state == IMU_STATE_INIT || g_ins_state == IMU_STATE_ERROR) {
+        g_yaw_total_valid = false;
+    }
 
-            // 顺便跑一下温控
-            Bmi088_read_temp(bmi088_dev);
-            Imu_Temp_Control(bmi088_dev->data.acc_data.temperature);
-
-            HAL_Delay(1);
+    now_us = DWT_GetTimeline_s();
+    if (g_last_update_timestamp_us != 0ULL) {
+        uint64_t delta_us = now_us - g_last_update_timestamp_us;
+        if (delta_us < 1000000ULL) {
+            dt = (float)delta_us * 1.0e-6f;
         }
+    }
+    g_last_update_timestamp_us = now_us;
 
-        gyro_offset[0] = gyro_sum[0] / CALIB_COUNT;
-        gyro_offset[1] = gyro_sum[1] / CALIB_COUNT;
-        gyro_offset[2] = gyro_sum[2] / CALIB_COUNT;
+    if (acc) {
+        memcpy(&target->accel_raw, acc, sizeof(Acc_raw_data_t));
+    }
+    if (gyro) {
+        target->gyro_raw.roll = RAD_TO_DEG(gyro->roll);
+        target->gyro_raw.pitch = RAD_TO_DEG(gyro->pitch);
+        target->gyro_raw.yaw = RAD_TO_DEG(gyro->yaw);
+        target->yaw_rate_dps = target->gyro_raw.yaw;
+    }
+    if (euler) {
+        float current_yaw;
+        bool has_external_total;
+
+        memcpy(&target->euler_angles, euler, sizeof(Euler_angles_t));
+
+        current_yaw = euler->yaw;
+        has_external_total = (yaw_total_angle != NULL) && isfinite(*yaw_total_angle);
+
+        if (has_external_total) {
+            g_yaw_total_deg = *yaw_total_angle;
+            g_yaw_round_count = (int32_t)floorf((g_yaw_total_deg + 180.0f) / 360.0f);
+            g_yaw_total_valid = true;
+        } else if (!g_yaw_total_valid) {
+            g_yaw_total_deg = current_yaw;
+            g_yaw_round_count = (int32_t)floorf((g_yaw_total_deg + 180.0f) / 360.0f);
+        }
     }
 
-    DWT_GetDeltaT(&last_dwt_cnt); // 重置时间戳
-}
-
-void INS_Task(void)
-{
-    if (bmi088_dev == NULL) return;
-
-    // 1. 计算dt
-    float dt = DWT_GetDeltaT(&last_dwt_cnt);
-    // dt保护：调试暂停或任务卡死时防止数据发散
-    if(dt > 0.01f) dt = 0.01f;
-
-    // 2. 读取数据
-    Bmi088_read_acc_dma(bmi088_dev);
-    Bmi088_read_gyro_dma(bmi088_dev);
-
-    // 3. 温控
-    Bmi088_read_temp(bmi088_dev);
-    Imu_Temp_Control(bmi088_dev->data.acc_data.temperature);
-
-    // 4. 准备算法数据 (扣除零偏)
-    // 注意：bmi088.c 中已经转换了坐标系和单位，这里直接使用
-    float ax = bmi088_dev->data.acc_data.acc_raw_data.x;
-    float ay = bmi088_dev->data.acc_data.acc_raw_data.y;
-    float az = bmi088_dev->data.acc_data.acc_raw_data.z;
-
-    float gx = bmi088_dev->data.gyro_data.gyro_raw_data.roll  - gyro_offset[0];
-    float gy = bmi088_dev->data.gyro_data.gyro_raw_data.pitch - gyro_offset[1];
-    float gz = bmi088_dev->data.gyro_data.gyro_raw_data.yaw   - gyro_offset[2];
-
-    // 5. 姿态解算 (Mahony)
-    MahonyAHRSupdateIMU(gx, gy, gz, ax, ay, az, dt);
-
-    // 6. 获取欧拉角并填充结构体
-    float p, r, y;
-    Mahony_GetEulerAngle(&p, &r, &y); // 输出为弧度
-
-    // 赋值给子结构体 euler_angles (转换为角度)
-    g_attitude.euler_angles.pitch = p * 57.29578f;
-    g_attitude.euler_angles.roll  = r * 57.29578f;
-    g_attitude.euler_angles.yaw   = y * 57.29578f;
-
-    // 填充原始数据
-    g_attitude.accel_raw.x = ax;
-    g_attitude.accel_raw.y = ay;
-    g_attitude.accel_raw.z = az;
-
-    g_attitude.gyro_raw.roll  = gx;
-    g_attitude.gyro_raw.pitch = gy;
-    g_attitude.gyro_raw.yaw   = gz;
-
-    g_attitude.temperature = bmi088_dev->data.acc_data.temperature;
-    g_attitude.dt = dt;
-}
-
-const attitude_t* INS_Get_Attitude(void)
-{
-    return &g_attitude;
-}
-
-void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-    if (hspi == &hspi1) {
-        Bmi088_DMA_RxCpltCallback(bmi088_dev);
+    target->yaw_round_count = g_yaw_round_count;
+    target->yaw_total_angle = g_yaw_total_deg;
+    if (!gyro) {
+        target->yaw_rate_dps = target->gyro_raw.yaw;
     }
+
+    target->state = g_ins_state;
+
+    __disable_irq();
+    g_active_buffer_index = inactive_index;
+    __enable_irq();
+}
+
+Imu_state_e ins_get_state(void)
+{
+    return g_ins_state;
 }
