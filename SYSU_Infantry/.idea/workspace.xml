@@ -62,17 +62,26 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_dwt/bsp_dwt.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_dwt/bsp_dwt.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_usart/bsp_usart.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_usart/bsp_usart.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Remote_Control/remote_control.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Remote_Control/remote_control.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="mock://C:/Users/26524/Desktop/RM_Infantry/sysu_-rm_-infantry/SYSU_Infantry/4-Application_Layer/Robot_Task/robot_task.c" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock://C:/Users/26524/Desktop/RM_Infantry/sysu_-rm_-infantry/SYSU_Infantry/4-Application_Layer/Robot_Task/robot_task.c" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
