@@ -1,3 +1,9 @@
+/**
+* @Author         : SYSU电控组
+ * @Date           : 2025-12-1
+ * @Note           : C板BMI088驱动库
+ *
+ */
 #include "bmi088.h"
 #include "bsp_dwt.h"
 #include <math.h>
