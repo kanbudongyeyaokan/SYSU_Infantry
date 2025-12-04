@@ -9,7 +9,6 @@
 
 
 // 测试任务头文件
-#include "bmi088_test_task.h"
 #include "can_motors_test_task.h"
 #include "rc_test_task.h"
 #include "Decision_making_task.h"  // 添加决策任务头文件
