@@ -210,7 +210,7 @@ void RC_ctrl_set()
     chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
 
     //云台控制量
-    gimbal_cmd_send.yaw += 0.005f * (float)rc_data[CURRENT].rc.Rrocker_x;
+    gimbal_cmd_send.yaw += 0.008f * (float)rc_data[CURRENT].rc.Rrocker_x;
     gimbal_cmd_send.pitch += 0.01f * (float)(rc_data[CURRENT].rc.Rrocker_y);
 
     

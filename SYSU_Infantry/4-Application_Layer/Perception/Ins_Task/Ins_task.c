@@ -15,13 +15,14 @@ static Bmi088_device_t *bmi088_device;
 #define INS_EKF_STATIC_THRESHOLD     200U
 #define INS_EKF_UPDATE_THRESHOLD     500U
 
-// 简单的向量运算
+
 static void vec_cross(float a[3], float b[3], float res[3]) {
     res[0] = a[1]*b[2] - a[2]*b[1];
     res[1] = a[2]*b[0] - a[0]*b[2];
     res[2] = a[0]*b[1] - a[1]*b[0];
 }
 
+//向量点积
 static float vec_dot(float a[3], float b[3]) {
     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
 }
@@ -34,12 +35,17 @@ static void vec_norm(float v[3]) {
 }
 
 /**
- * @brief 智能预热函数
+ * @brief 预热BMI088，使其达到39.5度才开始姿态解算
+ * @note  此函数会在 ins_task 开始时被调用。它会死循环检查温度，
+ * 并持续调用温控函数，直到温度达标或超时。
+ * 这能确保姿态解算开始时，IMU 已经处于恒温状态，从而获得极高的零偏稳定性。
  */
 static void Imu_Wait_For_Temp(Bmi088_device_t* bmi088) {
+    //目标温度：39.5度
     const float TARGET_TEMP = 39.5f;
+    // 超时时间：60000毫秒 (60秒)。
     const uint32_t TIMEOUT_MS = 60000;
-
+    // 记录开始预热的时间戳 (ms)
     uint32_t start_time = HAL_GetTick();
     uint32_t print_tick = 0;
 
@@ -50,7 +56,7 @@ static void Imu_Wait_For_Temp(Bmi088_device_t* bmi088) {
         if (current_temp >= TARGET_TEMP) {
             break;
         }
-
+        // 判断是否超时了，温度仍然没有升上来
         if ((HAL_GetTick() - start_time) > TIMEOUT_MS) {
             break;
         }
@@ -72,7 +78,7 @@ static void Ins_calibrate_and_init(Bmi088_device_t* bmi088) {
     float gyro_z_sum = 0.0f;
     float count = 0;
 
-    const int CALI_SAMPLES = 3000;
+    const int CALI_SAMPLES = 2000;
 
     for (int i = 0; i < CALI_SAMPLES; i++) {
         float temp = Bmi088_get_temperature(bmi088);
@@ -182,7 +188,7 @@ void Ins_task(void const *argument)
     if (bmi088_device != NULL)
     {
         Bmi088_ekf_init(bmi088_device, &ekf_config);
-        Imu_Wait_For_Temp(bmi088_device);
+       // Imu_Wait_For_Temp(bmi088_device);
         Ins_calibrate_and_init(bmi088_device);
     }
 
@@ -192,9 +198,8 @@ void Ins_task(void const *argument)
     uint32_t loop_count = 0;
     uint32_t static_consistent_count = 0;
 
-    // [新增] 误差累积器：用于平滑零偏修正
+    // 误差累积器：用于平滑零偏修正
     // 只有当累积误差足够大时，才去修改真正的 bias
-    // 类似于积分环节，防止高频噪声导致 bias 抖动
     float bias_accumulator = 0.0f;
 
     for (;;)
@@ -298,12 +303,14 @@ void Ins_task(void const *argument)
                  {
                      float temp = Bmi088_get_temperature(bmi088_device);
                      // 打印 BiasZ 以便观察
+                    /*
                      printf("IMU: R:%.2f P:%.2f Y:%.2f Temp:%.1f BiasZ:%.5f\r\n",
                             euler_angles->roll,
                             euler_angles->pitch,
                             euler_angles->yaw,
                             temp,
                             bmi088_device->data.ekf_state.gyro_bias[2]);
+                            */
                 }
             }
         } else {
