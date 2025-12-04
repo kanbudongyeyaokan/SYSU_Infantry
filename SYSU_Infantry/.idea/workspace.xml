@@ -41,14 +41,16 @@
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.h" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Src/tim.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/tim.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SYSU_Infantry.ioc" beforeDir="false" afterPath="$PROJECT_DIR$/SYSU_Infantry.ioc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,11 +129,6 @@
   }
 }</component>
   <component name="RunManager" selected="CMake 应用程序.SYSU_Infantry">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="FreeRTOS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="FreeRTOS" CONFIG_NAME="Debug-STM32">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -180,6 +177,10 @@
       <workItem from="1764565050856" duration="1234000" />
       <workItem from="1764589039515" duration="5304000" />
       <workItem from="1764604611246" duration="3662000" />
+      <workItem from="1764679805060" duration="1810000" />
+      <workItem from="1764770351770" duration="3141000" />
+      <workItem from="1764814247350" duration="898000" />
+      <workItem from="1764815170523" duration="4750000" />
     </task>
     <servers />
   </component>

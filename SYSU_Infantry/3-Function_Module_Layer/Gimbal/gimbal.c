@@ -44,7 +44,7 @@ static void Gimbal_motor_init(void) {
         .motor_type = GM6020,
         .motor_status = MOTOR_ENABLED,
         .motor_controller_init = {
-            .close_loop = OPEN_LOOP,
+            .close_loop = ANGLE_AND_SPEED_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
             //使用ins模块姿态数据作为反馈
@@ -85,7 +85,7 @@ static void Gimbal_motor_init(void) {
         .motor_type = GM6020,
         .motor_status = MOTOR_ENABLED,
         .motor_controller_init = {
-            .close_loop = OPEN_LOOP,
+            .close_loop = ANGLE_AND_SPEED_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
             //使用ins模块姿态数据作为反馈

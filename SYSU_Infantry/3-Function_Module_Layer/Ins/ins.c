@@ -8,7 +8,7 @@
 #include "math_lib.h"
 
 // 双缓冲姿态数据
-static attitude_t g_attitude_buffer[2];
+static attitude_t g_attitude_buffer;
 static volatile uint8_t g_active_buffer_index = 0U;
 
 static float g_yaw_total_deg = 0.0f;
@@ -23,7 +23,7 @@ static Imu_state_e g_ins_state = IMU_STATE_INIT;
  */
 attitude_t* get_attitude_data(void)
 {
-    return (attitude_t *)&g_attitude_buffer[g_active_buffer_index];
+    return (attitude_t *)&g_attitude_buffer;
 }
 
 /**
@@ -39,7 +39,7 @@ void update_attitude_data(const Acc_raw_data_t* acc,
                           Imu_state_e state)
 {
     uint8_t inactive_index = g_active_buffer_index ^ 1U;
-    attitude_t *target = &g_attitude_buffer[inactive_index];
+    attitude_t *target = &g_attitude_buffer;
     float dt = 0.001f; // 默认1ms
     uint64_t now_us;
 
@@ -95,9 +95,6 @@ void update_attitude_data(const Acc_raw_data_t* acc,
 
     target->state = g_ins_state;
 
-    __disable_irq();
-    g_active_buffer_index = inactive_index;
-    __enable_irq();
 }
 
 Imu_state_e ins_get_state(void)

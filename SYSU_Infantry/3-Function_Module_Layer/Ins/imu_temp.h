@@ -1,6 +1,12 @@
 #ifndef IMU_TEMP_H
 #define IMU_TEMP_H
-
+/**
+ * @Author  SYSU电控组
+ * @file    imu_temp.c
+ * @brief   IMU恒温控制模块
+ * @note    基于RoboMaster开发板C型：加热电阻连接在 TIM10_CH1 (PF6)
+ *
+ */
 #include <stdint.h>
 
 /**

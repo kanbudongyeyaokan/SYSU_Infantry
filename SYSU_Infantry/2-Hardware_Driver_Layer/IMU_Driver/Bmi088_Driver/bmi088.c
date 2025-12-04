@@ -1,7 +1,7 @@
 /**
-* @Author         : SYSU电控组
- * @Date           : 2025-12-1
- * @Note           : C板BMI088驱动库
+* @Author :SYSU电控组
+ * @Date  :2025-12-1
+ * @Note  :C板BMI088驱动库
  *
  */
 #include "bmi088.h"
@@ -584,7 +584,3 @@ float Bmi088_get_temperature(Bmi088_device_t* bmi088) {
     float* temp_ptr = Read_acc_temperature(bmi088);
     return temp_ptr ? *temp_ptr : 25.0f;
 }
-
-// ===================== 辅助函数实现 =====================
-
-// EKF相关函数已经移到ekf.c中实现

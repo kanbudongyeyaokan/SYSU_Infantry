@@ -73,11 +73,13 @@ void Chassis_init()
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 10,
+                    .kp = 15,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
-                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
+                    .LPF_coefficient = 0.8,
+                    .feedfoward_coefficient = 0.2,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST|PID_FEEDFOWARD,
                     .max_out = 15000,
                 }
             },
@@ -91,11 +93,13 @@ void Chassis_init()
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 10,
+                    .kp = 15,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
-                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
+                    .LPF_coefficient = 0.8,
+                    .feedfoward_coefficient = 0.2,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST|PID_FEEDFOWARD,
                     .max_out = 15000,
                 }
             },
@@ -109,11 +113,13 @@ void Chassis_init()
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 10,
+                    .kp = 15,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
-                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
+                    .LPF_coefficient = 0.8,
+                    .feedfoward_coefficient = 0.2,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST|PID_FEEDFOWARD,
                     .max_out = 15000,
                 }
             },
@@ -127,11 +133,13 @@ void Chassis_init()
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 10,
+                    .kp = 15,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
-                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
+                    .LPF_coefficient = 0.8,
+                    .feedfoward_coefficient = 0.2,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST|PID_FEEDFOWARD,
                     .max_out = 15000,
                 }
             },
@@ -149,7 +157,7 @@ void Chassis_init()
  */
 void Chassis_handle_command(void)
 {
-   // printf("speed is:%f",chassis_motors[0]->motor_measure.angular_velocity);
+    //printf("Mode is:%d",chassis_cmd_recv.chassis_mode);
     // 从消息中心获取最新的底盘控制指令
     if (Sub_get_message(chassis_cmd_sub, &chassis_cmd_recv)) {
         //底盘四个电机的输出
@@ -206,10 +214,14 @@ static void Chassis_omni_kinematics(const Chassis_cmd_send_t *cmd, Chassis_outpu
     //目前以电池所在位置为后方，其对面为正前方
     // 计算各轮子线速度 (rad/s)
     float wheel_linear_speed[4];
-    wheel_linear_speed[0] =  -cmd->vx - cmd->vy - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;   // 左前轮
-    wheel_linear_speed[1] =  cmd->vx + cmd->vy - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;   // 右前轮
-    wheel_linear_speed[2] = -cmd->vx + cmd->vy - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;  // 左后轮
-    wheel_linear_speed[3] =  cmd->vx - cmd->vy - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;  // 右后轮
+    wheel_linear_speed[0] =  -cmd->vx - cmd->vy
+                        - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;   // 右前轮
+    wheel_linear_speed[1] =  -cmd->vx + cmd->vy
+                        - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;   // 左后轮
+    wheel_linear_speed[2] =  cmd->vx + cmd->vy
+                        - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;  // 左前轮
+    wheel_linear_speed[3] =  cmd->vx - cmd->vy
+                        - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;  // 右后轮
     for (int i = 0; i < 4; i++) {
         output->motor_speed[i] = wheel_linear_speed[i];
     }

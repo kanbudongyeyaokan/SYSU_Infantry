@@ -1,20 +1,21 @@
 /**
-* @file    imu_temp.c
+ * @Author  SYSU电控组
+ * @file    imu_temp.c
  * @brief   IMU恒温控制模块
  * @note    基于RoboMaster开发板C型：加热电阻连接在 TIM10_CH1 (PF6)
+ *
  */
 #include "imu_temp.h"
 #include "algorithm_pid.h"
 #include "tim.h"
 #include "main.h"
 
-// 目标温度：通常设置为高于环境温度，推荐 40度 或 45度
+// 目标温度：通常设置为高于环境温度
 // BMI088 在恒温下零漂最稳定
 #define IMU_TEMP_TARGET 40.0f
 
-// PWM 最大值 (对应定时器的 Period/ARR)
-// 请确保 CubeMX 中 TIM10 的 Counter Period 设置为 1000-1 (即 999) 或者其他值
-// 这里假设 ARR 为 1000
+// PWM 最大值
+// ARR 为 1000
 #define PWM_MAX_VALUE   1000.0f
 
 static Pid_instance_t temp_pid;
@@ -25,8 +26,7 @@ static Pid_instance_t temp_pid;
  */
 void Imu_Temp_Init(void)
 {
-    // 1. 初始化PID参数
-    // 加热系统是大惯性系统，响应慢，需要较大的 Kp 和适当的 Ki
+    //初始化PID参数
     Pid_init_t pid_conf = {
         .kp = 800.0f,      // 比例系数
         .ki = 1.0f,         // 积分系数 (加热过程积分不能太大，否则超调严重)
@@ -39,8 +39,7 @@ void Imu_Temp_Init(void)
 
     Pid_init(&temp_pid, &pid_conf);
 
-    // 2. 开启 TIM10 Channel 1 的 PWM 输出
-    // 对应引脚 PF6
+    //开启 TIM10 Channel 1 的 PWM 输出
     HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
 }
 
@@ -51,17 +50,15 @@ void Imu_Temp_Init(void)
  */
 void Imu_Temp_Control(float current_temp)
 {
-    // 1. 计算PID输出
+    // 计算PID输出
     // 注意：加热是单向控制，只能加热不能制冷
     float pid_out = Pid_calculate(&temp_pid, current_temp, IMU_TEMP_TARGET);
-
-    // 2. 限制输出范围 [0, PWM_MAX]
+    // 限制输出范围 [0, PWM_MAX]
     if (pid_out < 0.0f) {
         pid_out = 0.0f;
     } else if (pid_out > PWM_MAX_VALUE) {
         pid_out = PWM_MAX_VALUE;
     }
-
     // 3. 设置 PWM 占空比
     __HAL_TIM_SET_COMPARE(&htim10, TIM_CHANNEL_1, (uint16_t)pid_out);
 }

@@ -1,7 +1,8 @@
 /**
- * @Author         : SYSU电控组
- * @Date           : 2025-12-1
- * @Note           : C板BMI088驱动库
+* @Author :SYSU电控组
+ * @Date  :2025-12-1
+ * @Note  :C板BMI088驱动库
+ *
  */
 #pragma once
 
@@ -39,8 +40,6 @@ typedef struct {
     float pitch;
     float yaw;
 } Gyro_raw_data_t;
-
-// EKF相关结构体已移至ekf.h中
 
 typedef struct {
     Acc_raw_data_t acc_raw_data;
@@ -147,7 +146,6 @@ float* Read_acc_temperature(Bmi088_device_t* bmi088);
 float Bmi088_get_temperature(Bmi088_device_t* bmi088);
 
 // EKF相关函数
-
 /**********************************************************************************************************
  * @attention
  * 
