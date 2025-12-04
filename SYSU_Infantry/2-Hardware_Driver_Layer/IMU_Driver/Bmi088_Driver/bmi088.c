@@ -58,14 +58,6 @@ Bmi088_device_t* Bmi088_device_init(Bmi088_config_t* config)
 
     // 获取一个空闲实例
     Bmi088_device_t* bmi088 = &bmi088_instances[bmi088_instance_count++];
-    bmi088->config = *config;
-    if (Bmi088_is_matrix_zero(bmi088->config.accel_rotation)) {
-        Bmi088_set_identity_matrix(bmi088->config.accel_rotation);
-    }
-    if (Bmi088_is_matrix_zero(bmi088->config.gyro_rotation)) {
-        Bmi088_set_identity_matrix(bmi088->config.gyro_rotation);
-    }
-    bmi088->last_error = NO_ERROR;
 
     // 复制配置
     bmi088->config = *config;

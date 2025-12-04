@@ -40,4 +40,9 @@ void update_attitude_data(const Acc_raw_data_t* acc,
  */
 Imu_state_e ins_get_state(void);
 
+/**
+ * @brief 查询INS当前状态
+ */
+Imu_state_e ins_get_state(void);
+
 #endif //SYSU_INFANTRY_INS_H

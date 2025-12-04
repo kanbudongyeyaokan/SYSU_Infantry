@@ -55,16 +55,16 @@ typedef struct
 {
     uint16_t last_ecd;          //上一次记录的编码器值
     uint16_t current_ecd;       //当前编码器值
-    float current_angle;        //当前电机角度
-    float angle_single_round;   // 单圈角度（0-360）
-    int32_t total_round;        // 累积圈数
-    float total_angle;          // 多圈角度
+    float current_angle;        //当前电机单圈角度 (0-360)
     float angular_velocity;     //电机转速，单位：【rpm】
     float linear_velocity;      //电机线速度
     int16_t real_current;       //电机实际电流
-    uint8_t  motor_temperature;//电机实际温度
-    bool total_angle_initialized; // 多圈角度是否初始化
-}Djimotor_measure_t;
+    uint8_t  motor_temperature; //电机实际温度
+
+    // [新增] 多圈角度相关
+    int32_t total_round;        // 总圈数
+    float   total_angle;        // 总角度 (累积值，无范围限制，如 3600.5 度)
+} Djimotor_measure_t;
 #pragma pack()
 
 /**单个场景的PID配置**/

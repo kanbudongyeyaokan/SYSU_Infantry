@@ -135,28 +135,6 @@ static void Ins_calibrate_and_init(Bmi088_device_t* bmi088) {
     }
 }
 
-#include <stdio.h>
-#include <math.h>
-#include <stdbool.h>
-
-#include "cmsis_os.h"
-#include "ins.h"
-#include "bmi088.h"
-#include "main.h"
-#include "bsp_dwt.h"
-#include "algorithm_ekf.h"
-
-// BMI088设备实例
-static Bmi088_device_t *bmi088_device;
-
-#define INS_EKF_STATIC_THRESHOLD     200U
-#define INS_EKF_UPDATE_THRESHOLD     500U
-
-/**
- * @brief          ins_task
- * @param[in]      pvParameters: 空
- * @retval         none
- */
 void Ins_task(void const *argument)
 {
     Imu_Temp_Init();
