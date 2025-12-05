@@ -97,9 +97,11 @@ void Receive_feedback_infomation()
     Sub_get_message(chassis_feedback_sub,(void *)(&chassis_feedback_recv));
     //获取云台反馈信息
     Sub_get_message(gimbal_feedback_sub,(void *)(&gimbal_feedback_recv));
-    if (!gimbal_yaw_initialized)
+    // 修复：使用IMU的多圈角度初始化云台目标值（与云台电机反馈源一致）
+    // 同时确保IMU已就绪，避免使用无效数据
+    if (!gimbal_yaw_initialized && gimbal_feedback_recv.imu_state == IMU_STATE_READY)
     {
-        gimbal_cmd_send.yaw = gimbal_feedback_recv.yaw_motor_total_angle;
+        gimbal_cmd_send.yaw = gimbal_feedback_recv.imu_yaw_total_angle;
         gimbal_yaw_initialized = true;
     }
     //获取发射机构反馈信息
