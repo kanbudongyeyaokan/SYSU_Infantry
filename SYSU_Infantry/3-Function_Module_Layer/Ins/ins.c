@@ -7,14 +7,14 @@
 #include "bsp_dwt.h"
 #include "math_lib.h"
 
-// 双缓冲姿态数据
-static attitude_t g_attitude_buffer;
+// 双缓冲姿态数据（恢复双缓冲机制，防止数据竞争）
+static attitude_t g_attitude_buffer[2];
 static volatile uint8_t g_active_buffer_index = 0U;
 
 static float g_yaw_total_deg = 0.0f;
 static int32_t g_yaw_round_count = 0;
 static bool g_yaw_total_valid = false;
-static uint64_t g_last_update_timestamp_us = 0ULL;
+static float g_last_update_timestamp_s = 0.0f;  // 改用秒为单位的float
 static Imu_state_e g_ins_state = IMU_STATE_INIT;
 
 /**
@@ -23,7 +23,7 @@ static Imu_state_e g_ins_state = IMU_STATE_INIT;
  */
 attitude_t* get_attitude_data(void)
 {
-    return (attitude_t *)&g_attitude_buffer;
+    return (attitude_t *)&g_attitude_buffer[g_active_buffer_index];
 }
 
 /**
@@ -39,9 +39,9 @@ void update_attitude_data(const Acc_raw_data_t* acc,
                           Imu_state_e state)
 {
     uint8_t inactive_index = g_active_buffer_index ^ 1U;
-    attitude_t *target = &g_attitude_buffer;
+    attitude_t *target = &g_attitude_buffer[inactive_index];  // 写入非活动缓冲区
     float dt = 0.001f; // 默认1ms
-    uint64_t now_us;
+    float now_s;
 
     g_ins_state = state;
     target->state = g_ins_state;
@@ -50,14 +50,15 @@ void update_attitude_data(const Acc_raw_data_t* acc,
         g_yaw_total_valid = false;
     }
 
-    now_us = DWT_GetTimeline_s();
-    if (g_last_update_timestamp_us != 0ULL) {
-        uint64_t delta_us = now_us - g_last_update_timestamp_us;
-        if (delta_us < 1000000ULL) {
-            dt = (float)delta_us * 1.0e-6f;
+    // 修复：使用正确的时间获取方式（秒为单位）
+    now_s = DWT_GetTimeline_s();
+    if (g_last_update_timestamp_s > 0.0f) {
+        float delta_s = now_s - g_last_update_timestamp_s;
+        if (delta_s > 0.0f && delta_s < 1.0f) {
+            dt = delta_s;
         }
     }
-    g_last_update_timestamp_us = now_us;
+    g_last_update_timestamp_s = now_s;
 
     if (acc) {
         memcpy(&target->accel_raw, acc, sizeof(Acc_raw_data_t));
@@ -95,6 +96,10 @@ void update_attitude_data(const Acc_raw_data_t* acc,
 
     target->state = g_ins_state;
 
+    // 原子切换缓冲区索引（中断保护）
+    __disable_irq();
+    g_active_buffer_index = inactive_index;
+    __enable_irq();
 }
 
 Imu_state_e ins_get_state(void)
