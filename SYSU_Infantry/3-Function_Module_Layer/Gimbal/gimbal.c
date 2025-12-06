@@ -209,7 +209,7 @@ void Gimbal_handle_command(void) {
     }
 
     //反馈数据
-    gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.angle_single_round;
+    gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
     gimbal_feedback.yaw_motor_total_angle = yaw_motor->motor_measure.total_angle;
     gimbal_feedback.imu_yaw_total_angle = gimbal_imu_data->yaw_total_angle;
     gimbal_feedback.imu_yaw_rate = gimbal_imu_data->yaw_rate_dps;
