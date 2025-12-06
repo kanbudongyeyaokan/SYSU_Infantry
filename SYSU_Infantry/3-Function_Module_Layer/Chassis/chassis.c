@@ -208,11 +208,13 @@ void Chassis_handle_command(void)
                 
                 // 简单一阶低通 FIR 滤波
                 angle_error_filtered = (1.0f - CHASSIS_FOLLOW_YAW_FILTER_ALPHA) * angle_error_filtered + CHASSIS_FOLLOW_YAW_FILTER_ALPHA * angle_error_raw;
-                // 这里的符号是 +，否则会进入正反馈
-                float p_term = CHASSIS_FOLLOW_YAW_GAIN * angle_error_filtered * fabsf(angle_error);
+                
+                float p_term = CHASSIS_FOLLOW_YAW_GAIN * angle_error * fabsf(angle_error);
 
                 // 用云台角速度作为前馈
-                float feedforward_term = CHASSIS_FOLLOW_YAW_FEEDGAIN * chassis_cmd_recv.gimbal_yaw_rate;
+                // float feedforward_term = CHASSIS_FOLLOW_YAW_FEEDGAIN * chassis_cmd_recv.gimbal_yaw_rate;
+                float feedforward_term = 0.0f;
+                // 这里的符号是 +，否则会进入正反馈
                 float wz_cmd = p_term + feedforward_term;
                 chassis_cmd_recv.wz = clamp_float(wz_cmd, -CHASSIS_FOLLOW_WZ_LIMIT, CHASSIS_FOLLOW_WZ_LIMIT);
                 
