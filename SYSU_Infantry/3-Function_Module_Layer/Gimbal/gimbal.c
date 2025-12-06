@@ -108,7 +108,7 @@ static void Gimbal_motor_init(void) {
             .angle_pid = {
                 .kp = 35,
                 .ki = 1,
-                .kd = 2.0,
+                .kd = 0.0,
                 .max_out = 320,
                 .max_iout = 100,
                 .feedfoward_coefficient = 0.2,
@@ -116,9 +116,9 @@ static void Gimbal_motor_init(void) {
                 //可补充
             },
             .speed_pid = {
-                .kp = 30,
-                .ki = 2.5,
-                .kd = 2.0,
+                .kp = -30,
+                .ki = 0.0,
+                .kd = 0.0,
                 .deadband = 0.1f,
                 .max_out = 28000,
                 .max_iout = 800,
@@ -137,9 +137,11 @@ static void Gimbal_motor_init(void) {
     };
     pitch_motor = DJI_Motor_Init(&pitch_config);
 
+    //云台上电后回到零位
     Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
     Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
-
+    Djimotor_set_target(yaw_motor, YAW_ALIGN_ANGLE);
+    Djimotor_set_target(pitch_motor, PITCH_HORIZON_ANGLE);
 }
 
 
@@ -171,17 +173,15 @@ void Gimbal_task_init(void) {
  */
 void Gimbal_handle_command(void) {
     Imu_state_e imu_state = ins_get_state();
+   // Djimotor_set_target(yaw_motor, 300);
+   // Djimotor_set_target(pitch_motor, 30);
+  //  printf("motor_yaw:%.2f,motor_pitch:%.2f\r\n",yaw_motor->motor_measure.total_angle,pitch_motor->motor_measure.total_angle);
 
-    Djimotor_set_target(yaw_motor, 300);
-    Djimotor_set_target(pitch_motor, 30);
-    printf("motor_yaw:%.2f,motor_pitch:%.2f\r\n",yaw_motor->motor_measure.total_angle,pitch_motor->motor_measure.total_angle);
-    /*
     printf("IMU: R:%.2f P:%.2f Y:%.2f\r\n",
                            gimbal_imu_data->euler_angles.roll,
                            gimbal_imu_data->euler_angles.pitch,
                            gimbal_imu_data->euler_angles.yaw);
-    */
-    /*
+/*
     if (imu_state == IMU_STATE_READY) {
         if (!gimbal_ins_ready) {
             gimbal_ins_ready = true;
@@ -200,9 +200,9 @@ void Gimbal_handle_command(void) {
             Djimotor_set_status(pitch_motor, MOTOR_STOP);
         }
     }
-*/
+
     // 从消息中心获取最新的控制指令
-/*
+
     if (Sub_get_message(gimbal_sub, (void *) (&gimbal_cmd_send))) {
         // 根据控制模式进行处理
         switch (gimbal_cmd_send.gimbal_mode) {
