@@ -68,9 +68,11 @@ void Robot_task_init(void)
 
 
     //看门狗任务
-    osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityNormal, 0, 512);
-    watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
-
+  //  osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityNormal, 0, 512);
+  //  watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
+    // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
+    osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 256);
+    motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
 
     // === 集成测试 ===
    // osThreadDef(chassis_motor_integration_test_task, Chassis_motor_integration_test_task, osPriorityNormal, 0, 2048);
@@ -80,29 +82,27 @@ void Robot_task_init(void)
    // osDelay(100);
 
     //决策任务
-   osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
-   decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
+  // osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
+  // decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
 
     //ins任务
-    osThreadDef(ins_task,Ins_task,osPriorityAboveNormal,0,4096);
-    ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
+  //  osThreadDef(ins_task,Ins_task,osPriorityAboveNormal,0,4096);
+  //  ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
 
     // === 启动底盘与电机任务（必需） ===
     // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
-   osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
-   chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
+   //osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
+   //chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
 
-  osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
+   osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
    gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
 
-  osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
-    shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+  //osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
+  //  shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
     // 添加短暂延时
     //  osDelay(100);
 
-    // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
-    osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 256);
-    motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
+
 
 }
 

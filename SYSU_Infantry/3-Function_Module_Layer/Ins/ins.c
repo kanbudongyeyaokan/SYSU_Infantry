@@ -40,6 +40,7 @@ void update_attitude_data(const Acc_raw_data_t* acc,
 {
     uint8_t inactive_index = g_active_buffer_index ^ 1U;
     attitude_t *target = &g_attitude_buffer[inactive_index];  // 写入非活动缓冲区
+
     float dt = 0.001f; // 默认1ms
     float now_s;
 
