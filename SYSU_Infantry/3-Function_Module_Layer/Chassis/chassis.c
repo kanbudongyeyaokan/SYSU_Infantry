@@ -171,7 +171,8 @@ void Chassis_handle_command(void)
 
         static float angle_error_raw = 0.0f;
         static float angle_error_filtered = 0.0f;
-        static const float filter_alpha = 0.3f;
+        static const float CHASSIS_FOLLOW_YAW_FILTER_ALPHA = 0.3f;
+        static const float CHASSIS_FOLLOW_YAW_FEEDGAIN = 0.8f;
 
         switch (chassis_cmd_recv.chassis_mode)
         {
@@ -205,9 +206,14 @@ void Chassis_handle_command(void)
                  // @TODO，不知道为什么云台相对底盘朝向差
                 float angle_error = chassis_cmd_recv.offset_angle + 90.0f; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
                 
-                angle_error_filtered = (1.0f - filter_alpha) * angle_error_filtered + filter_alpha * angle_error_raw;
+                // 简单一阶低通 FIR 滤波
+                angle_error_filtered = (1.0f - CHASSIS_FOLLOW_YAW_FILTER_ALPHA) * angle_error_filtered + CHASSIS_FOLLOW_YAW_FILTER_ALPHA * angle_error_raw;
                 // 这里的符号是 +，否则会进入正反馈
-                float wz_cmd = CHASSIS_FOLLOW_YAW_GAIN * angle_error_filtered * fabsf(angle_error);
+                float p_term = CHASSIS_FOLLOW_YAW_GAIN * angle_error_filtered * fabsf(angle_error);
+
+                // 用云台角速度作为前馈
+                float feedforward_term = CHASSIS_FOLLOW_YAW_FEEDGAIN * chassis_cmd_recv.gimbal_yaw_rate;
+                float wz_cmd = p_term + feedforward_term;
                 chassis_cmd_recv.wz = clamp_float(wz_cmd, -CHASSIS_FOLLOW_WZ_LIMIT, CHASSIS_FOLLOW_WZ_LIMIT);
                 
                 // 添加死区处理，避免小角度时的震荡
