@@ -168,6 +168,11 @@ void Chassis_handle_command(void)
     if (Sub_get_message(chassis_cmd_sub, &chassis_cmd_recv)) {
         //底盘四个电机的输出
         static Chassis_output_t chassis_output;
+
+        static float angle_error_raw = 0.0f;
+        static float angle_error_filtered = 0.0f;
+        static const float filter_alpha = 0.3f;
+
         switch (chassis_cmd_recv.chassis_mode)
         {
             /* 底盘无力 */
@@ -200,8 +205,9 @@ void Chassis_handle_command(void)
                  // @TODO，不知道为什么云台相对底盘朝向差
                 float angle_error = chassis_cmd_recv.offset_angle + 90.0f; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
                 
+                angle_error_filtered = (1.0f - filter_alpha) * angle_error_filtered + filter_alpha * angle_error_raw;
                 // 这里的符号是 +，否则会进入正反馈
-                float wz_cmd = CHASSIS_FOLLOW_YAW_GAIN * angle_error * fabsf(angle_error);
+                float wz_cmd = CHASSIS_FOLLOW_YAW_GAIN * angle_error_filtered * fabsf(angle_error);
                 chassis_cmd_recv.wz = clamp_float(wz_cmd, -CHASSIS_FOLLOW_WZ_LIMIT, CHASSIS_FOLLOW_WZ_LIMIT);
                 
                 // 添加死区处理，避免小角度时的震荡

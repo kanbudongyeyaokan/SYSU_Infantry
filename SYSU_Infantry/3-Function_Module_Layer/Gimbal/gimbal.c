@@ -52,10 +52,10 @@ static void Gimbal_motor_init(void) {
         .motor_controller_init = {
             .close_loop = ANGLE_AND_SPEED_LOOP,
             .angle_source = OTHER_FEEDBACK,
-            .speed_source = OTHER_FEEDBACK,
+            .speed_source = MOTOR_FEEDBACK,
             //使用ins模块姿态数据作为反馈
             .other_angle_feedback_ptr = &(gimbal_imu_data->yaw_total_angle),
-            .other_speed_feedback_ptr = &(gimbal_imu_data->yaw_rate_dps),
+            // .other_speed_feedback_ptr = &(gimbal_imu_data->yaw_rate_dps),
             .angle_pid = {
                 .kp = 8,
                 .ki = 0,
@@ -93,10 +93,10 @@ static void Gimbal_motor_init(void) {
         .motor_controller_init = {
             .close_loop = ANGLE_AND_SPEED_LOOP,
             .angle_source = OTHER_FEEDBACK,
-            .speed_source = OTHER_FEEDBACK,
+            .speed_source = MOTOR_FEEDBACK,
             //使用ins模块姿态数据作为反馈
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.pitch),
-            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.pitch),
+            // .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.pitch),
             .angle_pid = {
                 .kp = 2,
                 .ki = 0,

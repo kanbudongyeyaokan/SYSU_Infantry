@@ -37,9 +37,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/editor.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/editor.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Document/dji_motor.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -119,11 +119,6 @@
   }
 }</component>
   <component name="RunManager" selected="CMake 应用程序.SYSU_Infantry">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="FreeRTOS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="FreeRTOS" CONFIG_NAME="Debug-STM32">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -171,7 +166,9 @@
       <workItem from="1764507564258" duration="1248000" />
       <workItem from="1764565050856" duration="1234000" />
       <workItem from="1764589039515" duration="3722000" />
-      <workItem from="1765002920408" duration="256000" />
+      <workItem from="1765002920408" duration="965000" />
+      <workItem from="1765005009864" duration="85000" />
+      <workItem from="1765005104757" duration="1103000" />
     </task>
     <servers />
   </component>
