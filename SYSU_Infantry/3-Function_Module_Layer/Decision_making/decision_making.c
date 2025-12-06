@@ -32,7 +32,7 @@ static Chassis_cmd_send_t chassis_cmd_send;//存储决策层给底盘应用层�
 //云台控制模式/控制量发布
 static Publisher_t *gimbal_cmd_pub;          //云台控制信息发布者
 static Gimbal_cmd_send_t  gimbal_cmd_send;  //存储决策层给云台应用层的控制信息
-#define MAX_GIMBAL_YAW_LEAD 60.0f
+#define MAX_GIMBAL_YAW_LEAD 10.0f
 #define MAX_GIMBAL_PITCH_LEAD 20.0f // Pitch轴通常有机械限位，也可以限制一下
 
 //发射机构控制模式/控制量发布
@@ -52,7 +52,6 @@ static Chassis_feedback_info_t chassis_feedback_recv;   //存储底盘应用层�
 //云台反馈数据读取
 static Subscriber_t *gimbal_feedback_sub;                //云台反馈信息订阅者
 static Gimbal_feedback_info_t  gimbal_feedback_recv;    //存储云台应用层发给决策层的信息
-
 static bool gimbal_yaw_initialized = false;
 
 
@@ -215,41 +214,54 @@ void RC_ctrl_set()
 
     //云台控制量
     /**************** yaw 轴积分防止饱和 ****************/
-    // 1. 获取输入增量 (遥控器摇杆值转化)
-    float yaw_delta = 0.008f * (float)rc_data[CURRENT].rc.Rrocker_x;
+    /*
+    // 1. 获取输入增量
+        // 注意：0.008f 是灵敏度系数，如果觉得太快或太慢可以调整这里
+        float yaw_delta = 0.008f * (float)rc_data[CURRENT].rc.Rrocker_x;
     
-    // 2. 获取当前实际反馈值 (来自IMU)
-    // 注意确保 Receive_feedback_infomation() 已经在任务中被调用并更新了 gimbal_feedback_recv
-    float current_actual_yaw = gimbal_feedback_recv.imu_yaw_total_angle;
-    
-    // 3. 计算预期的下一个目标值
-    float next_target_yaw = gimbal_cmd_send.yaw + yaw_delta;
-    
-    // 4. 计算“领跑距离” (目标 - 实际)
-    float yaw_lead_error = next_target_yaw - current_actual_yaw;
-    
-    // 5. 应用限制逻辑
-    if (yaw_lead_error > MAX_GIMBAL_YAW_LEAD) 
-    {
-        // 如果正向超前太多，就强行限制在边界上
-        // 效果：目标值被“钉”在实际值前方 60 度处，不能继续增加
-        gimbal_cmd_send.yaw = current_actual_yaw + MAX_GIMBAL_YAW_LEAD;
-    } 
-    else if (yaw_lead_error < -MAX_GIMBAL_YAW_LEAD) 
-    {
-        // 反向同理
-        gimbal_cmd_send.yaw = current_actual_yaw - MAX_GIMBAL_YAW_LEAD;
-    } 
-    else 
-    {
-        // 如果在允许范围内，正常累加
-        gimbal_cmd_send.yaw = next_target_yaw;
-    }
-    // gimbal_cmd_send.yaw += 0.008f * (float)rc_data[CURRENT].rc.Rrocker_x;
+        // 2. 更新虚拟目标（用户想去哪）
+        gimbal_virtual_target_yaw += yaw_delta;
+        
+        // 3. 获取当前实际值
+        float current_actual_yaw = gimbal_feedback_recv.imu_yaw_total_angle;
+        
+        // 4. 计算领跑误差
+        float virtual_lead_error = gimbal_virtual_target_yaw - current_actual_yaw;
+        
+        // 5. 领跑限制逻辑
+        // 定义“刹车缓冲距离”，建议设置得和 MAX_GIMBAL_YAW_LEAD 一样
+        // 这样松手时，云台最多只需要追赶 60度
+        float windup_limit = MAX_GIMBAL_YAW_LEAD; 
+        
+        if (virtual_lead_error > MAX_GIMBAL_YAW_LEAD) 
+        {
+            // 限制发给电机的指令：永远保持在前方 60 度，引导电机全速旋转
+            gimbal_cmd_send.yaw = current_actual_yaw + MAX_GIMBAL_YAW_LEAD;
+            
+            // 关键修改：限制虚拟目标不要跑太远
+            // 如果超出了 windup_limit (60度)，强行把它拉回来，防止积攒过多行程
+            if (gimbal_virtual_target_yaw > current_actual_yaw + windup_limit) {
+                gimbal_virtual_target_yaw = current_actual_yaw + windup_limit;
+            }
+        } 
+        else if (virtual_lead_error < -MAX_GIMBAL_YAW_LEAD) 
+        {
+            // 反向同理
+            gimbal_cmd_send.yaw = current_actual_yaw - MAX_GIMBAL_YAW_LEAD;
+            
+            if (gimbal_virtual_target_yaw < current_actual_yaw - windup_limit) {
+                gimbal_virtual_target_yaw = current_actual_yaw - windup_limit;
+            }
+        } 
+        else 
+        {
+            // 正常范围内，指哪打哪
+            gimbal_cmd_send.yaw = gimbal_virtual_target_yaw;
+        }
+    */  
+    // Pitch轴逻辑保持不变...
     gimbal_cmd_send.pitch += 0.01f * (float)(rc_data[CURRENT].rc.Rrocker_y);
-
-    
-   
+    gimbal_cmd_send.yaw += 0.008f * (float)rc_data[CURRENT].rc.Rrocker_x;   
 
 }
 
