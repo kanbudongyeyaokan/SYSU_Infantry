@@ -71,7 +71,7 @@ static void Gimbal_motor_init(void) {
                 //可补充
             },
             .speed_pid = {
-                .kp = 50,
+                .kp = 20,
                 .ki = 0,
                 .kd = 0,
                 .deadband = 0.1f,
@@ -137,11 +137,42 @@ static void Gimbal_motor_init(void) {
     };
     pitch_motor = DJI_Motor_Init(&pitch_config);
 
-    //云台上电后回到零位
+    // 利用上述配置云台上电后回到零位
     Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
     Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
     Djimotor_set_target(yaw_motor, YAW_ALIGN_ANGLE);
     Djimotor_set_target(pitch_motor, PITCH_HORIZON_ANGLE);
+
+    osDelay(2000); // 等待2秒到达位置
+
+    // 之后更改云台配置（直接修改成员，避免重新建结构体）
+    Djimotor_set_status(yaw_motor, MOTOR_STOP);
+    Djimotor_set_status(pitch_motor, MOTOR_STOP);
+
+    // yaw: 切换到 IMU yaw_total_angle 作为角度反馈，并更新 PID 及限幅
+    yaw_motor->motor_pid.close_loop = ANGLE_AND_SPEED_LOOP;
+    yaw_motor->motor_pid.angle_source = OTHER_FEEDBACK;
+    yaw_motor->motor_pid.speed_source = MOTOR_FEEDBACK;
+    yaw_motor->motor_pid.other_angle_feedback_ptr = &(gimbal_imu_data->yaw_total_angle);
+
+    Pid_reset(&yaw_motor->motor_pid.angle_pid);
+    Pid_reset(&yaw_motor->motor_pid.speed_pid);
+
+    // pitch: 切换到 IMU pitch 作为角度反馈，并更新 PID 及限幅
+    pitch_motor->motor_pid.close_loop = ANGLE_AND_SPEED_LOOP;
+    pitch_motor->motor_pid.angle_source = OTHER_FEEDBACK;
+    pitch_motor->motor_pid.speed_source = MOTOR_FEEDBACK;
+    pitch_motor->motor_pid.other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.pitch);
+
+    Pid_reset(&pitch_motor->motor_pid.angle_pid);
+    Pid_reset(&pitch_motor->motor_pid.speed_pid);
+
+    // 重新设定目标并使能
+    Djimotor_set_target(yaw_motor, YAW_ALIGN_ANGLE);
+    Djimotor_set_target(pitch_motor, PITCH_HORIZON_ANGLE);
+    Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
+    Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
+
 }
 
 
@@ -162,9 +193,6 @@ void Gimbal_task_init(void) {
     // 注册底盘反馈信息发布者
     gimbal_pub = Pub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
 
-    //云台归零
-    Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
-    Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
 }
 
 
@@ -176,13 +204,6 @@ void Gimbal_handle_command(void) {
    // Djimotor_set_target(yaw_motor, 300);
    // Djimotor_set_target(pitch_motor, 30);
   //  printf("motor_yaw:%.2f,motor_pitch:%.2f\r\n",yaw_motor->motor_measure.total_angle,pitch_motor->motor_measure.total_angle);
-/*
-    printf("IMU: R:%.2f P:%.2f Y:%.2f\r\n",
-                           gimbal_imu_data->euler_angles.roll,
-                           gimbal_imu_data->euler_angles.pitch,
-                           gimbal_imu_data->euler_angles.yaw);
-                           */
-/*
     if (imu_state == IMU_STATE_READY) {
         if (!gimbal_ins_ready) {
             gimbal_ins_ready = true;

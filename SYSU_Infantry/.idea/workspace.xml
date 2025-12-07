@@ -41,7 +41,7 @@
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -172,8 +172,35 @@
       <workItem from="1765002920408" duration="965000" />
       <workItem from="1765005009864" duration="85000" />
       <workItem from="1765005104757" duration="1442000" />
-      <workItem from="1765009519800" duration="10741000" />
-      <workItem from="1765073426738" duration="403000" />
+      <workItem from="1765009519800" duration="9767000" />
+      <workItem from="1765022501343" duration="222000" />
+      <workItem from="1765022735885" duration="85000" />
+      <workItem from="1765022839815" duration="79000" />
+      <workItem from="1765023768746" duration="97000" />
+      <workItem from="1765023883400" duration="192000" />
+      <workItem from="1765024087396" duration="144000" />
+      <workItem from="1765024253987" duration="213000" />
+      <workItem from="1765024480066" duration="211000" />
+      <workItem from="1765024722398" duration="352000" />
+      <workItem from="1765025125592" duration="197000" />
+      <workItem from="1765025334161" duration="131000" />
+      <workItem from="1765025480527" duration="109000" />
+      <workItem from="1765025631921" duration="945000" />
+      <workItem from="1765026868976" duration="85000" />
+      <workItem from="1765026969223" duration="162000" />
+      <workItem from="1765027143031" duration="664000" />
+      <workItem from="1765027824527" duration="477000" />
+      <workItem from="1765028315945" duration="85000" />
+      <workItem from="1765028411189" duration="97000" />
+      <workItem from="1765028524917" duration="225000" />
+      <workItem from="1765028760863" duration="150000" />
+      <workItem from="1765028946889" duration="160000" />
+      <workItem from="1765029119185" duration="298000" />
+      <workItem from="1765029495085" duration="115000" />
+      <workItem from="1765029623797" duration="108000" />
+      <workItem from="1765029741806" duration="760000" />
+      <workItem from="1765031080102" duration="18000" />
+      <workItem from="1765031111517" duration="152000" />
     </task>
     <servers />
   </component>

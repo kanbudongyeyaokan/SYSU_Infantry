@@ -204,7 +204,7 @@ void Chassis_handle_command(void)
                     Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
                 }
                  // @TODO，不知道为什么云台相对底盘朝向差
-                float angle_error = chassis_cmd_recv.offset_angle + 90.0f; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
+                float angle_error = chassis_cmd_recv.offset_angle; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
                 
                 // 简单一阶低通 FIR 滤波
                 angle_error_filtered = (1.0f - CHASSIS_FOLLOW_YAW_FILTER_ALPHA) * angle_error_filtered + CHASSIS_FOLLOW_YAW_FILTER_ALPHA * angle_error_raw;
