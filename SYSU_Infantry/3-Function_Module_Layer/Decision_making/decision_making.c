@@ -105,6 +105,8 @@ void Receive_feedback_infomation()
         gimbal_virtual_target = gimbal_feedback_recv.imu_yaw_total_angle;
         gimbal_yaw_initialized = true;
     }
+
+    gimbal_cmd_send.chassis_wz = chassis_feedback_recv.chassis_wz;
     //获取发射机构反馈信息
     Sub_get_message(shoot_feedback_sub,(void *)(&shoot_feedback_recv));
 }

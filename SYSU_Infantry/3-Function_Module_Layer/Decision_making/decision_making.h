@@ -28,8 +28,10 @@ typedef struct
 //云台
 typedef struct 
 {
-    float yaw;          //yaw控制量
-    float pitch;        //chassis控制量
+    float yaw;          // yaw控制量
+    float pitch;        // pitch控制量
+    float chassis_wz;   // 底盘角速度，用于云台陀螺仪模式下的补偿
+    
     gimbal_mode_e gimbal_mode;          //云台控制模式
 }Gimbal_cmd_send_t;
 

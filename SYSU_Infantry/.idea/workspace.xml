@@ -42,8 +42,9 @@
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Execution/Gimbal_Task/Gimbal_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Execution/Gimbal_Task/Gimbal_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.h" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -145,9 +146,9 @@
       </method>
     </configuration>
     <list>
-      <item itemvalue="CMake 应用程序.SYSU_Infantry" />
       <item itemvalue="CMake 应用程序.FreeRTOS" />
       <item itemvalue="CMake 应用程序.STM32_Drivers" />
+      <item itemvalue="CMake 应用程序.SYSU_Infantry" />
       <item itemvalue="CMake 应用程序.USB_Device_Library" />
     </list>
   </component>
@@ -203,7 +204,8 @@
       <workItem from="1765029741806" duration="760000" />
       <workItem from="1765031080102" duration="18000" />
       <workItem from="1765031111517" duration="749000" />
-      <workItem from="1765073022753" duration="1557000" />
+      <workItem from="1765073022753" duration="2350000" />
+      <workItem from="1765077981261" duration="11000" />
     </task>
     <servers />
   </component>

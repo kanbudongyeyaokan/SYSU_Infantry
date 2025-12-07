@@ -169,10 +169,10 @@ void Chassis_handle_command(void)
         //底盘四个电机的输出
         static Chassis_output_t chassis_output;
 
-        static float angle_error_raw = 0.0f;
         static float angle_error_filtered = 0.0f;
+        static float wz_filtered = 0.0f;
         static const float CHASSIS_FOLLOW_YAW_FILTER_ALPHA = 0.3f;
-        static const float CHASSIS_FOLLOW_YAW_FEEDGAIN = 0.8f;
+        static const float CHASSIS_WZ_FILTER_ALPHA = 0.3f;
 
         switch (chassis_cmd_recv.chassis_mode)
         {
@@ -206,16 +206,12 @@ void Chassis_handle_command(void)
                  // @TODO，不知道为什么云台相对底盘朝向差
                 float angle_error = chassis_cmd_recv.offset_angle; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
                 
-                // 简单一阶低通 FIR 滤波
-                angle_error_filtered = (1.0f - CHASSIS_FOLLOW_YAW_FILTER_ALPHA) * angle_error_filtered + CHASSIS_FOLLOW_YAW_FILTER_ALPHA * angle_error_raw;
+                // 简单一阶低通 FIR 滤波，暂时不启用
+                angle_error_filtered = (1.0f - CHASSIS_FOLLOW_YAW_FILTER_ALPHA) * angle_error_filtered + CHASSIS_FOLLOW_YAW_FILTER_ALPHA * angle_error;
                 
-                float p_term = CHASSIS_FOLLOW_YAW_GAIN * angle_error * fabsf(angle_error);
-
-                // 用云台角速度作为前馈
-                // float feedforward_term = CHASSIS_FOLLOW_YAW_FEEDGAIN * chassis_cmd_recv.gimbal_yaw_rate;
-                float feedforward_term = 0.0f;
+                float wz_cmd = CHASSIS_FOLLOW_YAW_GAIN * angle_error * fabsf(angle_error);
                 // 这里的符号是 +，否则会进入正反馈
-                float wz_cmd = p_term + feedforward_term;
+            
                 chassis_cmd_recv.wz = clamp_float(wz_cmd, -CHASSIS_FOLLOW_WZ_LIMIT, CHASSIS_FOLLOW_WZ_LIMIT);
                 
                 // 添加死区处理，避免小角度时的震荡
@@ -267,8 +263,12 @@ void Chassis_handle_command(void)
         }
 
         // 更新底盘反馈信息（这里可以添加底盘角速度的反馈）
-        // 简化处理，假设底盘角速度直接来自控制指令
-        chassis_feedback.chassis_wz = chassis_cmd_recv.wz;
+        // 简化处理，假设底盘角速度直接来自控制指令，并且进行滤波
+
+        chassis_feedback.chassis_wz = chassis_cmd_recv.wz ;
+        wz_filtered = (1.0f - CHASSIS_WZ_FILTER_ALPHA) * wz_filtered + CHASSIS_WZ_FILTER_ALPHA * chassis_feedback.chassis_wz;
+        chassis_feedback.chassis_wz = wz_filtered;
+
         Pub_push_message(chassis_feedback_pub, &chassis_feedback);
     }
 }

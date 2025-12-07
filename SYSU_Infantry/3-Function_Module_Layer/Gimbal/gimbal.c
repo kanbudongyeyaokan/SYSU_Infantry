@@ -8,7 +8,7 @@
  * @note    云台电机初始化
  */
 
-//
+#include "cmsis_os.h"
 #include <stdbool.h>
 
 #include "gimbal.h"
@@ -222,7 +222,7 @@ void Gimbal_handle_command(void) {
             Djimotor_set_status(pitch_motor, MOTOR_STOP);
         }
     }
-*/
+
     // 从消息中心获取最新的控制指令
 
      if(Sub_get_message(gimbal_sub, (void *) (&gimbal_cmd_send))) {
@@ -243,9 +243,10 @@ void Gimbal_handle_command(void) {
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
 
                 //设置电机目标值
-              //  Djimotor_set_target(yaw_motor, gimbal_cmd_send.yaw);
-              //  Djimotor_set_target(pitch_motor, gimbal_cmd_send.pitch);
-            
+                Djimotor_set_target(yaw_motor, gimbal_cmd_send.yaw);
+                yaw_motor->motor_pid.speed_feedforward = gimbal_cmd_send.chassis_wz; // 底盘角速度补偿
+                // 注意正负号以及单位
+                Djimotor_set_target(pitch_motor, gimbal_cmd_send.pitch);
                 break;
             //云台视觉模式
             case GIMBAL_VISION_MODE:
