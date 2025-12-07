@@ -176,11 +176,12 @@ void Gimbal_handle_command(void) {
    // Djimotor_set_target(yaw_motor, 300);
    // Djimotor_set_target(pitch_motor, 30);
   //  printf("motor_yaw:%.2f,motor_pitch:%.2f\r\n",yaw_motor->motor_measure.total_angle,pitch_motor->motor_measure.total_angle);
-
+/*
     printf("IMU: R:%.2f P:%.2f Y:%.2f\r\n",
                            gimbal_imu_data->euler_angles.roll,
                            gimbal_imu_data->euler_angles.pitch,
                            gimbal_imu_data->euler_angles.yaw);
+                           */
 /*
     if (imu_state == IMU_STATE_READY) {
         if (!gimbal_ins_ready) {
@@ -200,10 +201,11 @@ void Gimbal_handle_command(void) {
             Djimotor_set_status(pitch_motor, MOTOR_STOP);
         }
     }
-
+*/
     // 从消息中心获取最新的控制指令
 
-    if (Sub_get_message(gimbal_sub, (void *) (&gimbal_cmd_send))) {
+     if(Sub_get_message(gimbal_sub, (void *) (&gimbal_cmd_send))) {
+         printf("cmd_yaw:%f,cmd_pitch:%f\r\n",gimbal_cmd_send.yaw,gimbal_cmd_send.pitch);
         // 根据控制模式进行处理
         switch (gimbal_cmd_send.gimbal_mode) {
             // 电流零输入,失能云台电机
@@ -220,8 +222,8 @@ void Gimbal_handle_command(void) {
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
 
                 //设置电机目标值
-                Djimotor_set_target(yaw_motor, gimbal_cmd_send.yaw);
-                Djimotor_set_target(pitch_motor, gimbal_cmd_send.pitch);
+              //  Djimotor_set_target(yaw_motor, gimbal_cmd_send.yaw);
+              //  Djimotor_set_target(pitch_motor, gimbal_cmd_send.pitch);
             
                 break;
             //云台视觉模式
@@ -248,5 +250,5 @@ void Gimbal_handle_command(void) {
     if (gimbal_pub != NULL) {
         Pub_push_message(gimbal_pub, (void *) &gimbal_feedback);
     }
-*/
+
 }
