@@ -42,6 +42,11 @@
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Execution/Chassis_Task/Chassis_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Execution/Chassis_Task/Chassis_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Execution/Gimbal_Task/Gimbal_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Execution/Gimbal_Task/Gimbal_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -122,6 +127,11 @@
   }
 }</component>
   <component name="RunManager" selected="CMake 应用程序.SYSU_Infantry">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="FreeRTOS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="FreeRTOS" CONFIG_NAME="Debug-STM32">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />

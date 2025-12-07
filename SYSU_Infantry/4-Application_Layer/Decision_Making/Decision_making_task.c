@@ -35,7 +35,7 @@ void Decision_making_task()
         //向各个应用层传送控制信息
         Send_command_to_all_task();
         //控制频率500HZ
-        osDelay(2);
+        osDelay(5);
     }
 
 }
