@@ -215,38 +215,13 @@ void RC_ctrl_set()
     chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
 
     //云台控制量
-    /**************** yaw 轴积分防止饱和 ****************/
-   // 2. 计算摇杆输入 (Input)
-    // 0.005f 是灵敏度，相当于图中黑线的上升斜率
-    float yaw_input = 0.005f * (float)rc_data[CURRENT].rc.Rrocker_x;
-
-    // 3. 积分：更新虚拟目标
-    gimbal_virtual_target += yaw_input;
-
-    // 4. 获取真实值 (Green Line)
-    float current_actual_yaw = gimbal_feedback_recv.imu_yaw_total_angle;
-
-    // 5. 【软规划核心算法】 (实现图中红线被绿线拖住的效果)
-    // 定义“最大领跑角度”(Max Lead Angle)，比如 20度
-    // 这意味着规划值最多只能比真实值快 20度
-    float max_lead = 20.0f; 
-
-    // 正向限制：如果规划跑太快（红线大大高于绿线）
-    if (gimbal_virtual_target > current_actual_yaw + max_lead) {
-        // 强制把规划值拉回来，保持在真实值前方 max_lead 处
-        gimbal_virtual_target = current_actual_yaw + max_lead; 
-    }
-    // 反向限制：同理
-    else if (gimbal_virtual_target < current_actual_yaw - max_lead) {
-        gimbal_virtual_target = current_actual_yaw - max_lead;
-    }
-
-    // 6. 输出最终规划值 (Red Line)
-    gimbal_cmd_send.yaw = gimbal_virtual_target;
+    gimbal_cmd_send.yaw -= 0.0018*(float)(rc_data[CURRENT].rc.Rrocker_x);
     // Pitch轴逻辑保持不变...
-    gimbal_cmd_send.pitch += 0.01f * (float)(rc_data[CURRENT].rc.Rrocker_y);
-    // gimbal_cmd_send.yaw += 0.008f * (float)rc_data[CURRENT].rc.Rrocker_x;   
-
+    gimbal_cmd_send.pitch -= 0.001f * (float)(rc_data[CURRENT].rc.Rrocker_y);
+    if (gimbal_cmd_send.pitch > 40)
+        gimbal_cmd_send.pitch = 40;
+    else if (gimbal_cmd_send.pitch < -30)
+        gimbal_cmd_send.pitch = -30;
 }
 
 /**

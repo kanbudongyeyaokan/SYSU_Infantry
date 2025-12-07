@@ -29,6 +29,6 @@ void Chassis_control_task(void const *argument)
         Chassis_handle_command();
         
         // 任务延时2ms，保持500Hz的运行频率
-        osDelay(2);
+        osDelay(5);
     }
 }
