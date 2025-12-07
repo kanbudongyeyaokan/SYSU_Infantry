@@ -34,8 +34,8 @@ void Decision_making_task()
         Calc_offset_angle();
         //向各个应用层传送控制信息
         Send_command_to_all_task();
-        //控制频率500HZ
-        osDelay(2);
+        //控制频率200HZ
+        osDelay(5);
     }
 
 }

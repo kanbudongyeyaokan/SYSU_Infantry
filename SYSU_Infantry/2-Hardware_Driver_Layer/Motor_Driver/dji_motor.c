@@ -169,6 +169,11 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config)
 void Djimotor_change_controller(Djimotor_device_t *motor, Djimotor_controller_init_t ctrl_params)
 {
     if (!motor) return;
+
+    // 1. 【进入临界区】关闭全局中断，防止被打断
+    // 具体的函数名取决于你的 RTOS 或 HAL 库，例如：
+    __disable_irq();
+
     motor->motor_pid.close_loop = ctrl_params.close_loop;
     motor->motor_pid.angle_source = ctrl_params.angle_source;
     motor->motor_pid.speed_source = ctrl_params.speed_source;
@@ -177,6 +182,10 @@ void Djimotor_change_controller(Djimotor_device_t *motor, Djimotor_controller_in
     Pid_init(&(motor->motor_pid.speed_pid),&(ctrl_params.speed_pid));
     Pid_init(&(motor->motor_pid.angle_pid),&(ctrl_params.angle_pid));
     Pid_init(&(motor->motor_pid.current_pid),&(ctrl_params.current_pid));
+    motor->motor_pid.speed_feedforward = 0.0f;
+
+    // 2. 【退出临界区】恢复全局中断
+    __enable_irq();
 }
 
 void Djimotor_set_target(Djimotor_device_t *motor, float target) {
@@ -260,8 +269,11 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
                 break;
             }
             case ANGLE_AND_SPEED_LOOP: {
-                float speed_target = Pid_calculate(&motor->motor_pid.angle_pid, angle_feedback, motor->motor_pid.pid_target);
+                float speed_target = Pid_calculate(&motor->motor_pid.angle_pid, angle_feedback, motor->motor_pid.pid_target)
+                                     + motor->motor_pid.speed_feedforward; // 速度前馈补偿
+                
                 output = Pid_calculate(&motor->motor_pid.speed_pid, speed_feedback, speed_target);
+                                    // 力矩前馈可以在这里添加
                 break;
             }
             default:

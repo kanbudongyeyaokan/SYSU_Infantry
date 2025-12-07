@@ -244,7 +244,7 @@ void Chassis_handle_command(void)
                 }
                 chassis_cmd_recv.wz = CHASSIS_ROTATE_WZ;   //设置小陀螺转速
                 // @TODO，不知道为什么云台相对底盘朝向差和这里的指令杆量
-                float angle_error = chassis_cmd_recv.offset_angle + 90.0f; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
+                float angle_error = chassis_cmd_recv.offset_angle; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
 
                 // 直接将云台坐标系下的杆量转换到底盘坐标系
                 float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);

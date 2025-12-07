@@ -89,6 +89,9 @@ typedef struct
     Pid_instance_t angle_pid;   //角度环
     Pid_instance_t speed_pid;   //速度环
     float pid_target;           //PID目标量
+
+    // 速度前馈量，用于存放底盘反向速度等外部干扰补偿
+    float speed_feedforward;
 } Djimotor_controller_t;
 #pragma pack()
 
