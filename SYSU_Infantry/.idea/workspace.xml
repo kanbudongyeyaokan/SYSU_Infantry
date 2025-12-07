@@ -43,8 +43,20 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.h" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Document/new_decision.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Document/new_ins.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Document/new_ins_task.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Document/old_decision.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Document/old_ins.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Document/old_ins_task.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/new_decision.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/new_ins.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/new_ins_task.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/old_decision.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/old_ins.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/old_ins_task.c" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,24 +73,36 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_can/bsp_can.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_dwt/bsp_dwt.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_dwt/bsp_dwt.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_usart/bsp_usart.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_usart/bsp_usart.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_wdg/bsp_wdg.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/1-Hardware_Layer/bsp_wdg/bsp_wdg.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Ins/imu_temp.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Remote_Control/remote_control.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Remote_Control/remote_control.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/3-Function_Module_Layer/Shoot/shoot.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/4-Application_Layer/Decision_Making/Decision_making_task.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/4-Application_Layer/Execution/Shoot_Task/shoot_task.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Core/Inc/FreeRTOSConfig.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Core/Src/main.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
@@ -206,6 +230,13 @@
       <workItem from="1765031111517" duration="749000" />
       <workItem from="1765073022753" duration="2350000" />
       <workItem from="1765077981261" duration="11000" />
+      <workItem from="1765078400301" duration="289000" />
+      <workItem from="1765078701508" duration="217000" />
+      <workItem from="1765079110153" duration="195000" />
+      <workItem from="1765079312485" duration="171000" />
+      <workItem from="1765079497843" duration="434000" />
+      <workItem from="1765079944412" duration="576000" />
+      <workItem from="1765082997565" duration="294000" />
     </task>
     <servers />
   </component>

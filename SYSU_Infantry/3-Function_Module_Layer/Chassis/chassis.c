@@ -264,10 +264,17 @@ void Chassis_handle_command(void)
 
         // 更新底盘反馈信息（这里可以添加底盘角速度的反馈）
         // 简化处理，假设底盘角速度直接来自控制指令，并且进行滤波
-
-        chassis_feedback.chassis_wz = chassis_cmd_recv.wz ;
-        wz_filtered = (1.0f - CHASSIS_WZ_FILTER_ALPHA) * wz_filtered + CHASSIS_WZ_FILTER_ALPHA * chassis_feedback.chassis_wz;
-        chassis_feedback.chassis_wz = wz_filtered;
+        if (chassis_cmd_recv.chassis_mode == CHASSIS_FOLLOW_GIMBAL ||
+            chassis_cmd_recv.chassis_mode == CHASSIS_ROTATE) {
+            chassis_feedback.chassis_wz = chassis_cmd_recv.wz ;
+            wz_filtered = (1.0f - CHASSIS_WZ_FILTER_ALPHA) * wz_filtered + CHASSIS_WZ_FILTER_ALPHA * chassis_feedback.chassis_wz;
+            chassis_feedback.chassis_wz = wz_filtered;
+        } else {
+            chassis_cmd_recv.wz = 0.0f;
+            chassis_feedback.chassis_wz = 0.0f;
+            wz_filtered = 0.0f;
+        }
+        
 
         Pub_push_message(chassis_feedback_pub, &chassis_feedback);
     }

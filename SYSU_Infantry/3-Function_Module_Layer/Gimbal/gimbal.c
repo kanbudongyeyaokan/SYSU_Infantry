@@ -14,6 +14,7 @@
 #include "gimbal.h"
 
 #include <stdio.h>
+#include <main.h>
 
 #include "dji_motor.h"
 #include "decision_making.h"
@@ -54,7 +55,7 @@ static void Gimbal_motor_init(void) {
         .motor_status = MOTOR_STOP,
         .motor_controller_init = {
             .close_loop = ANGLE_AND_SPEED_LOOP,
-            .angle_source = OTHER_FEEDBACK,
+            .angle_source = MOTOR_FEEDBACK,
             .speed_source = MOTOR_FEEDBACK,
             //使用ins模块姿态数据作为反馈
             .other_angle_feedback_ptr = &(gimbal_imu_data->yaw_total_angle),
@@ -99,7 +100,7 @@ static void Gimbal_motor_init(void) {
         .motor_status = MOTOR_STOP,
         .motor_controller_init = {
             .close_loop = ANGLE_AND_SPEED_LOOP,
-            .angle_source = OTHER_FEEDBACK,
+            .angle_source = MOTOR_FEEDBACK,
             .speed_source = MOTOR_FEEDBACK,
 
             //使用ins模块姿态数据作为反馈
@@ -140,17 +141,17 @@ static void Gimbal_motor_init(void) {
     // 利用上述配置云台上电后回到零位
     Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
     Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
-  //  Djimotor_set_target(yaw_motor, YAW_ALIGN_ANGLE);
-  //  Djimotor_set_target(pitch_motor, PITCH_HORIZON_ANGLE);
+    Djimotor_set_target(yaw_motor, YAW_ALIGN_ANGLE);
+    Djimotor_set_target(pitch_motor, PITCH_HORIZON_ANGLE);
 
-   // osDelay(2000); // 等待2秒到达位置
+    osDelay(2000); // 等待2秒到达位置
 
     // 之后更改云台配置（直接修改成员，避免重新建结构体）
-   // Djimotor_set_status(yaw_motor, MOTOR_STOP);
-   // Djimotor_set_status(pitch_motor, MOTOR_STOP);
+    Djimotor_set_status(yaw_motor, MOTOR_STOP);
+    Djimotor_set_status(pitch_motor, MOTOR_STOP);
 
     // yaw: 切换到 IMU yaw_total_angle 作为角度反馈，并更新 PID 及限幅
-    /*
+
     yaw_motor->motor_pid.close_loop = ANGLE_AND_SPEED_LOOP;
     yaw_motor->motor_pid.angle_source = OTHER_FEEDBACK;
     yaw_motor->motor_pid.speed_source = MOTOR_FEEDBACK;
@@ -173,7 +174,7 @@ static void Gimbal_motor_init(void) {
     Djimotor_set_target(pitch_motor, PITCH_HORIZON_ANGLE);
     Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
     Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
-*/
+
 }
 
 
@@ -240,8 +241,15 @@ void Gimbal_handle_command(void) {
 
                 //设置电机目标值
                 Djimotor_set_target(yaw_motor, gimbal_cmd_send.yaw);
-                yaw_motor->motor_pid.speed_feedforward = gimbal_cmd_send.chassis_wz; // 底盘角速度补偿
-                // 注意正负号以及单位
+                // 如果底盘速度很小，直接认为是0，防止零漂导致云台缓慢漂移
+                if (fabsf(gimbal_cmd_send.chassis_wz) < 5.0f) { 
+                    yaw_motor->motor_pid.speed_feedforward = 0.0f;
+                } else {
+                    // 注意：你代码里的负号是对的，保持住
+                    yaw_motor->motor_pid.speed_feedforward = -gimbal_cmd_send.chassis_wz; // 底盘角速度补偿
+                    // 注意正负号以及单位，这里要用负号
+                }
+
                 Djimotor_set_target(pitch_motor, gimbal_cmd_send.pitch);
                 break;
             //云台视觉模式
