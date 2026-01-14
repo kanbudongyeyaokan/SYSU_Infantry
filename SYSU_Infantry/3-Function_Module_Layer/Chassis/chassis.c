@@ -38,8 +38,13 @@ static Chassis_feedback_info_t chassis_feedback;
 /****************底盘参数存储***************************** */ 
 static Chassis_params_t chassis_params = {0};
 
-/****************底盘电机实例*******************************/
+/****************底盘电机实例及控制参数*******************************/
 static Djimotor_device_t *chassis_motors[4] = {0};
+
+//底盘四个电机的输出
+static Chassis_output_t chassis_output;
+
+#define abs(x) ((x > 0) ? x : -x)
 
 /*********************************底盘方法接口**************************************/
 /**
@@ -68,6 +73,7 @@ void Chassis_init()
     chassis_params.track_width = 295.0f;      // 默认轮宽295mm
     chassis_params.half_track_width = chassis_params.track_width/2.0;
     chassis_params.chassis_type=CHASSIS_TYPE_OMNI;// 全向轮底盘
+
     //设置底盘电机参数
     Djimotor_init_config_t cfg[4] = {
         {
@@ -166,14 +172,8 @@ void Chassis_handle_command(void)
     //printf("Mode is:%d",chassis_cmd_recv.chassis_mode);
     // 从消息中心获取最新的底盘控制指令
     if (Sub_get_message(chassis_cmd_sub, &chassis_cmd_recv)) {
-        //底盘四个电机的输出
-        static Chassis_output_t chassis_output;
-
-        static float angle_error_filtered = 0.0f;
-        static float wz_filtered = 0.0f;
-        static const float CHASSIS_FOLLOW_YAW_FILTER_ALPHA = 0.3f;
-        static const float CHASSIS_WZ_FILTER_ALPHA = 0.3f;
-
+        Chassis_cmd_send_t cmd_solved = chassis_cmd_recv;
+        printf("Mode is:%d\r\n",chassis_cmd_recv.chassis_mode);
         switch (chassis_cmd_recv.chassis_mode)
         {
             /* 底盘无力 */
@@ -200,46 +200,39 @@ void Chassis_handle_command(void)
             /* 底盘跟随云台 */
             case CHASSIS_FOLLOW_GIMBAL:
             {
-                for (uint8_t i = 0; i < 4; i++) {
-                    Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
-                }
-                 // @TODO，不知道为什么云台相对底盘朝向差
-                float angle_error = chassis_cmd_recv.offset_angle; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
-                
-                // 简单一阶低通 FIR 滤波，暂时不启用
-                angle_error_filtered = (1.0f - CHASSIS_FOLLOW_YAW_FILTER_ALPHA) * angle_error_filtered + CHASSIS_FOLLOW_YAW_FILTER_ALPHA * angle_error;
-                
-                float wz_cmd = CHASSIS_FOLLOW_YAW_GAIN * angle_error * fabsf(angle_error);
-                // 这里的符号是 +，否则会进入正反馈
-            
-                chassis_cmd_recv.wz = clamp_float(wz_cmd, -CHASSIS_FOLLOW_WZ_LIMIT, CHASSIS_FOLLOW_WZ_LIMIT);
-                
-                // 添加死区处理，避免小角度时的震荡
-                if (fabsf(angle_error) < 2.0f) {
-                    chassis_cmd_recv.wz = 0;
-                }
-
-                float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);
-                float sin_theta = arm_sin_f32(angle_error * MATH_DEG2RAD);
-
-                Chassis_cmd_send_t follow_cmd = chassis_cmd_recv;
-                follow_cmd.vx = chassis_cmd_recv.vx * cos_theta - chassis_cmd_recv.vy * sin_theta;
-                follow_cmd.vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
-
-                Chassis_kinematics_solve(&follow_cmd, &chassis_output);
+                chassis_cmd_recv.wz = 0.5f * chassis_cmd_recv.offset_angle * abs(chassis_cmd_recv.offset_angle);
+                cmd_solved.wz = 0.5f * chassis_cmd_recv.offset_angle * abs(chassis_cmd_recv.offset_angle);
+              //  printf("offset_angle:%.2f,wz:%.2f\r\n",cmd_solved.offset_angle,cmd_solved.wz);
+                // 2. [核心缺失] 矢量坐标变换 (平移跟随)
+                // 必须把“云台视角的直行”转换成“底盘视角的斜行”
+                // 将角度差转换为弧度
+                // offset_angle = 云台 - 底盘。我们需要把云台矢量逆旋转回底盘矢量，所以取负
+                float theta = -chassis_cmd_recv.offset_angle * (M_PI / 180.0f);
+                float cos_theta = arm_cos_f32(theta);
+                float sin_theta = arm_sin_f32(theta);
+                // 旋转矩阵公式
+                // vx_chassis = vx_gimbal * cos - vy_gimbal * sin
+                // vy_chassis = vx_gimbal * sin + vy_gimbal * cos
+                // 注意：这里正负号取决于你的坐标系定义(左右手系)，如果方向反了，把sin前的符号反一下
+                cmd_solved.vx = chassis_cmd_recv.vx * cos_theta - chassis_cmd_recv.vy * sin_theta;
+                cmd_solved.vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
+                Chassis_kinematics_solve(&cmd_solved, &chassis_output);
+                /*
                 for (uint8_t i = 0; i < 4; i++) {
                     Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
                 }
+                */
                 break;
             }
             /* 底盘小陀螺 */
             case CHASSIS_ROTATE:
             {
+                /*
                 for (uint8_t i = 0; i < 4; i++) {
                     Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
                 }
                 chassis_cmd_recv.wz = CHASSIS_ROTATE_WZ;   //设置小陀螺转速
-                // @TODO，不知道为什么云台相对底盘朝向差和这里的指令杆量
+
                 float angle_error = chassis_cmd_recv.offset_angle; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
 
                 // 直接将云台坐标系下的杆量转换到底盘坐标系
@@ -255,27 +248,16 @@ void Chassis_handle_command(void)
                 for (uint8_t i = 0; i < 4; i++) {
                     Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
                 }
-
+                */
                 break;
             }
             default:
                 break;
         }
-
+     //  printf("offset_angle:%.2f,wz:%.2f\r\n",cmd_solved.offset_angle,cmd_solved.wz);
         // 更新底盘反馈信息（这里可以添加底盘角速度的反馈）
-        // 简化处理，假设底盘角速度直接来自控制指令，并且进行滤波
-        if (chassis_cmd_recv.chassis_mode == CHASSIS_FOLLOW_GIMBAL ||
-            chassis_cmd_recv.chassis_mode == CHASSIS_ROTATE) {
-            chassis_feedback.chassis_wz = chassis_cmd_recv.wz ;
-            wz_filtered = (1.0f - CHASSIS_WZ_FILTER_ALPHA) * wz_filtered + CHASSIS_WZ_FILTER_ALPHA * chassis_feedback.chassis_wz;
-            chassis_feedback.chassis_wz = wz_filtered;
-        } else {
-            chassis_cmd_recv.wz = 0.0f;
-            chassis_feedback.chassis_wz = 0.0f;
-            wz_filtered = 0.0f;
-        }
-        
-
+        // 简化处理，假设底盘角速度直接来自控制指令
+        chassis_feedback.chassis_wz = chassis_cmd_recv.wz;
         Pub_push_message(chassis_feedback_pub, &chassis_feedback);
     }
 }

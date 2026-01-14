@@ -40,23 +40,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/debugServers/ST_LINK__yy.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/debugServers/ST_LINK__yy.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/debugServers/ST_LINK_hyk.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/debugServers/ST_LINK_hyk.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/0-Middleware_Layer/Pid_Controller/algorithm_pid.c" beforeDir="false" afterPath="$PROJECT_DIR$/0-Middleware_Layer/Pid_Controller/algorithm_pid.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Decision_making/decision_making.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Document/new_decision.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Document/new_ins.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Document/new_ins_task.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Document/old_decision.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Document/old_ins.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Document/old_ins_task.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/new_decision.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/new_ins.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/new_ins_task.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/old_decision.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/old_ins.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/old_ins_task.c" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -154,12 +145,32 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="FreeRTOS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="FreeRTOS" CONFIG_NAME="Debug-STM32">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="STM32_Drivers" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="STM32_Drivers" CONFIG_NAME="Debug-STM32">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="STM32_Drivers" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="STM32_Drivers" CONFIG_NAME="Debug-STM32">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
     <configuration name="SYSU_Infantry" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="SYSU_Infantry" CONFIG_NAME="Debug-STM32" RUN_TARGET_PROJECT_NAME="SYSU_Infantry" RUN_TARGET_NAME="SYSU_Infantry">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SYSU_Infantry" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="SYSU_Infantry" CONFIG_NAME="Debug-STM32" RUN_TARGET_PROJECT_NAME="SYSU_Infantry" RUN_TARGET_NAME="SYSU_Infantry">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="USB_Device_Library" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="USB_Device_Library" CONFIG_NAME="Debug-STM32">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -237,6 +248,8 @@
       <workItem from="1765079497843" duration="434000" />
       <workItem from="1765079944412" duration="576000" />
       <workItem from="1765082997565" duration="294000" />
+      <workItem from="1765257804269" duration="5927000" />
+      <workItem from="1768355243723" duration="6000" />
     </task>
     <servers />
   </component>

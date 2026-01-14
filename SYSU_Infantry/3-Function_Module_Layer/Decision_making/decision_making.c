@@ -78,18 +78,9 @@ void Decision_making_task_init()
     //发射机构
     shoot_cmd_pub = Pub_register("shoot_cmd", sizeof(Shoot_cmd_send_t));
     shoot_feedback_sub = Sub_register("shoot_feedback", sizeof(Shoot_feedback_info_t));
-
-    //机器人开始工作
-    robot_state = ROBOT_ON;
-
-    gimbal_cmd_send.yaw = 0.0f;
-    gimbal_cmd_send.pitch = 0.0f;
-    gimbal_yaw_initialized = false;
-    chassis_cmd_send.gimbal_yaw_total_angle = 0.0f;
-    chassis_cmd_send.gimbal_yaw_rate = 0.0f;
-
 }
 
+//获取各个模块的反馈信息
 void Receive_feedback_infomation()
 {
 
@@ -97,16 +88,6 @@ void Receive_feedback_infomation()
     Sub_get_message(chassis_feedback_sub,(void *)(&chassis_feedback_recv));
     //获取云台反馈信息
     Sub_get_message(gimbal_feedback_sub,(void *)(&gimbal_feedback_recv));
-    // 修复：使用IMU的多圈角度初始化云台目标值（与云台电机反馈源一致）
-    // 同时确保IMU已就绪，避免使用无效数据
-    if (!gimbal_yaw_initialized && gimbal_feedback_recv.imu_state == IMU_STATE_READY)
-    {
-        gimbal_cmd_send.yaw = gimbal_feedback_recv.imu_yaw_total_angle;
-        gimbal_virtual_target = gimbal_feedback_recv.imu_yaw_total_angle;
-        gimbal_yaw_initialized = true;
-    }
-
-    gimbal_cmd_send.chassis_wz = chassis_feedback_recv.chassis_wz;
     //获取发射机构反馈信息
     Sub_get_message(shoot_feedback_sub,(void *)(&shoot_feedback_recv));
 }
@@ -127,9 +108,9 @@ void Send_command_to_all_task()
 */
 void Robot_set_command()
 {
-    //printf("rc_data[CURRENT].rc.Rrocker_x:%d\r\n",rc_data[CURRENT].rc.Rrocker_x);
-    //printf("rc_data[CURRENT].rc.Rrocker_y:%d\r\n",rc_data[CURRENT].rc.Rrocker_y);
-    //printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
+    printf("rc_data[CURRENT].rc.Rrocker_x:%d\r\n",rc_data[CURRENT].rc.Rrocker_x);
+    printf("rc_data[CURRENT].rc.Rrocker_y:%d\r\n",rc_data[CURRENT].rc.Rrocker_y);
+    printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
     //printf("rc_data[CURRENT].rc.Lrocker_y:%d\r\n",rc_data[CURRENT].rc.Lrocker_y);
     // printf("rc_data[CURRENT].rc.dial:%d\r\n",rc_data[CURRENT].rc.dial);
     //printf("rc_data[CURRENT].rc.Lswitch:%d\r\n",rc_data[CURRENT].rc.Lswitch);
@@ -164,7 +145,7 @@ void RC_ctrl_set()
     //如果右边开关打上，则进入底盘自由模式，此时底盘不跟随云台
     else if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_MID)
     {
-        chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
+        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
     }
     //如果右边开关打中间，则底盘进入小陀螺模式，云台进入自由模式
@@ -196,32 +177,26 @@ void RC_ctrl_set()
         {
             shoot_cmd_send.loader_mode = LOAD_STOP;     //
         }
-    
-    
-
-
-    //正常情况下不发射子弹
-
     //急停模式
     Emergency_stop();
     /****************控制量设定*****************/
     //底盘控制量
      /*后续可增加死区限制，解决遥控器通道值因老化而造成的零漂问题*/
-    // if (rc_data[CURRENT].rc.Lrocker_y>=-32&&rc_data[CURRENT].rc.Lrocker_y<=0)
-    //     chassis_cmd_send.vy=0;
-    // else {
-    //     chassis_cmd_send.vy = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_y; //竖直方向
-    // }
-    // chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
+     if (rc_data[CURRENT].rc.Lrocker_y>=-32&&rc_data[CURRENT].rc.Lrocker_y<=0)
+         chassis_cmd_send.vy=0;
+     else {
+         chassis_cmd_send.vy = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_y; //竖直方向
+     }
+     chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
 
     // //云台控制量
-    // gimbal_cmd_send.yaw -= 0.0018*(float)(rc_data[CURRENT].rc.Rrocker_x);
-    // // Pitch轴逻辑保持不变...
-    // gimbal_cmd_send.pitch -= 0.001f * (float)(rc_data[CURRENT].rc.Rrocker_y);
-    // if (gimbal_cmd_send.pitch > 40)
-    //     gimbal_cmd_send.pitch = 40;
-    // else if (gimbal_cmd_send.pitch < -30)
-    //     gimbal_cmd_send.pitch = -30;
+    gimbal_cmd_send.yaw -= 0.0018*(float)(rc_data[CURRENT].rc.Rrocker_x);
+    gimbal_cmd_send.pitch += 0.002f * (float)(rc_data[CURRENT].rc.Rrocker_y);
+    if (gimbal_cmd_send.pitch > 40)
+        gimbal_cmd_send.pitch = 40;
+    else if (gimbal_cmd_send.pitch < -30)
+        gimbal_cmd_send.pitch = -30;
+
 }
 
 /**
@@ -238,7 +213,7 @@ void Keyboard_ctrl_set()
     //如果右边开关打上，则进入底盘自由模式，此时底盘不跟随云台
     else if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_MID)
     {
-        chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
+        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
     }
     //如果右边开关打中间，则底盘进入小陀螺模式，云台进入自由模式
@@ -270,58 +245,6 @@ void Keyboard_ctrl_set()
     
     //急停模式
     Emergency_stop();
-    /****************控制量设定*****************/
-    //底盘控制量
-     /*后续可增加死区限制，解决遥控器通道值因老化而造成的零漂问题*/
-    if (rc_data[CURRENT].rc.Lrocker_y>=-32&&rc_data[CURRENT].rc.Lrocker_y<=0)
-        chassis_cmd_send.vy=0;
-    else {
-        chassis_cmd_send.vy = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_y; //竖直方向
-    }
-    chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
-
-    //云台控制量
-    // 1/2 获取遥控器输入 (Blue Line)
-    // float yaw_input = 0.005f * (float)rc_data[CURRENT].rc.Rrocker_x;
-
-    // // 3. 积分：更新虚拟目标
-    // gimbal_virtual_target += yaw_input;
-
-    // // 4. 获取真实值 (Green Line)
-    // float current_actual_yaw = gimbal_feedback_recv.imu_yaw_total_angle;
-
-    // // 5. 【软规划核心算法】 (实现图中红线被绿线拖住的效果)
-    // // 定义“最大领跑角度”(Max Lead Angle)，比如 20度
-    // // 这意味着规划值最多只能比真实值快 20度
-    // float max_lead = 20.0f; 
-
-    // // 正向限制：如果规划跑太快（红线大大高于绿线）
-    // if (gimbal_virtual_target > current_actual_yaw + max_lead) {
-    //     // 强制把规划值拉回来，保持在真实值前方 max_lead 处
-    //     gimbal_virtual_target = current_actual_yaw + max_lead; 
-    // }
-    // // 反向限制：同理
-    // else if (gimbal_virtual_target < current_actual_yaw - max_lead) {
-    //     gimbal_virtual_target = current_actual_yaw - max_lead;
-    // }
-
-    // // 6. 输出最终规划值 (Red Line)
-    // gimbal_cmd_send.yaw = gimbal_virtual_target;
-    gimbal_cmd_send.yaw += 0.005f * (float)rc_data[CURRENT].rc.Rrocker_x;
-    gimbal_cmd_send.pitch += 0.01f * (float)(rc_data[CURRENT].rc.Rrocker_y);
-
-    // 键盘控制设置的临时实现
-    // 默认模式设置
-   // chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
-    //gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
-   // shoot_cmd_send.shoot_mode = SHOOT_OFF;
-   // shoot_cmd_send.loader_mode = LOAD_STOP;
-    // 这里添加键盘鼠标的具体控制逻辑
-
-    // float yaw_delta = (float)rc_data[TEMP].mouse.x / 660.0f * 10.0f;
-    // gimbal_cmd_send.yaw += yaw_delta;
-    // gimbal_cmd_send.pitch += (float)rc_data[TEMP].mouse.y / 660.0f * 10.0f;
-
 }
 
 /**
@@ -353,17 +276,8 @@ void Emergency_stop()
  */
 void Calc_offset_angle()
 {
-    // 如果机器人处于急停状态，不计算偏差角，直接清零
-    if (robot_state == ROBOT_OFF) {
-        chassis_cmd_send.offset_angle = 0.0f;
-        chassis_cmd_send.gimbal_yaw_total_angle = 0.0f;
-        chassis_cmd_send.gimbal_yaw_rate = 0.0f;
-        return;
-    }
-    
     // 别名angle提高可读性,不然太长了不好看,虽然基本不会动这个函数
     static float angle;
-    static float last_offset_angle = 0.0f; // 记录上一次的偏差角
     angle = gimbal_feedback_recv.yaw_motor_single_round_angle; // 从云台获取的当前yaw电机单圈角度
     
     float temp_offset_angle;
@@ -381,26 +295,10 @@ void Calc_offset_angle()
         temp_offset_angle = angle - YAW_ALIGN_ANGLE;
     else
         temp_offset_angle = angle - YAW_ALIGN_ANGLE + 360.0f;
-#endif
-
-    // 检测角度跳变，如果跳变超过180度，说明发生了0/360度边界跨越
-    float angle_diff = temp_offset_angle - last_offset_angle;
-    if (angle_diff > 180.0f) {
-        temp_offset_angle -= 360.0f;
-    } else if (angle_diff < -180.0f) {
-        temp_offset_angle += 360.0f;
-    }
-    
-    // 限制偏差角在-180到180度之间
-    if (temp_offset_angle > 180.0f) {
-        temp_offset_angle -= 360.0f;
-    } else if (temp_offset_angle < -180.0f) {
-        temp_offset_angle += 360.0f;
-    }
-    
+    //计算出最终的偏差角
     chassis_cmd_send.offset_angle = temp_offset_angle;
-    last_offset_angle = temp_offset_angle;
 
+#endif
     chassis_cmd_send.gimbal_yaw_total_angle = gimbal_feedback_recv.imu_yaw_total_angle;
     chassis_cmd_send.gimbal_yaw_rate = gimbal_feedback_recv.imu_yaw_rate;
 }
