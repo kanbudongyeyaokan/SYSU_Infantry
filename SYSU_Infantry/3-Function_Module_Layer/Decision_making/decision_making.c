@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include "SBUS.h"
+#include "gimbal.h"  // 用于获取云台状态
 
 
 
@@ -225,12 +226,24 @@ void RC_ctrl_set()
     
     chassis_cmd_send.vx = -2.0f * (float)sbus_data[CURRENT].rc.Ch4;
     
-    // 云台控制量
-    if (sbus_data[CURRENT].rc.Ch1 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch1 < -SBUS_DEADZONE)
-        gimbal_cmd_send.yaw += 0.0018f * (float)sbus_data[CURRENT].rc.Ch1;
+    // ==================== 云台目标值同步逻辑 ====================
+    // 当云台从归中状态切换到就绪状态时，需要同步目标值
+    Gimbal_state_e gimbal_state = Gimbal_get_state();
+    if (gimbal_state == GIMBAL_STATE_READY && !gimbal_yaw_initialized) {
+        // 首次进入 READY 状态，同步目标值为当前 IMU 读数
+        gimbal_cmd_send.yaw = gimbal_feedback_recv.imu_yaw_total_angle;
+        gimbal_cmd_send.pitch = 0;  // Pitch 从 0 开始
+        gimbal_yaw_initialized = true;
+    }
     
-    if (sbus_data[CURRENT].rc.Ch3 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch3 < -SBUS_DEADZONE)
-        gimbal_cmd_send.pitch -= 0.0018f * (float)sbus_data[CURRENT].rc.Ch3;
+    // 云台控制量（只有在就绪状态才累加）
+    if (gimbal_state == GIMBAL_STATE_READY) {
+        if (sbus_data[CURRENT].rc.Ch1 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch1 < -SBUS_DEADZONE)
+            gimbal_cmd_send.yaw += 0.0018f * (float)sbus_data[CURRENT].rc.Ch1;
+        
+        if (sbus_data[CURRENT].rc.Ch3 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch3 < -SBUS_DEADZONE)
+            gimbal_cmd_send.pitch -= 0.0018f * (float)sbus_data[CURRENT].rc.Ch3;
+    }
     
     // Pitch限幅
     if (gimbal_cmd_send.pitch > 40)
