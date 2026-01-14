@@ -93,8 +93,8 @@ void Robot_task_init(void)
    osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
    gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
 
- // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
- //  shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+ osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
+  shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
     // 添加短暂延时
     //  osDelay(100);
 

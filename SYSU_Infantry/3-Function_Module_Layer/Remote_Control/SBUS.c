@@ -113,6 +113,7 @@ static void sbus_to_ctrl(volatile const uint8_t *sbus_buf)
     //        sbus_data[CURRENT].rc.Ch13, sbus_data[CURRENT].rc.Ch14,
     //        sbus_data[CURRENT].rc.Ch15, sbus_data[CURRENT].rc.Ch16,
     //        sbus_data[CURRENT].S1, sbus_data[CURRENT].S2);
+    printf("Ch1:%d Ch15:%d\r\n", sbus_data[CURRENT].rc.Ch1, sbus_data[CURRENT].rc.Ch15);
 }
 
 /**

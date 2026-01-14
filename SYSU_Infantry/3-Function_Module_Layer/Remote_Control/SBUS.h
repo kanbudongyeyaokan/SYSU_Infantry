@@ -64,7 +64,7 @@ typedef struct
     struct
     {
         int16_t Ch1;  // 通道1 (右摇杆X)
-        int16_t Ch2;  // 通道2
+        int16_t Ch2;  // 通道2 (左摇杆Y)
         int16_t Ch3;  // 通道3 (右摇杆Y)
         int16_t Ch4;  // 通道4 (左摇杆X)
         int16_t Ch5;  // 通道5 (SF 2)

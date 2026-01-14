@@ -186,19 +186,21 @@ void RC_ctrl_set()
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
     }
     
-    /**射击模式设定 - 使用Ch5(拨轮)**/
-    if (sbus_data[CURRENT].rc.Ch5 > 150)
+    /**射击模式设定 - 使用Ch15(左拨轮)**/
+    // Ch15左拨轮范围: -660 ~ +660
+    // 向上拨(正值)开启摩擦轮, 继续向上拨开始发射
+    if (sbus_data[CURRENT].rc.Ch15 > 150)
     {
-        shoot_cmd_send.shoot_mode = SHOOT_ON;
+        shoot_cmd_send.shoot_mode = SHOOT_ON;  // 开启摩擦轮
     }
     else
     {
         shoot_cmd_send.shoot_mode = SHOOT_OFF;
     }
     
-    if (sbus_data[CURRENT].rc.Ch5 > 450)
+    if (sbus_data[CURRENT].rc.Ch15 > 450)
     {
-        shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
+        shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;  // 连发
         shoot_cmd_send.shoot_rate = 8;
     }
     else
@@ -211,7 +213,8 @@ void RC_ctrl_set()
     
     /****************控制量设定*****************/
     // SBUS通道映射: Ch2=前后, Ch4=左右, Ch1=YAW, Ch3=PITCH
-    #define SBUS_DEADZONE 32
+    // 死区设置: 遥控器中心可能有偏移(约±50)，死区需要覆盖这个偏移
+    #define SBUS_DEADZONE 60
     
     // 底盘控制量
     if (sbus_data[CURRENT].rc.Ch2 >= -SBUS_DEADZONE && sbus_data[CURRENT].rc.Ch2 <= SBUS_DEADZONE)
@@ -325,8 +328,8 @@ void Keyboard_ctrl_set()
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
     }
     
-    /**射击模式设定 - Ch5拨轮**/
-    if (sbus_data[CURRENT].rc.Ch5 > 150)
+    /**射击模式设定 - Ch15左拨轮**/
+    if (sbus_data[CURRENT].rc.Ch15 > 150)
     {
         shoot_cmd_send.shoot_mode = SHOOT_ON;
     }
@@ -335,7 +338,7 @@ void Keyboard_ctrl_set()
         shoot_cmd_send.shoot_mode = SHOOT_OFF;
     }
     
-    if (sbus_data[CURRENT].rc.Ch5 > 300)
+    if (sbus_data[CURRENT].rc.Ch15 > 300)
     {
         shoot_cmd_send.loader_mode = LOAD_1_BULLET;  // 单发
     }
