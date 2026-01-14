@@ -18,12 +18,17 @@
 #include "main.h"
 #include <stdbool.h>
 #include <math.h>
+#include "SBUS.h"
 
 
 
 /**********************发出决策信息***************************/
 //存储遥控器数据，CURRENT-当前数据,LAST-上一次数据
-static RC_ctrl_t *rc_data;
+#if USE_SBUS_RECEIVER
+static SBUS_ctrl_t *sbus_data;  // SBUS遥控器数据
+#else
+static RC_ctrl_t *rc_data;      // DJI遥控器数据
+#endif
 
 //底盘控制模式/控制量发布
 static Publisher_t *chassis_cmd_pub;        //底盘控制信息发布者
@@ -66,7 +71,11 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 void Decision_making_task_init()
 {
     //接收遥控器数据
-    rc_data = RC_Data_Get(&huart3);  // 修改为对应串口,注意如果是自研板dbus协议串口需选用添加了反相器的那个
+#if USE_SBUS_RECEIVER
+    sbus_data = SBUS_Data_Get(&huart3);  // SBUS协议 (天地飞等)
+#else
+    rc_data = RC_Data_Get(&huart3);      // DJI DBUS协议
+#endif
 
     /***********************************初始化决策层的发布者和订阅者***************************************/
     //底盘
@@ -78,6 +87,13 @@ void Decision_making_task_init()
     //发射机构
     shoot_cmd_pub = Pub_register("shoot_cmd", sizeof(Shoot_cmd_send_t));
     shoot_feedback_sub = Sub_register("shoot_feedback", sizeof(Shoot_feedback_info_t));
+
+    //机器人开始工作 - 关键！缺少此初始化会导致控制无响应
+    robot_state = ROBOT_ON;
+
+    // 初始化默认模式
+    gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  // 默认使能云台控制
+    chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;  // 默认不跟随模式
 }
 
 //获取各个模块的反馈信息
@@ -108,23 +124,39 @@ void Send_command_to_all_task()
 */
 void Robot_set_command()
 {
-    printf("rc_data[CURRENT].rc.Rrocker_x:%d\r\n",rc_data[CURRENT].rc.Rrocker_x);
-    printf("rc_data[CURRENT].rc.Rrocker_y:%d\r\n",rc_data[CURRENT].rc.Rrocker_y);
-    printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
-    //printf("rc_data[CURRENT].rc.Lrocker_y:%d\r\n",rc_data[CURRENT].rc.Lrocker_y);
-    // printf("rc_data[CURRENT].rc.dial:%d\r\n",rc_data[CURRENT].rc.dial);
-    //printf("rc_data[CURRENT].rc.Lswitch:%d\r\n",rc_data[CURRENT].rc.Lswitch);
-    //printf("rc_data[CURRENT].rc.Rswitch:%d\r\n",rc_data[CURRENT].rc.Rswitch);
-     //左边开关打下，进入遥控器控制模式
-   if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_DOWN)
-   {
+#if USE_SBUS_RECEIVER
+    // SBUS遥控器调试输出
+    // printf("SBUS Ch1:%d Ch2:%d Ch3:%d Ch4:%d S1:%d S2:%d\r\n",
+    //        sbus_data[CURRENT].rc.Ch1, sbus_data[CURRENT].rc.Ch2,
+    //        sbus_data[CURRENT].rc.Ch3, sbus_data[CURRENT].rc.Ch4,
+    //        sbus_data[CURRENT].S1, sbus_data[CURRENT].S2);
+    
+    // SBUS开关映射: S1左开关, S2右开关 (1=下, 2=上, 3=中)
+    // if (sbus_data[CURRENT].S1 == SBUS_SWITCH_DOWN)
+    // {
+    //     RC_ctrl_set();
+    // }
+    // else if (sbus_data[CURRENT].S1 == SBUS_SWITCH_UP)
+    // {
+    //     Keyboard_ctrl_set();
+    // }
+    RC_ctrl_set();
+#else
+    // printf("rc_data[CURRENT].rc.Rrocker_x:%d\r\n",rc_data[CURRENT].rc.Rrocker_x);
+    // printf("rc_data[CURRENT].rc.Rrocker_y:%d\r\n",rc_data[CURRENT].rc.Rrocker_y);
+    // printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
+    
+    //左边开关打下，进入遥控器控制模式
+    if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_DOWN)
+    {
         RC_ctrl_set();
     }
-    //左边开关打上，进入单发模式
-      else if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_UP)
+    //左边开关打上，进入键鼠模式
+    else if (rc_data[CURRENT].rc.Lswitch == SWITCH_IS_UP)
     {
         Keyboard_ctrl_set();
-    } 
+    }
+#endif
 }
 
 /**
@@ -133,8 +165,77 @@ void Robot_set_command()
 */
 void RC_ctrl_set()
 {
+#if USE_SBUS_RECEIVER
+    /**根据SBUS开关状态设定模式**/
+    // S2右开关: 1=下, 2=上, 3=中
+    if (sbus_data[CURRENT].S2 == SBUS_SWITCH_DOWN)
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
+    }
+    else if (sbus_data[CURRENT].S2 == SBUS_SWITCH_MID)
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
+    }
+    else if (sbus_data[CURRENT].S2 == SBUS_SWITCH_UP)
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
+    }
+    
+    /**射击模式设定 - 使用Ch5(拨轮)**/
+    if (sbus_data[CURRENT].rc.Ch5 > 150)
+    {
+        shoot_cmd_send.shoot_mode = SHOOT_ON;
+    }
+    else
+    {
+        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+    }
+    
+    if (sbus_data[CURRENT].rc.Ch5 > 450)
+    {
+        shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
+        shoot_cmd_send.shoot_rate = 8;
+    }
+    else
+    {
+        shoot_cmd_send.loader_mode = LOAD_STOP;
+    }
+    
+    //急停模式
+    Emergency_stop();
+    
+    /****************控制量设定*****************/
+    // SBUS通道映射: Ch2=前后, Ch4=左右, Ch1=YAW, Ch3=PITCH
+    #define SBUS_DEADZONE 32
+    
+    // 底盘控制量
+    if (sbus_data[CURRENT].rc.Ch2 >= -SBUS_DEADZONE && sbus_data[CURRENT].rc.Ch2 <= SBUS_DEADZONE)
+        chassis_cmd_send.vy = 0;
+    else
+        // chassis_cmd_send.vy = 2.0f * (float)sbus_data[CURRENT].rc.Ch2;
+        chassis_cmd_send.vy = 15.0f * (float)sbus_data[CURRENT].rc.Ch2;
+    
+    // chassis_cmd_send.vx = -2.0f * (float)sbus_data[CURRENT].rc.Ch4;
+    chassis_cmd_send.vx = -15.0f * (float)sbus_data[CURRENT].rc.Ch4;
+    
+    // 云台控制量
+    if (sbus_data[CURRENT].rc.Ch1 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch1 < -SBUS_DEADZONE)
+        gimbal_cmd_send.yaw -= 0.0018f * (float)sbus_data[CURRENT].rc.Ch1;
+    
+    if (sbus_data[CURRENT].rc.Ch3 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch3 < -SBUS_DEADZONE)
+        gimbal_cmd_send.pitch += 0.002f * (float)sbus_data[CURRENT].rc.Ch3;
+    
+    // Pitch限幅
+    if (gimbal_cmd_send.pitch > 40)
+        gimbal_cmd_send.pitch = 40;
+    else if (gimbal_cmd_send.pitch < -30)
+        gimbal_cmd_send.pitch = -30;
+
+#else
     /**根据遥控器开关状态设定模式**/
-   // printf("RC_ctrl_set \n");
     /**底盘/云台模式设定**/
     //如果右边开关打下，则进入底盘跟随云台模式,云台进入陀螺仪反馈模式
     if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_DOWN)
@@ -196,7 +297,7 @@ void RC_ctrl_set()
         gimbal_cmd_send.pitch = 40;
     else if (gimbal_cmd_send.pitch < -30)
         gimbal_cmd_send.pitch = -30;
-
+#endif
 }
 
 /**
@@ -205,7 +306,47 @@ void RC_ctrl_set()
 */
 void Keyboard_ctrl_set()
 {
-     if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_DOWN)
+#if USE_SBUS_RECEIVER
+    // S2右开关: 1=下, 2=上, 3=中
+    if (sbus_data[CURRENT].S2 == SBUS_SWITCH_DOWN)
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
+    }
+    else if (sbus_data[CURRENT].S2 == SBUS_SWITCH_MID)
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
+    }
+    else if (sbus_data[CURRENT].S2 == SBUS_SWITCH_UP)
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
+    }
+    
+    /**射击模式设定 - Ch5拨轮**/
+    if (sbus_data[CURRENT].rc.Ch5 > 150)
+    {
+        shoot_cmd_send.shoot_mode = SHOOT_ON;
+    }
+    else
+    {
+        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+    }
+    
+    if (sbus_data[CURRENT].rc.Ch5 > 300)
+    {
+        shoot_cmd_send.loader_mode = LOAD_1_BULLET;  // 单发
+    }
+    else
+    {
+        shoot_cmd_send.loader_mode = LOAD_STOP;
+    }
+    
+    //急停模式
+    Emergency_stop();
+#else
+    if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_DOWN)
     {
         chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
@@ -222,7 +363,7 @@ void Keyboard_ctrl_set()
         chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
     }
-     /**射击模式设定**/
+    /**射击模式设定**/
     //左边拨轮往上打开启摩擦轮,进入准备射击模式
     if (rc_data[CURRENT].rc.dial > 150)
     {
@@ -233,18 +374,18 @@ void Keyboard_ctrl_set()
     {
         shoot_cmd_send.shoot_mode = SHOOT_OFF;
     }
-//正常情况下不发射子弹
-  
-    if (rc_data[CURRENT].rc.dial > 300 ){
-        shoot_cmd_send.loader_mode =  LOAD_1_BULLET;//单发
+    //正常情况下不发射子弹
+    if (rc_data[CURRENT].rc.dial > 300){
+        shoot_cmd_send.loader_mode = LOAD_1_BULLET;  //单发
     }
-  else
+    else
     {
-        shoot_cmd_send.loader_mode = LOAD_STOP;     //
+        shoot_cmd_send.loader_mode = LOAD_STOP;
     }
     
     //急停模式
     Emergency_stop();
+#endif
 }
 
 /**
@@ -253,6 +394,22 @@ void Keyboard_ctrl_set()
  */
 void Emergency_stop()
 {
+#if USE_SBUS_RECEIVER
+    // Ch5拨轮向下打到底则进入急停模式
+    if (sbus_data[CURRENT].rc.Ch5 < -300 || robot_state == ROBOT_OFF)
+    {
+        robot_state = ROBOT_OFF;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_ZERO_FORCE;
+        chassis_cmd_send.chassis_mode = CHASSIS_ZERO_FORCE;
+        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+        shoot_cmd_send.loader_mode = LOAD_STOP;
+    }
+    // S2开关为[中],恢复正常运行
+    if (sbus_data[CURRENT].S2 == SBUS_SWITCH_MID)
+    {
+        robot_state = ROBOT_ON;
+    }
+#else
     // 拨轮的向下打到底则进入急停模式
     if (rc_data[CURRENT].rc.dial < -300 || robot_state == ROBOT_OFF)
     {
@@ -267,6 +424,7 @@ void Emergency_stop()
     {
         robot_state = ROBOT_ON;
     }
+#endif
 }
 
 /**
