@@ -78,11 +78,11 @@ void Chassis_init()
     Djimotor_init_config_t cfg[4] = {
         {
             .motor_name = "CHASSIS_FR",
-            .motor_type = GM6020,
+            .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
             .deadzone_compensation = 500,
             .motor_controller_init = {
-                .close_loop = OPEN_LOOP,
+                .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
                     .kp = 15,
@@ -95,8 +95,8 @@ void Chassis_init()
                     .max_out = 15000,
                 }
             },
-            // .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 1, .rx_id = 0x201}
-            .can_init = {.can_handle = &hcan1, .can_id = 0x1FF, .tx_id = 2, .rx_id = 0x206}
+            .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 1, .rx_id = 0x201}
+            // .can_init = {.can_handle = &hcan1, .can_id = 0x1FF, .tx_id = 2, .rx_id = 0x206}
         },{
             .motor_name = "CHASSIS_FL",
             .motor_type = M3508,
@@ -174,7 +174,12 @@ void Chassis_handle_command(void)
     // 从消息中心获取最新的底盘控制指令
     if (Sub_get_message(chassis_cmd_sub, &chassis_cmd_recv)) {
         Chassis_cmd_send_t cmd_solved = chassis_cmd_recv;
-        chassis_cmd_recv.chassis_mode = CHASSIS_NO_FOLLOW;
+        // chassis_cmd_recv.chassis_mode = CHASSIS_NO_FOLLOW;
+        // chassis_cmd_recv.chassis_mode = CHASSIS_ROTATE;
+        // chassis_cmd_recv.vx =0000;
+        // chassis_cmd_recv.vy =0000;
+        // chassis_cmd_recv.offset_angle=0;
+        // chassis_cmd_recv.wz =100;
         switch (chassis_cmd_recv.chassis_mode)
         {
             /* 底盘无力 */
@@ -228,7 +233,7 @@ void Chassis_handle_command(void)
             /* 底盘小陀螺 */
             case CHASSIS_ROTATE:
             {
-                /*
+
                 for (uint8_t i = 0; i < 4; i++) {
                     Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
                 }
@@ -249,7 +254,7 @@ void Chassis_handle_command(void)
                 for (uint8_t i = 0; i < 4; i++) {
                     Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
                 }
-                */
+
                 break;
             }
             default:

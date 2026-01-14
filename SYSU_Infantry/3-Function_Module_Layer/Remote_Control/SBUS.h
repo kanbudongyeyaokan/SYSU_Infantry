@@ -29,10 +29,18 @@
 #define SBUS_CH_VALUE_OFFSET ((uint16_t)1024) // SBUS中心值偏移量
 #define SBUS_FRAME_SIZE 25                    // SBUS帧总长度
 
-/* ----------------------- SBUS开关值 ----------------------------- */
-#define SBUS_SWITCH_DOWN ((uint8_t)1) // 开关向下时的值
-#define SBUS_SWITCH_UP ((uint8_t)2)   // 开关向上时的值
-#define SBUS_SWITCH_MID ((uint8_t)3)  // 开关中间时的值
+/* ----------------------- SBUS开关值 (数字开关) ----------------------------- */
+#define SBUS_SWITCH_DOWN ((uint8_t)1) // 数字开关向下时的值
+#define SBUS_SWITCH_UP ((uint8_t)2)   // 数字开关向上时的值
+#define SBUS_SWITCH_MID ((uint8_t)3)  // 数字开关中间时的值
+
+/* ----------------------- SBUS拨杆阈值 (模拟通道) --------------------------- */
+// 三档拨杆阈值 (Ch8等三档开关, 实际值: 下=-660, 中=0, 上=+660)
+#define SBUS_3POS_THRESHOLD_DOWN  (-300)  // 小于此值判定为下档
+#define SBUS_3POS_THRESHOLD_UP    (300)   // 大于此值判定为上档
+
+// 两档拨杆阈值 (Ch5等两档开关, 实际值: 下=-660, 上=+660)
+#define SBUS_2POS_THRESHOLD       (0)     // 小于0判定为下档, 大于等于0判定为上档
 
 // 用于SBUS数据读取，数据是一个大小为2的结构体数组，分为当前数据和上一次数据
 #define CURRENT 0
@@ -59,23 +67,23 @@ typedef struct
         int16_t Ch2;  // 通道2
         int16_t Ch3;  // 通道3 (右摇杆Y)
         int16_t Ch4;  // 通道4 (左摇杆X)
-        int16_t Ch5;  // 通道5 (拨轮)
+        int16_t Ch5;  // 通道5 (SF)
         int16_t Ch6;  // 通道6 (扩展通道)
         int16_t Ch7;  // 通道7
-        int16_t Ch8;  // 通道8
-        int16_t Ch9;  // 通道9
+        int16_t Ch8;  // 通道8 (SB)
+        int16_t Ch9;  // 通道9 (SC)
         int16_t Ch10; // 通道10
         int16_t Ch11; // 通道11
         int16_t Ch12; // 通道12
         int16_t Ch13; // 通道13
         int16_t Ch14; // 通道14
-        int16_t Ch15; // 通道15
-        int16_t Ch16; // 通道16
+        int16_t Ch15; // 通道15 (左波轮)
+        int16_t Ch16; // 通道16 (右波轮)
     } rc;
 
     // 开关数据
     uint8_t S1; // 开关1 (1=下, 2=上, 3=中)
-    uint8_t S2; // 开关2 (1=下, 2=上, 3=中)
+    uint8_t S2; // 开关2 (1=下, 2=上, 3=中) 
 
     uint8_t Frame_flag; // 帧标志位
 } SBUS_ctrl_t;

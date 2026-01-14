@@ -101,13 +101,18 @@ static void sbus_to_ctrl(volatile const uint8_t *sbus_buf)
     memcpy(&sbus_data[LAST], &sbus_data[CURRENT], sizeof(SBUS_ctrl_t));
 
     //输出
-    // printf("SBUS Ch1: %d, Ch2: %d, Ch3: %d, Ch4: %d, S1: %d, S2: %d\r\n",
-    //        sbus_data[CURRENT].rc.Ch1,
-    //        sbus_data[CURRENT].rc.Ch2,
-    //        sbus_data[CURRENT].rc.Ch3,
-    //        sbus_data[CURRENT].rc.Ch4,
-    //        sbus_data[CURRENT].S1,
-    //        sbus_data[CURRENT].S2);
+    // 打印所有16个通道 + 开关状态
+    // printf("Ch1:%d Ch2:%d Ch3:%d Ch4:%d Ch5:%d Ch6:%d Ch7:%d Ch8:%d\r\n",
+    //        sbus_data[CURRENT].rc.Ch1, sbus_data[CURRENT].rc.Ch2,
+    //        sbus_data[CURRENT].rc.Ch3, sbus_data[CURRENT].rc.Ch4,
+    //        sbus_data[CURRENT].rc.Ch5, sbus_data[CURRENT].rc.Ch6,
+    //        sbus_data[CURRENT].rc.Ch7, sbus_data[CURRENT].rc.Ch8);
+    // printf("Ch9:%d Ch10:%d Ch11:%d Ch12:%d Ch13:%d Ch14:%d Ch15:%d Ch16:%d S1:%d S2:%d\r\n",
+    //        sbus_data[CURRENT].rc.Ch9, sbus_data[CURRENT].rc.Ch10,
+    //        sbus_data[CURRENT].rc.Ch11, sbus_data[CURRENT].rc.Ch12,
+    //        sbus_data[CURRENT].rc.Ch13, sbus_data[CURRENT].rc.Ch14,
+    //        sbus_data[CURRENT].rc.Ch15, sbus_data[CURRENT].rc.Ch16,
+    //        sbus_data[CURRENT].S1, sbus_data[CURRENT].S2);
 }
 
 /**

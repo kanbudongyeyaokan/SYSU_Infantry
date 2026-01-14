@@ -166,22 +166,24 @@ void Robot_set_command()
 void RC_ctrl_set()
 {
 #if USE_SBUS_RECEIVER
-    /**根据SBUS开关状态设定模式**/
-    // S2右开关: 1=下, 2=上, 3=中
-    if (sbus_data[CURRENT].S2 == SBUS_SWITCH_DOWN)
+    /**根据SBUS Ch8三档拨杆设定模式**/
+    // Ch8三档拨杆实际值: 下=-660, 中=0, 上=+660
+    // 使用SBUS.h中定义的通用阈值宏
+    
+    if (sbus_data[CURRENT].rc.Ch8 < SBUS_3POS_THRESHOLD_DOWN) // Ch8 下 (约-660) → 跟随模式
     {
         chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
     }
-    else if (sbus_data[CURRENT].S2 == SBUS_SWITCH_MID)
-    {
-        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
-        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
-    }
-    else if (sbus_data[CURRENT].S2 == SBUS_SWITCH_UP)
+    else if (sbus_data[CURRENT].rc.Ch8 > SBUS_3POS_THRESHOLD_UP) // Ch8 上 (约+660) → 小陀螺模式
     {
         chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
+    }
+    else // Ch8 中 (约0) → 不跟随模式
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
     }
     
     /**射击模式设定 - 使用Ch5(拨轮)**/
@@ -215,11 +217,10 @@ void RC_ctrl_set()
     if (sbus_data[CURRENT].rc.Ch2 >= -SBUS_DEADZONE && sbus_data[CURRENT].rc.Ch2 <= SBUS_DEADZONE)
         chassis_cmd_send.vy = 0;
     else
-        // chassis_cmd_send.vy = 2.0f * (float)sbus_data[CURRENT].rc.Ch2;
-        chassis_cmd_send.vy = 15.0f * (float)sbus_data[CURRENT].rc.Ch2;
+        chassis_cmd_send.vy = 2.0f * (float)sbus_data[CURRENT].rc.Ch2;
+
     
-    // chassis_cmd_send.vx = -2.0f * (float)sbus_data[CURRENT].rc.Ch4;
-    chassis_cmd_send.vx = -15.0f * (float)sbus_data[CURRENT].rc.Ch4;
+    chassis_cmd_send.vx = -2.0f * (float)sbus_data[CURRENT].rc.Ch4;
     
     // 云台控制量
     if (sbus_data[CURRENT].rc.Ch1 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch1 < -SBUS_DEADZONE)
@@ -307,21 +308,21 @@ void RC_ctrl_set()
 void Keyboard_ctrl_set()
 {
 #if USE_SBUS_RECEIVER
-    // S2右开关: 1=下, 2=上, 3=中
-    if (sbus_data[CURRENT].S2 == SBUS_SWITCH_DOWN)
+    // Ch8三档拨杆: 下=-660, 中=0, 上=+660
+    if (sbus_data[CURRENT].rc.Ch8 < SBUS_3POS_THRESHOLD_DOWN) // Ch8 下 → 跟随模式
     {
         chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
     }
-    else if (sbus_data[CURRENT].S2 == SBUS_SWITCH_MID)
-    {
-        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
-        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
-    }
-    else if (sbus_data[CURRENT].S2 == SBUS_SWITCH_UP)
+    else if (sbus_data[CURRENT].rc.Ch8 > SBUS_3POS_THRESHOLD_UP) // Ch8 上 → 小陀螺模式
     {
         chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
+    }
+    else // Ch8 中 → 跟随模式
+    {
+        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  
     }
     
     /**射击模式设定 - Ch5拨轮**/
@@ -395,8 +396,9 @@ void Keyboard_ctrl_set()
 void Emergency_stop()
 {
 #if USE_SBUS_RECEIVER
-    // Ch5拨轮向下打到底则进入急停模式
-    if (sbus_data[CURRENT].rc.Ch5 < -300 || robot_state == ROBOT_OFF)
+    // Ch5(SF)两档拨杆: 向下打到底(-660)进入急停模式
+    // 使用 SBUS_3POS_THRESHOLD_DOWN 作为急停阈值 (< -300)
+    if (sbus_data[CURRENT].rc.Ch5 < SBUS_3POS_THRESHOLD_DOWN)
     {
         robot_state = ROBOT_OFF;
         gimbal_cmd_send.gimbal_mode = GIMBAL_ZERO_FORCE;
@@ -404,8 +406,8 @@ void Emergency_stop()
         shoot_cmd_send.shoot_mode = SHOOT_OFF;
         shoot_cmd_send.loader_mode = LOAD_STOP;
     }
-    // S2开关为[中],恢复正常运行
-    if (sbus_data[CURRENT].S2 == SBUS_SWITCH_MID)
+    // Ch5不在急停位置时，恢复正常运行
+    else
     {
         robot_state = ROBOT_ON;
     }
