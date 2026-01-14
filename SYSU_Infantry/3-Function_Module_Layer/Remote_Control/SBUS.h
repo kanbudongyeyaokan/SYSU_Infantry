@@ -67,16 +67,16 @@ typedef struct
         int16_t Ch2;  // 通道2
         int16_t Ch3;  // 通道3 (右摇杆Y)
         int16_t Ch4;  // 通道4 (左摇杆X)
-        int16_t Ch5;  // 通道5 (SF)
-        int16_t Ch6;  // 通道6 (扩展通道)
+        int16_t Ch5;  // 通道5 (SF 2)
+        int16_t Ch6;  // 通道6 (SE 3)
         int16_t Ch7;  // 通道7
-        int16_t Ch8;  // 通道8 (SB)
-        int16_t Ch9;  // 通道9 (SC)
-        int16_t Ch10; // 通道10
-        int16_t Ch11; // 通道11
-        int16_t Ch12; // 通道12
-        int16_t Ch13; // 通道13
-        int16_t Ch14; // 通道14
+        int16_t Ch8;  // 通道8 (SB 3)
+        int16_t Ch9;  // 通道9 (SC 3)
+        int16_t Ch10; // 通道10 (SD 3)
+        int16_t Ch11; // 通道11 (SG 3)
+        int16_t Ch12; // 通道12 (SH 2) 有弹簧
+        int16_t Ch13; // 通道13 (LD 左旋钮)
+        int16_t Ch14; // 通道14 (RD 右旋钮)
         int16_t Ch15; // 通道15 (左波轮)
         int16_t Ch16; // 通道16 (右波轮)
     } rc;
