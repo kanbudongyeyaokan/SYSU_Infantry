@@ -189,7 +189,7 @@ void RC_ctrl_set()
     /**射击模式设定 - 使用Ch15(左拨轮)**/
     // Ch15左拨轮范围: -660 ~ +660
     // 向上拨(正值)开启摩擦轮, 继续向上拨开始发射
-    if (sbus_data[CURRENT].rc.Ch15 > 150)
+    if (sbus_data[CURRENT].rc.Ch15 > 0)
     {
         shoot_cmd_send.shoot_mode = SHOOT_ON;  // 开启摩擦轮
     }
@@ -198,7 +198,7 @@ void RC_ctrl_set()
         shoot_cmd_send.shoot_mode = SHOOT_OFF;
     }
     
-    if (sbus_data[CURRENT].rc.Ch15 > 450)
+    if (sbus_data[CURRENT].rc.Ch15 > 600)
     {
         shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;  // 连发
         shoot_cmd_send.shoot_rate = 8;
@@ -227,10 +227,10 @@ void RC_ctrl_set()
     
     // 云台控制量
     if (sbus_data[CURRENT].rc.Ch1 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch1 < -SBUS_DEADZONE)
-        gimbal_cmd_send.yaw -= 0.0018f * (float)sbus_data[CURRENT].rc.Ch1;
+        gimbal_cmd_send.yaw += 0.0018f * (float)sbus_data[CURRENT].rc.Ch1;
     
     if (sbus_data[CURRENT].rc.Ch3 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch3 < -SBUS_DEADZONE)
-        gimbal_cmd_send.pitch += 0.002f * (float)sbus_data[CURRENT].rc.Ch3;
+        gimbal_cmd_send.pitch -= 0.0018f * (float)sbus_data[CURRENT].rc.Ch3;
     
     // Pitch限幅
     if (gimbal_cmd_send.pitch > 40)

@@ -189,9 +189,10 @@ void Shoot_handle_command(void) {
 					} 
 				// 连发模式,对速度闭环,射频后续修改为可变,目前固定为80发/min
 			case LOAD_BURSTFIRE:
-				shoot_motors[2]->motor_pid.close_loop =  SPEED_LOOP;                                             // 切换到角度环
+				shoot_motors[2]->motor_pid.close_loop =  SPEED_LOOP;                                             // 切换到速度环
 				Djimotor_set_status(shoot_motors[2], MOTOR_ENABLED);
-				Djimotor_set_target(shoot_motors[2], -(360/10)*(shoot_cmd_recv.shoot_rate*10)*REDUCTION_RATIO_LOADER /360);
+				// 电机角速度 = 射速(发/秒) × 每发弹丸拨盘角度 × 减速比
+				Djimotor_set_target(shoot_motors[2], -shoot_cmd_recv.shoot_rate * ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER);
 				break;
 				// x颗/秒换算成速度: 已知一圈的载弹量,由此计算出1s需要转的角度,注意换算角速度(DJIMotor的速度单位是angle per second)shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 10
 				

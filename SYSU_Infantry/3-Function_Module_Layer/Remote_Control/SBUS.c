@@ -4,6 +4,7 @@
 
 #include "string.h"
 #include "bsp_usart.h"
+#include "bsp_dwt.h"
 
 /**SBUS遥控器数据定义区**/
 static SBUS_ctrl_t sbus_data[2]; // 0-当前数据，1-上一次数据
@@ -121,6 +122,12 @@ static void sbus_to_ctrl(volatile const uint8_t *sbus_buf)
  */
 static void SBUS_receive_callback(void)
 {
+    // 测量SBUS帧间隔
+    // static uint32_t dwt_cnt = 0;
+    // float dt = DWT_GetDeltaT(&dwt_cnt);  // 返回两次调用的时间间隔(秒)
+    // uint32_t interval_us = (uint32_t)(dt * 1000000.0f);  // 转换为微秒
+    // printf("SBUS interval: %lu us\n", interval_us);  // 14400 us = 14.4 ms
+    
     sbus_to_ctrl(sbus_uart->rx_buffer); // 进行协议解析
 }
 

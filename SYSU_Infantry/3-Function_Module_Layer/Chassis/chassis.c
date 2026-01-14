@@ -223,11 +223,11 @@ void Chassis_handle_command(void)
                 cmd_solved.vx = chassis_cmd_recv.vx * cos_theta - chassis_cmd_recv.vy * sin_theta;
                 cmd_solved.vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
                 Chassis_kinematics_solve(&cmd_solved, &chassis_output);
-                /*
+
                 for (uint8_t i = 0; i < 4; i++) {
                     Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
                 }
-                */
+
                 break;
             }
             /* 底盘小陀螺 */
