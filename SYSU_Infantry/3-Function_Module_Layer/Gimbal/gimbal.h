@@ -35,3 +35,4 @@ void Gimbal_task_init(void);
  */
 void Gimbal_handle_command(void);
 #endif //SYSU_INFANTRY_GIMBAL_H
+

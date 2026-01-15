@@ -246,10 +246,10 @@ void RC_ctrl_set()
     }
     
     // Pitch限幅
-    if (gimbal_cmd_send.pitch > 40)
-        gimbal_cmd_send.pitch = 40;
-    else if (gimbal_cmd_send.pitch < -30)
-        gimbal_cmd_send.pitch = -30;
+    if (gimbal_cmd_send.pitch > 50)
+        gimbal_cmd_send.pitch = 50;
+    else if (gimbal_cmd_send.pitch < -50)
+        gimbal_cmd_send.pitch = -50;
 
 #else
     /**根据遥控器开关状态设定模式**/

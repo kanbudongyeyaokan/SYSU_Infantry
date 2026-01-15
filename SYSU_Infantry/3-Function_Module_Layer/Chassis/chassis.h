@@ -64,5 +64,4 @@ void Chassis_handle_command(void);
 void Chassis_kinematics_solve(const Chassis_cmd_send_t *cmd, Chassis_output_t *output);
 
 
-
 #endif //SYSU_INFANTRY_CHASSIS_FUNCTION_H
