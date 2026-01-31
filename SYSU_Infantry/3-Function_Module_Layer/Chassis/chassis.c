@@ -23,19 +23,13 @@
 #define CHASSIS_ROTATE_WZ 400.0f
 #define CHASSIS_MOTOR_PID_MAX_OUT 15000.0f
 
-/****************接收决策层的底盘控制信息********************/
-// 订阅决策层发来的底盘控制指令
-static Subscriber_t *chassis_cmd_sub;
-// 存储决策层发来的控制命令
-static Chassis_cmd_send_t chassis_cmd_recv;
-
 /****************发送给决策层的底盘反馈信息******************/
 // 发布给决策层的底盘反馈信息
 static Publisher_t *chassis_feedback_pub;
 // 存储发送给决策层的反馈信息
 static Chassis_feedback_info_t chassis_feedback;
 
-/****************底盘参数存储***************************** */ 
+/****************底盘参数存储***************************** */
 static Chassis_params_t chassis_params = {0};
 
 /****************底盘电机实例及控制参数*******************************/
@@ -50,29 +44,26 @@ static Chassis_output_t chassis_output;
 /**
  * @brief 底盘任务初始化
  */
-void Chassis_task_init(void)
-{
-   //底盘模块初始化
+void Chassis_task_init(void) {
+    //底盘模块初始化
     Chassis_init();
     // 先完成消息中心注册，避免后续大量内存分配导致订阅失败
-    chassis_cmd_sub = Sub_register("chassis_cmd", sizeof(Chassis_cmd_send_t));
     chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
-   
 }
+
 /**
  * @brief 底盘功能模块初始化
  */
-void Chassis_init()
-{
+void Chassis_init() {
     // 设置底盘物理参数
-    chassis_params.wheel_radius = 60.0f;   // 轮子半径60mm
-    chassis_params.wheel_perimeter = chassis_params.wheel_radius*2*M_PI;//轮子周长
-    chassis_params.chassis_radius = 0.2f;   // 默认底盘半径200mm
-    chassis_params.wheel_base = 295.0f;       // 默认轮距295mm
-    chassis_params.half_wheel_base = chassis_params.wheel_base/2.0;
-    chassis_params.track_width = 295.0f;      // 默认轮宽295mm
-    chassis_params.half_track_width = chassis_params.track_width/2.0;
-    chassis_params.chassis_type=CHASSIS_TYPE_OMNI;// 全向轮底盘
+    chassis_params.wheel_radius = 60.0f; // 轮子半径60mm
+    chassis_params.wheel_perimeter = chassis_params.wheel_radius * 2 * M_PI; //轮子周长
+    chassis_params.chassis_radius = 0.2f; // 默认底盘半径200mm
+    chassis_params.wheel_base = 295.0f; // 默认轮距295mm
+    chassis_params.half_wheel_base = chassis_params.wheel_base / 2.0;
+    chassis_params.track_width = 295.0f; // 默认轮宽295mm
+    chassis_params.half_track_width = chassis_params.track_width / 2.0;
+    chassis_params.chassis_type = CHASSIS_TYPE_OMNI; // 全向轮底盘
 
     //设置底盘电机参数
     Djimotor_init_config_t cfg[4] = {
@@ -91,13 +82,15 @@ void Chassis_init()
                     .max_iout = 3000,
                     .LPF_coefficient = 0.8,
                     .feedfoward_coefficient = 0.2,
-                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST|PID_FEEDFOWARD,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST |
+                                    PID_FEEDFOWARD,
                     .max_out = 15000,
                 }
             },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 1, .rx_id = 0x201}
             // .can_init = {.can_handle = &hcan1, .can_id = 0x1FF, .tx_id = 2, .rx_id = 0x206}
-        },{
+        },
+        {
             .motor_name = "CHASSIS_FL",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
@@ -112,12 +105,14 @@ void Chassis_init()
                     .max_iout = 3000,
                     .LPF_coefficient = 0.8,
                     .feedfoward_coefficient = 0.2,
-                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST|PID_FEEDFOWARD,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST |
+                                    PID_FEEDFOWARD,
                     .max_out = 15000,
                 }
             },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 2, .rx_id = 0x202}
-        },{
+        },
+        {
             .motor_name = "CHASSIS_BL",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
@@ -132,12 +127,14 @@ void Chassis_init()
                     .max_iout = 3000,
                     .LPF_coefficient = 0.8,
                     .feedfoward_coefficient = 0.2,
-                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST|PID_FEEDFOWARD,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST |
+                                    PID_FEEDFOWARD,
                     .max_out = 15000,
                 }
             },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 3, .rx_id = 0x203}
-        },{
+        },
+        {
             .motor_name = "CHASSIS_BR",
             .motor_type = M3508,
             .motor_status = MOTOR_ENABLED,
@@ -152,7 +149,8 @@ void Chassis_init()
                     .max_iout = 3000,
                     .LPF_coefficient = 0.8,
                     .feedfoward_coefficient = 0.2,
-                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST|PID_FEEDFOWARD,
+                    .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST |
+                                    PID_FEEDFOWARD,
                     .max_out = 15000,
                 }
             },
@@ -165,107 +163,97 @@ void Chassis_init()
     }
 }
 
+
 /**
- * @brief 处理底盘控制指令
+ * @brief [核心修改] 底盘逻辑更新函数
+ * @param cmd 指向接收到的指令结构体
  */
-void Chassis_handle_command(void)
+void Chassis_Update_Control(Chassis_cmd_send_t *cmd)
 {
-    //printf("Mode is:%d",chassis_cmd_recv.chassis_mode);
-    // 从消息中心获取最新的底盘控制指令
-    if (Sub_get_message(chassis_cmd_sub, &chassis_cmd_recv)) {
-        Chassis_cmd_send_t cmd_solved = chassis_cmd_recv;
-        // chassis_cmd_recv.chassis_mode = CHASSIS_NO_FOLLOW;
-        // chassis_cmd_recv.chassis_mode = CHASSIS_ROTATE;
-        // chassis_cmd_recv.vx =0000;
-        // chassis_cmd_recv.vy =0000;
-        // chassis_cmd_recv.offset_angle=0;
-        // chassis_cmd_recv.wz =100;
-        switch (chassis_cmd_recv.chassis_mode)
+    //testing
+    // printf("vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
+    //printf("chassis_mode: %d\r\n", cmd->chassis_mode);
+
+    // 1. 使用传入的 'cmd' 指针代替原来的全局变量
+    switch (cmd->chassis_mode) // [注意] 这里把 . 改成了 ->
+    {
+        case CHASSIS_ZERO_FORCE:
+            for (uint8_t i = 0; i < 4; i++) {
+                Djimotor_set_status(chassis_motors[i], MOTOR_STOP);
+                Djimotor_set_target(chassis_motors[i], 0);
+            }
+            break;
+
+        case CHASSIS_NO_FOLLOW:
+            for (uint8_t i = 0; i < 4; i++) {
+                Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
+            }
+
+            // 注意：这里需要创建一个临时的 cmd 副本或者直接用 cmd->wz
+            // 因为 chassis_kinematics_solve 可能需要修改内部值，或者我们构造一个新的
+            // 建议这里直接传 cmd 进去，不要在函数内部修改 const 指针内容
+
+            // 简单处理：
+            Chassis_kinematics_solve(cmd, &chassis_output);
+
+            for (uint8_t i = 0; i < 4; i++) {
+                Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+            }
+            break;
+
+        case CHASSIS_FOLLOW_GIMBAL:
         {
-            /* 底盘无力 */
-            case CHASSIS_ZERO_FORCE:
-                for (uint8_t i = 0; i < 4; i++) {
-                    Djimotor_set_status(chassis_motors[i], MOTOR_STOP);
-                    Djimotor_set_target(chassis_motors[i], 0);
-                }
-                break;
-            /* 底盘不跟随云台 */
-            case CHASSIS_NO_FOLLOW:
-                for (uint8_t i = 0; i < 4; i++) {
-                    Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
-                }
-                chassis_cmd_recv.wz = 0; //不旋转
-                //底盘解算
-                Chassis_kinematics_solve(&chassis_cmd_recv, &chassis_output);
-                // 直接将目标写入各底盘电机实例（这些实例应已在底盘/电机相关模块初始化）
-                for (uint8_t i = 0; i < 4; i++) {
-                    // 速度模式：单位rpm
-                    Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
-                }
-                break;
-            /* 底盘跟随云台 */
-            case CHASSIS_FOLLOW_GIMBAL:
-            {
-                chassis_cmd_recv.wz = 0.5f * chassis_cmd_recv.offset_angle * abs(chassis_cmd_recv.offset_angle);
-                cmd_solved.wz = 0.5f * chassis_cmd_recv.offset_angle * abs(chassis_cmd_recv.offset_angle);
-              //  printf("offset_angle:%.2f,wz:%.2f\r\n",cmd_solved.offset_angle,cmd_solved.wz);
-                // 2. [核心缺失] 矢量坐标变换 (平移跟随)
-                // 必须把“云台视角的直行”转换成“底盘视角的斜行”
-                // 将角度差转换为弧度
-                // offset_angle = 云台 - 底盘。我们需要把云台矢量逆旋转回底盘矢量，所以取负
-                float theta = -chassis_cmd_recv.offset_angle * (M_PI / 180.0f);
-                float cos_theta = arm_cos_f32(theta);
-                float sin_theta = arm_sin_f32(theta);
-                // 旋转矩阵公式
-                // vx_chassis = vx_gimbal * cos - vy_gimbal * sin
-                // vy_chassis = vx_gimbal * sin + vy_gimbal * cos
-                // 注意：这里正负号取决于你的坐标系定义(左右手系)，如果方向反了，把sin前的符号反一下
-                cmd_solved.vx = chassis_cmd_recv.vx * cos_theta - chassis_cmd_recv.vy * sin_theta;
-                cmd_solved.vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
-                Chassis_kinematics_solve(&cmd_solved, &chassis_output);
+            // 逻辑与原代码一致，但使用 cmd->xxx
+            Chassis_cmd_send_t cmd_solved = *cmd; // 复制一份用于计算（因为要改值）
 
-                for (uint8_t i = 0; i < 4; i++) {
-                    Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
-                }
+            cmd_solved.wz = 0.5f * cmd->offset_angle * abs(cmd->offset_angle);
 
-                break;
+            // 矢量变换逻辑
+            float theta = -cmd->offset_angle * (M_PI / 180.0f);
+            float cos_theta = arm_cos_f32(theta);
+            float sin_theta = arm_sin_f32(theta);
+
+            cmd_solved.vx = cmd->vx * cos_theta - cmd->vy * sin_theta;
+            cmd_solved.vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
+
+            Chassis_kinematics_solve(&cmd_solved, &chassis_output);
+
+            for (uint8_t i = 0; i < 4; i++) {
+                Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
             }
-            /* 底盘小陀螺 */
-            case CHASSIS_ROTATE:
-            {
-
-                for (uint8_t i = 0; i < 4; i++) {
-                    Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
-                }
-                chassis_cmd_recv.wz = CHASSIS_ROTATE_WZ;   //设置小陀螺转速
-
-                float angle_error = chassis_cmd_recv.offset_angle; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
-
-                // 直接将云台坐标系下的杆量转换到底盘坐标系
-                float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);
-                float sin_theta = arm_sin_f32(angle_error * MATH_DEG2RAD);
-
-                Chassis_cmd_send_t rotate_cmd = chassis_cmd_recv; // 复制一份指令
-                rotate_cmd.vx = chassis_cmd_recv.vx * cos_theta - chassis_cmd_recv.vy * sin_theta;
-                rotate_cmd.vy = chassis_cmd_recv.vx * sin_theta + chassis_cmd_recv.vy * cos_theta;
-
-                Chassis_kinematics_solve(&rotate_cmd, &chassis_output);
-                // 直接将目标写入各底盘电机实例
-                for (uint8_t i = 0; i < 4; i++) {
-                    Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
-                }
-
-                break;
-            }
-            default:
-                break;
+            break;
         }
-     //  printf("offset_angle:%.2f,wz:%.2f\r\n",cmd_solved.offset_angle,cmd_solved.wz);
-        // 更新底盘反馈信息（这里可以添加底盘角速度的反馈）
-        // 简化处理，假设底盘角速度直接来自控制指令
-        chassis_feedback.chassis_wz = chassis_cmd_recv.wz;
-        Pub_push_message(chassis_feedback_pub, &chassis_feedback);
+
+        case CHASSIS_ROTATE:
+            for (uint8_t i = 0; i < 4; i++) {
+                Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
+            }
+            cmd->wz = CHASSIS_ROTATE_WZ; //设置小陀螺转速
+
+            float angle_error = cmd->offset_angle; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
+
+            // 直接将云台坐标系下的杆量转换到底盘坐标系
+            float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);
+            float sin_theta = arm_sin_f32(angle_error * MATH_DEG2RAD);
+
+            Chassis_cmd_send_t* rotate_cmd = cmd; // 复制一份指令
+            rotate_cmd->vx = cmd->vx * cos_theta - cmd->vy * sin_theta;
+            rotate_cmd->vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
+
+            Chassis_kinematics_solve(rotate_cmd, &chassis_output);
+            // 直接将目标写入各底盘电机实例
+            for (uint8_t i = 0; i < 4; i++) {
+                Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+            }
+
+            break;
+        default:
+            break;
     }
+
+    // 反馈部分
+    chassis_feedback.chassis_wz = cmd->wz;
+    Pub_push_message(chassis_feedback_pub, &chassis_feedback);
 }
 
 /**
@@ -273,19 +261,22 @@ void Chassis_handle_command(void)
  * @param cmd 底盘控制指令
  * @param output 解算输出结果
  */
-static void Chassis_omni_kinematics(const Chassis_cmd_send_t *cmd, Chassis_output_t *output)
-{
+static void Chassis_omni_kinematics(const Chassis_cmd_send_t *cmd, Chassis_output_t *output) {
     //目前以电池所在位置为后方，其对面为正前方
     // 计算各轮子线速度 (rad/s)
     float wheel_linear_speed[4];
-    wheel_linear_speed[0] =  -cmd->vx - cmd->vy
-                        - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;   // 右前轮
-    wheel_linear_speed[1] =  -cmd->vx + cmd->vy
-                        - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;   // 左后轮
-    wheel_linear_speed[2] =  cmd->vx + cmd->vy
-                        - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;  // 左前轮
-    wheel_linear_speed[3] =  cmd->vx - cmd->vy
-                        - cmd->wz*(chassis_params.half_wheel_base+chassis_params.half_track_width)*MATH_DEG2RAD;  // 右后轮
+    wheel_linear_speed[0] = -cmd->vx - cmd->vy
+                            - cmd->wz * (chassis_params.half_wheel_base + chassis_params.half_track_width) *
+                            MATH_DEG2RAD; // 右前轮
+    wheel_linear_speed[1] = -cmd->vx + cmd->vy
+                            - cmd->wz * (chassis_params.half_wheel_base + chassis_params.half_track_width) *
+                            MATH_DEG2RAD; // 左后轮
+    wheel_linear_speed[2] = cmd->vx + cmd->vy
+                            - cmd->wz * (chassis_params.half_wheel_base + chassis_params.half_track_width) *
+                            MATH_DEG2RAD; // 左前轮
+    wheel_linear_speed[3] = cmd->vx - cmd->vy
+                            - cmd->wz * (chassis_params.half_wheel_base + chassis_params.half_track_width) *
+                            MATH_DEG2RAD; // 右后轮
     for (int i = 0; i < 4; i++) {
         output->motor_speed[i] = wheel_linear_speed[i];
     }
@@ -293,40 +284,37 @@ static void Chassis_omni_kinematics(const Chassis_cmd_send_t *cmd, Chassis_outpu
 
 /**
  * @brief 麦克纳姆轮底盘运动学解算
- * @param cmd 底盘控制指令  
+ * @param cmd 底盘控制指令
  * @param output 解算输出结果
  */
-static void Chassis_mecanum_kinematics(const Chassis_cmd_send_t *cmd, Chassis_output_t *output)
-{
+static void Chassis_mecanum_kinematics(const Chassis_cmd_send_t *cmd, Chassis_output_t *output) {
     // 麦克纳姆轮布局（从俯视图看）：
     // 左前(0)  右前(1)
     // 左后(2)  右后(3)
     //
     // 麦克纳姆轮运动学模型
     // 左前轮 = vx - vy - wz*(wheelbase + track_width)/2
-    // 右前轮 = vx + vy + wz*(wheelbase + track_width)/2  
+    // 右前轮 = vx + vy + wz*(wheelbase + track_width)/2
     // 左后轮 = vx + vy - wz*(wheelbase + track_width)/2
     // 右后轮 = vx - vy + wz*(wheelbase + track_width)/2
-    
-    float L = chassis_params.wheel_base;      // 轮距
-    float W = chassis_params.track_width;     // 轮宽
+
+    float L = chassis_params.wheel_base; // 轮距
+    float W = chassis_params.track_width; // 轮宽
     float rotate_compensation = cmd->wz * (L + W) / (2.0f * chassis_params.wheel_radius);
-    
+
     // 计算各轮子线速度 (m/s)
     float wheel_linear_speed[4];
     wheel_linear_speed[0] = cmd->vx - cmd->vy - rotate_compensation; // 左前
     wheel_linear_speed[1] = cmd->vx + cmd->vy + rotate_compensation; // 右前
     wheel_linear_speed[2] = cmd->vx + cmd->vy - rotate_compensation; // 左后
     wheel_linear_speed[3] = cmd->vx - cmd->vy + rotate_compensation; // 右后
-    
+
     // 转换为角速度 (rad/s) 再转换为 rpm
     for (int i = 0; i < 4; i++) {
         float angular_velocity = wheel_linear_speed[i] / chassis_params.wheel_radius; // rad/s
         output->motor_speed[i] = angular_velocity * 60.0f / (2.0f * M_PI); // rpm
     }
-    
 }
-
 
 
 /**
@@ -334,22 +322,17 @@ static void Chassis_mecanum_kinematics(const Chassis_cmd_send_t *cmd, Chassis_ou
  * @param cmd 底盘控制指令
  * @param output 解算输出结果
  */
-void Chassis_kinematics_solve(const Chassis_cmd_send_t *cmd, Chassis_output_t *output)
-{
+void Chassis_kinematics_solve(const Chassis_cmd_send_t *cmd, Chassis_output_t *output) {
     // 根据底盘类型调用对应的解算函数
     switch (chassis_params.chassis_type) {
         case CHASSIS_TYPE_OMNI:
             Chassis_omni_kinematics(cmd, output);
             break;
-            
+
         case CHASSIS_TYPE_MECANUM:
             Chassis_mecanum_kinematics(cmd, output);
             break;
-            
         default:
             break;
     }
 }
-
-
-

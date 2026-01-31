@@ -7,14 +7,18 @@
 
 #include "usart.h"
 
+#include "queue.h"
 
 // 测试任务头文件
+#include <stdio.h>
+
 #include "can_motors_test_task.h"
 #include "rc_test_task.h"
 #include "Decision_making_task.h"  // 添加决策任务头文件
 #include "message_test_task.h"     // 添加消息中心测试任务头文件
 #include "chassis_motor_integration_test.h"  // 添加底盘电机集成测试
 #include "Chassis_task.h"
+#include "decision_making.h"
 #include "motor_task.h"
 #include "watchdog_task.h"
 #include "Gimbal_task.h"
@@ -39,12 +43,23 @@ osThreadId rc_test_task_handle; //单独遥控器测试任务
 osThreadId chassis_motor_integration_test_handle; // 底盘电机集成测试任务
 osThreadId motor_task_handle;
 
+/**创建各个进程控制队列**/
+QueueHandle_t Chassis_cmd_queue_handle;
 
 
 
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
+    // 创建队列 (必须在任务创建之前!)
+    // ============================================================
+    // 深度为1，启用覆盖写模式，始终保持最新指令
+    Chassis_cmd_queue_handle = xQueueCreate(1, sizeof(Chassis_cmd_send_t));
+    if(Chassis_cmd_queue_handle == NULL) {
+        // 错误处理：内存不足
+        printf("Chassis_cmd_queue_handle is NULL\n");
+    }
+
     // 选择要运行的测试任务（取消注释需要的测试）
     
     // === 单元测试 ===

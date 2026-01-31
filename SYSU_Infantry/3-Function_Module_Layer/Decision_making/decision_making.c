@@ -20,7 +20,7 @@
 #include <math.h>
 #include "SBUS.h"
 #include "gimbal.h"  // 用于获取云台状态
-
+#include "robot_task.h"
 
 
 /**********************发出决策信息***************************/
@@ -80,7 +80,7 @@ void Decision_making_task_init()
 
     /***********************************初始化决策层的发布者和订阅者***************************************/
     //底盘
-    chassis_cmd_pub = Pub_register("chassis_cmd",sizeof(Chassis_cmd_send_t));
+    // chassis_cmd_pub = Pub_register("chassis_cmd",sizeof(Chassis_cmd_send_t));
     chassis_feedback_sub = Sub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));//底盘反馈数据订阅者
     //云台
     gimbal_cmd_pub = Pub_register("gimbal_cmd", sizeof(Gimbal_cmd_send_t));//云台注册的话题是gimbal_cmd
@@ -112,7 +112,10 @@ void Receive_feedback_infomation()
 void Send_command_to_all_task()
 {
     //发送底盘控制信息
-    Pub_push_message(chassis_cmd_pub,(void *)(&chassis_cmd_send));
+    // Pub_push_message(chassis_cmd_pub,(void *)(&chassis_cmd_send));
+    // 即使底盘卡顿没有读走旧数据，新数据也会覆盖旧的，防止队列堆积延迟
+    xQueueOverwrite(Chassis_cmd_queue_handle, &chassis_cmd_send);
+
     //发送云台控制信息
     Pub_push_message(gimbal_cmd_pub,(void *)(&gimbal_cmd_send));
     //发送发射机构控制信息
@@ -255,9 +258,10 @@ void RC_ctrl_set()
     /**根据遥控器开关状态设定模式**/
     /**底盘/云台模式设定**/
     //如果右边开关打下，则进入底盘跟随云台模式,云台进入陀螺仪反馈模式
+    // printf("vx: %f,vy:%f\r\n", chassis_cmd_send.vx,chassis_cmd_send.vy);
     if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_DOWN)
     {
-        chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+        chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE; 
     }
     //如果右边开关打上，则进入底盘自由模式，此时底盘不跟随云台
@@ -297,6 +301,8 @@ void RC_ctrl_set()
         }
     //急停模式
     Emergency_stop();
+
+
     /****************控制量设定*****************/
     //底盘控制量
      /*后续可增加死区限制，解决遥控器通道值因老化而造成的零漂问题*/
