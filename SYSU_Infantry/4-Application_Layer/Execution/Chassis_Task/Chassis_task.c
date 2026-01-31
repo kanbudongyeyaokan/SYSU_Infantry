@@ -16,8 +16,7 @@
 #include "robot_task.h"
 
 
-// 本地变量，用于接收队列数据
-Chassis_cmd_send_t cmd_recv;
+
 
 
 /**
@@ -29,7 +28,8 @@ void Chassis_control_task(void const *argument)
 {
     // 初始化底盘任务
     Chassis_task_init();
-    
+    // 本地变量，用于接收队列数据
+    Chassis_cmd_send_t cmd_recv;
     // 任务主循环
     for (;;)
     {

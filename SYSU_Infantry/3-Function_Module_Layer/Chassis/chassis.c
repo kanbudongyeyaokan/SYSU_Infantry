@@ -168,7 +168,7 @@ void Chassis_init() {
  * @brief [核心修改] 底盘逻辑更新函数
  * @param cmd 指向接收到的指令结构体
  */
-void Chassis_Update_Control(Chassis_cmd_send_t *cmd)
+void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 {
     //testing
     // printf("vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
@@ -189,11 +189,6 @@ void Chassis_Update_Control(Chassis_cmd_send_t *cmd)
                 Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
             }
 
-            // 注意：这里需要创建一个临时的 cmd 副本或者直接用 cmd->wz
-            // 因为 chassis_kinematics_solve 可能需要修改内部值，或者我们构造一个新的
-            // 建议这里直接传 cmd 进去，不要在函数内部修改 const 指针内容
-
-            // 简单处理：
             Chassis_kinematics_solve(cmd, &chassis_output);
 
             for (uint8_t i = 0; i < 4; i++) {
@@ -203,7 +198,6 @@ void Chassis_Update_Control(Chassis_cmd_send_t *cmd)
 
         case CHASSIS_FOLLOW_GIMBAL:
         {
-            // 逻辑与原代码一致，但使用 cmd->xxx
             Chassis_cmd_send_t cmd_solved = *cmd; // 复制一份用于计算（因为要改值）
 
             cmd_solved.wz = 0.5f * cmd->offset_angle * abs(cmd->offset_angle);
@@ -228,30 +222,33 @@ void Chassis_Update_Control(Chassis_cmd_send_t *cmd)
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
             }
-            cmd->wz = CHASSIS_ROTATE_WZ; //设置小陀螺转速
 
-            float angle_error = cmd->offset_angle; // 目标与当前夹角误差，+90是因为底盘前方为云台右侧
+            Chassis_cmd_send_t rotate_cmd = *cmd;
 
-            // 直接将云台坐标系下的杆量转换到底盘坐标系
+            // 修改副本的 Wz
+            rotate_cmd.wz = CHASSIS_ROTATE_WZ;
+
+            float angle_error = cmd->offset_angle;
             float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);
             float sin_theta = arm_sin_f32(angle_error * MATH_DEG2RAD);
 
-            Chassis_cmd_send_t* rotate_cmd = cmd; // 复制一份指令
-            rotate_cmd->vx = cmd->vx * cos_theta - cmd->vy * sin_theta;
-            rotate_cmd->vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
+            // [修正] 使用原始数据 cmd 计算，赋值给副本 rotate_cmd
+            // 这样保证计算 vy 时，vx 还是原始值
+            rotate_cmd.vx = cmd->vx * cos_theta - cmd->vy * sin_theta;
+            rotate_cmd.vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
 
-            Chassis_kinematics_solve(rotate_cmd, &chassis_output);
-            // 直接将目标写入各底盘电机实例
+            // 传入副本的地址
+            Chassis_kinematics_solve(&rotate_cmd, &chassis_output);
+
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
             }
-
             break;
         default:
             break;
     }
 
-    // 反馈部分
+    // 反馈底盘数据回决策层
     chassis_feedback.chassis_wz = cmd->wz;
     Pub_push_message(chassis_feedback_pub, &chassis_feedback);
 }

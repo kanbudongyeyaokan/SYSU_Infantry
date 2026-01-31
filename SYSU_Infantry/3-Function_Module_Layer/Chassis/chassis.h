@@ -54,7 +54,7 @@ void Chassis_task_init(void);
  * @brief 处理底盘控制指令
  */
 // void Chassis_handle_command(void);
-void Chassis_Update_Control(Chassis_cmd_send_t *cmd);
+void Chassis_Update_Control(const Chassis_cmd_send_t *cmd);
 
 /**
  * @brief 底盘运动学解算
