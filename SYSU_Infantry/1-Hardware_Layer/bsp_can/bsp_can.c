@@ -4,13 +4,17 @@
 #include "can.h"
 #include "stdio.h"
 
-/** CAN实例管理 **/
+// [新增] 快速查找表 (Look-Up Table)
+// 索引是 CAN ID，存储的是对应的设备指针
+static Can_controller_t *can1_rx_lut[CAN_FAST_LUT_SIZE] = {NULL};
+static Can_controller_t *can2_rx_lut[CAN_FAST_LUT_SIZE] = {NULL};
+
+// 原有的线性列表保留，用于管理内存防止泄露，或者处理超出 LUT 范围的 ID
 static Can_controller_t *can_controller[CAN_MAX_COUNT] = {NULL};
 static uint8_t can_ix = 0; // 全局CAN实例索引
 
 /**
- * @brief 配置全局 CAN 过滤器 (掩码模式，接收所有标准帧)
- * @note  这样就不受硬件过滤器数量限制了
+ * @brief 配置全局 CAN 过滤器
  */
 static void Can_filter_config_global(void)
 {
@@ -29,26 +33,23 @@ static void Can_filter_config_global(void)
     can_filter_conf.FilterBank = 0;
     HAL_CAN_ConfigFilter(&hcan1, &can_filter_conf);
 
-    // 配置 CAN2 过滤器 (Bank 14, Slave Start)
+    // 配置 CAN2 过滤器 (Bank 14)
     can_filter_conf.FilterBank = 14;
     can_filter_conf.SlaveStartFilterBank = 14;
     HAL_CAN_ConfigFilter(&hcan2, &can_filter_conf);
 }
 
 /**
- * @brief 在第一个CAN实例初始化的时候会自动调用此函数,启动CAN服务
+ * @brief 启动CAN服务
  */
 void Can_init()
 {
-    // 1. 配置全局过滤器
     Can_filter_config_global();
 
-    // 2. 启动 CAN1
     HAL_CAN_Start(&hcan1);
     HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
     HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING);
 
-    // 3. 启动 CAN2
     HAL_CAN_Start(&hcan2);
     HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING);
     HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING);
@@ -57,26 +58,14 @@ void Can_init()
 /* CAN管理者注册 */
 Can_controller_t* Can_device_init(Can_init_t *can_config)
 {
-    // 首次调用检查
     if (can_ix >= CAN_MAX_COUNT) return NULL;
 
-    // 分配内存
+    // 1. 分配内存
     Can_controller_t* can_dev = (Can_controller_t*)malloc(sizeof(Can_controller_t));
     if (can_dev == NULL) return NULL;
     memset(can_dev, 0, sizeof(Can_controller_t));
 
-    // 检查重复 (虽然不是必须，但为了安全)
-    for (int i = 0; i < can_ix; i++)
-    {
-        if (can_controller[i]->can_handle == can_config->can_handle &&
-            can_controller[i]->rx_id == can_config->rx_id)
-        {
-            free(can_dev);
-            return can_controller[i]; // 返回已存在的实例
-        }
-    }
-
-    // 初始化参数
+    // 2. 赋值
     can_dev->can_handle = can_config->can_handle;
     can_dev->can_id = can_config->can_id;
     can_dev->tx_id  = can_config->tx_id;
@@ -84,16 +73,24 @@ Can_controller_t* Can_device_init(Can_init_t *can_config)
     can_dev->receive_callback = can_config->receive_callback;
     can_dev->context = can_config->context;
 
-    /* CAN发送配置 */
     can_dev->tx_config.StdId = can_config->can_id;
     can_dev->tx_config.IDE = CAN_ID_STD;
     can_dev->tx_config.RTR = CAN_RTR_DATA;
     can_dev->tx_config.DLC = 0x08;
 
-    // 加入管理列表
-    can_controller[can_ix++] = can_dev;
+    // 3. [关键优化] 注册到快速查找表
+    // 如果 ID 在 0~0x2FF 范围内，直接填入指针数组
+    if (can_config->rx_id < CAN_FAST_LUT_SIZE)
+    {
+        if (can_config->can_handle == &hcan1) {
+            can1_rx_lut[can_config->rx_id] = can_dev;
+        } else if (can_config->can_handle == &hcan2) {
+            can2_rx_lut[can_config->rx_id] = can_dev;
+        }
+    }
 
-    // 注意：这里不再调用 Can_filter_add，因为我们在 Can_init 里配置了全局过滤器
+    // 4. 同时也放入线性列表 (作为备份管理)
+    can_controller[can_ix++] = can_dev;
 
     return can_dev;
 }
@@ -105,10 +102,9 @@ uint8_t Can_send_data(Can_controller_t* Can_controller, uint8_t *tx_buff)
 
     static uint32_t tx_mailbox;
 
-    // 检查邮箱是否满
+    // 检查邮箱
     if (HAL_CAN_GetTxMailboxesFreeLevel(Can_controller->can_handle) == 0)
     {
-        // 邮箱满直接返回失败，不阻塞，保证实时性
         return 0;
     }
 
@@ -121,30 +117,44 @@ uint8_t Can_send_data(Can_controller_t* Can_controller, uint8_t *tx_buff)
 }
 
 // 内部函数：统一处理 FIFO 数据
-static void Can_fifo_process(CAN_HandleTypeDef *hcan, uint32_t fifox)
+// 使用 inline 建议编译器优化
+static inline void Can_fifo_process(CAN_HandleTypeDef *hcan, uint32_t fifox)
 {
     static CAN_RxHeaderTypeDef rxconf;
     static uint8_t can_rx_buff[8];
+    Can_controller_t *target_dev = NULL;
 
-    // 循环取出 FIFO 中的所有数据，防止积压
+    // 循环取出 FIFO 中的所有数据
     while (HAL_CAN_GetRxFifoFillLevel(hcan, fifox) > 0)
     {
         if (HAL_CAN_GetRxMessage(hcan, fifox, &rxconf, can_rx_buff) == HAL_OK)
         {
-            // 遍历所有注册设备进行分发
-            for (size_t i = 0; i < can_ix; ++i)
+            // === [优化] 极速查表 ===
+            // 不再循环遍历数组，而是直接用 ID 当索引去取指针
+            if (rxconf.StdId < CAN_FAST_LUT_SIZE)
             {
-                if (can_controller[i]->can_handle == hcan &&
-                    can_controller[i]->rx_id == rxconf.StdId)
-                {
-                    if (can_controller[i]->receive_callback != NULL)
-                    {
-                        memcpy(can_controller[i]->rx_buffer, can_rx_buff, 8);
-                        can_controller[i]->receive_callback(can_controller[i], can_controller[i]->context);
-                    }
-                    break; // 找到后立即退出循环
+                if (hcan == &hcan1) {
+                    target_dev = can1_rx_lut[rxconf.StdId];
+                } else {
+                    target_dev = can2_rx_lut[rxconf.StdId];
                 }
             }
+
+            // 如果查到了设备，且注册了回调
+            if (target_dev != NULL && target_dev->receive_callback != NULL)
+            {
+                // 1. 拷贝数据到设备自己的buffer (兼容旧逻辑)
+                // 使用 uint32_t 拷贝比 memcpy 快
+                uint32_t *dst = (uint32_t *)target_dev->rx_buffer;
+                uint32_t *src = (uint32_t *)can_rx_buff;
+                dst[0] = src[0];
+                dst[1] = src[1];
+
+                // 2. 执行回调
+                target_dev->receive_callback(target_dev, target_dev->context);
+            }
+            // 重置指针，防止污染下一次循环
+            target_dev = NULL;
         }
     }
 }

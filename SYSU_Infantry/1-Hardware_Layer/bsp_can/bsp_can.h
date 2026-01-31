@@ -4,8 +4,12 @@
 #include "can.h"
 #include "stdint.h"
 
-// CAN实例最大数量
+// CAN实例最大数量 (用于线性表备份，防止溢出)
 #define CAN_MAX_COUNT 16
+
+// [新增] 快速查找表的大小
+// 覆盖 0x000 ~ 0x2FF 的 ID，包含了所有达妙/领控(小ID)和大疆(0x200+)的范围
+#define CAN_FAST_LUT_SIZE 0x300
 
 // 前向声明
 typedef struct CanController CanController_t;
@@ -19,20 +23,16 @@ typedef struct CanController
 {
     CAN_HandleTypeDef *can_handle; // can句柄
     CAN_TxHeaderTypeDef tx_config; // CAN报文发送配置
-    uint32_t can_id;               // 发送所需要的CAN总线ID
+    uint32_t can_id;               // 发送ID
 
-    // 发送缓冲区由外部提供
+    // 接收相关
     uint32_t tx_id;                // 设备ID
     uint8_t rx_buffer[8];          // 接收缓冲区
     uint32_t rx_id;                // 接收ID
 
-    // 接收的回调函数指针
+    // 回调
     void* context;                 // 上下文指针
     ReceiveCallback_t receive_callback; // 回调函数指针
-
-    // [新增] 链表指针，用于哈希桶或链表管理 (优化查找效率)
-    // 即使目前使用数组管理，保留此指针方便未来扩展哈希表查找
-    struct CanController *next;
 } Can_controller_t;
 #pragma pack()
 
