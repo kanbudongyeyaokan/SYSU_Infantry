@@ -181,6 +181,8 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_status(chassis_motors[i], MOTOR_STOP);
                 Djimotor_set_target(chassis_motors[i], 0);
+                //计算PID
+                Djimotor_Calc_Output(chassis_motors[i]);
             }
             break;
 
@@ -193,6 +195,8 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+                //计算PID
+                Djimotor_Calc_Output(chassis_motors[i]);
             }
             break;
 
@@ -214,6 +218,8 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+                //计算PID
+                Djimotor_Calc_Output(chassis_motors[i]);
             }
             break;
         }
@@ -242,6 +248,8 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
+                //计算PID
+                Djimotor_Calc_Output(chassis_motors[i]);
             }
             break;
         default:

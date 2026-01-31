@@ -13,6 +13,9 @@
 #include "stdio.h"
 #include "bsp_wdg.h" // 引入看门狗库
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 // 电机实例数组
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
 static uint8_t motor_count = 0;
@@ -221,29 +224,31 @@ int16_t Djimotor_get_deadzone(Djimotor_device_t *motor) {
     return 0;
 }
 
-// 计算控制输出并填充到缓冲区
-static void Calculate_Motor_Output(Djimotor_device_t *motor) {
+// 仅计算 PID，不涉及 CAN 发送
+void Djimotor_Calc_Output(Djimotor_device_t *motor)
+{
+    if (motor == NULL) return;
 
-    // 离线检查
+    // 1. 离线检查 (保持不变)
     if (motor->wdg && !Watchdog_is_online(motor->wdg)) {
         motor->motor_status = MOTOR_STOP;
     }
 
     float output = 0.0f;
     Djimotor_measure_t *measure = &motor->motor_measure;
-    //获取电机角度反馈值
+
+    // 2. 获取反馈值 (保持不变)
     float angle_feedback = measure->total_angle;
     if (motor->motor_pid.angle_source == OTHER_FEEDBACK && motor->motor_pid.other_angle_feedback_ptr) {
         angle_feedback = *(motor->motor_pid.other_angle_feedback_ptr);
     }
-    //获取电机速度反馈值
     float speed_feedback = measure->angular_velocity;
     if (motor->motor_pid.speed_source == OTHER_FEEDBACK && motor->motor_pid.other_speed_feedback_ptr) {
         speed_feedback = *(motor->motor_pid.other_speed_feedback_ptr);
     }
-    //获取电机电流反馈值
     float current_feedback = measure->real_current;
 
+    // 3. PID 计算 (保持不变)
     if (motor->motor_status == MOTOR_STOP) {
         output = 0.0f;
         Pid_reset(&motor->motor_pid.current_pid);
@@ -270,10 +275,8 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
             }
             case ANGLE_AND_SPEED_LOOP: {
                 float speed_target = Pid_calculate(&motor->motor_pid.angle_pid, angle_feedback, motor->motor_pid.pid_target)
-                                     + motor->motor_pid.speed_feedforward; // 速度前馈补偿
-                
+                                     + motor->motor_pid.speed_feedforward;
                 output = Pid_calculate(&motor->motor_pid.speed_pid, speed_feedback, speed_target);
-                                    // 力矩前馈可以在这里添加
                 break;
             }
             default:
@@ -282,42 +285,56 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
         }
     }
 
-    int16_t current_val = (int16_t)output;
-
-    CAN_HandleTypeDef *hcan = motor->can_controller->can_handle;
-    uint32_t tx_id = motor->can_controller->tx_id;
-    uint32_t can_id = motor->can_controller->can_id;
-
-    uint8_t can_idx = (hcan == &hcan1) ? 0 : 1;
-    uint8_t group_idx = 0;
-
-    if (can_id == 0x1FF) group_idx = 0;
-    else if (can_id == 0x200) group_idx = 1;
-    else if (can_id == 0x2FF) group_idx = 2;
-    else return;
-
-    uint8_t buffer_offset = 0;
-    if (motor->motor_type == GM6020) {
-        if (tx_id <= 4) buffer_offset = (tx_id - 1) * 2;
-        else            buffer_offset = (tx_id - 5) * 2;
-    } else {
-        if (tx_id <= 4) buffer_offset = (tx_id - 1) * 2;
-        else            buffer_offset = (tx_id - 5) * 2;
-    }
-
-    motor_can_buffer[can_idx][group_idx][buffer_offset]     = (uint8_t)(current_val >> 8);
-    motor_can_buffer[can_idx][group_idx][buffer_offset + 1] = (uint8_t)(current_val);
-
-    motor_can_flag[can_idx][group_idx] = 1;
+    // [核心修改] 将计算结果存入结构体，而不是直接填 CAN buffer
+    motor->out_current = (int16_t)output;
 }
 
-void Djimotor_control_all(void) {
+// 统一发送函数
+void Djimotor_Send_All_Bus(void)
+{
+    // 清空标志位
     memset(motor_can_flag, 0, sizeof(motor_can_flag));
 
+    // 遍历所有注册的电机，将 out_current 填入 buffer
     for (uint8_t i = 0; i < motor_count; i++) {
-        Calculate_Motor_Output(motor_instances[i]);
+        Djimotor_device_t *motor = motor_instances[i];
+
+        //在读取的那一瞬间加锁
+        taskENTER_CRITICAL();
+        int16_t current_val = motor->out_current;
+        taskEXIT_CRITICAL();
+
+        // 大疆电机的 CAN ID 匹配
+        CAN_HandleTypeDef *hcan = motor->can_controller->can_handle;
+        uint32_t tx_id = motor->can_controller->tx_id;
+        uint32_t can_id = motor->can_controller->can_id;
+
+        uint8_t can_idx = (hcan == &hcan1) ? 0 : 1;
+        uint8_t group_idx = 0;
+
+        if (can_id == 0x1FF) group_idx = 0;
+        else if (can_id == 0x200) group_idx = 1;
+        else if (can_id == 0x2FF) group_idx = 2;
+        else continue;
+
+        uint8_t buffer_offset = 0;
+        // 注意：GM6020 ID逻辑可能需要根据实际手册确认，这里沿用你的逻辑
+        if (motor->motor_type == GM6020) {
+            if (tx_id <= 4) buffer_offset = (tx_id - 1) * 2;
+            else            buffer_offset = (tx_id - 5) * 2;
+        } else {
+            if (tx_id <= 4) buffer_offset = (tx_id - 1) * 2;
+            else            buffer_offset = (tx_id - 5) * 2;
+        }
+
+        // 填充 buffer
+        motor_can_buffer[can_idx][group_idx][buffer_offset]     = (uint8_t)(current_val >> 8);
+        motor_can_buffer[can_idx][group_idx][buffer_offset + 1] = (uint8_t)(current_val);
+
+        motor_can_flag[can_idx][group_idx] = 1;
     }
 
+    // 统一发送
     if (motor_can_flag[0][0]) Can_send_data(&can1_tx_handlers[0], motor_can_buffer[0][0]);
     if (motor_can_flag[0][1]) Can_send_data(&can1_tx_handlers[1], motor_can_buffer[0][1]);
     if (motor_can_flag[0][2]) Can_send_data(&can1_tx_handlers[2], motor_can_buffer[0][2]);

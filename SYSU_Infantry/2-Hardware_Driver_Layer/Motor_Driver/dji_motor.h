@@ -121,6 +121,9 @@ typedef struct
 
     // [新增] 看门狗句柄
     Watchdog_device_t *wdg;
+
+    // 缓存计算出的输出电流值 (等待发送)
+    int16_t out_current;
 } Djimotor_device_t;
 #pragma pack()
 
@@ -145,8 +148,11 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config);
 //电机控制函数
 void Djimotor_set_target(Djimotor_device_t *motor, float target);
 
-//管理所有电机的控制命令发送
-void Djimotor_control_all(void);
+// [新增] 单个电机 PID 计算 (应用层调用)
+void Djimotor_Calc_Output(Djimotor_device_t *motor);
+
+// [新增] 发送所有电机 CAN 总线数据 (MotorTask 调用)
+void Djimotor_Send_All_Bus(void);
 
 //切换电机控制模式
 void Djimotor_change_controller(Djimotor_device_t *motor, Djimotor_controller_init_t ctrl_params);

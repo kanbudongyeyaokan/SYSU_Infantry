@@ -12,6 +12,8 @@
 #include "dji_motor.h"
 #include <stdio.h>
 
+#include "cmsis_os.h"
+
 /**
  * @brief 电机控制任务函数
  * @param argument 任务参数（未使用）
@@ -19,18 +21,16 @@
  */
 void Motor_control_task(void const *argument)
 {
-    // 纯发送任务，不做设备初始化（各模块自行完成）
+    // 获取当前时间 tick
+    uint32_t PreviousWakeTime = osKernelSysTick();
+    const uint32_t TimeIncrement = 1; // 1ms
 
-    
-    
-    // 任务主循环
     for (;;)
     {
-        // 纯CAN后台发送任务：所有目标值由各功能/应用模块实时更新到 dji_motor.c 的静态缓冲区
-        // 仅负责聚合并发送
-        Djimotor_control_all();
-        
-        // 任务延时1ms，保持1000Hz的运行频率
-        osDelay(1);
+        // 后台发送CAN报文，实现算发分离
+        Djimotor_Send_All_Bus();
+
+        // 使用绝对延时，保证严格的 1kHz 节拍
+        osDelayUntil(&PreviousWakeTime, TimeIncrement);
     }
 }
