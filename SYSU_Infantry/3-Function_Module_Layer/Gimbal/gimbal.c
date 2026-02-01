@@ -13,11 +13,14 @@
 
 #include <stdio.h>
 
+#include "bsp_usart.h"
 #include "dji_motor.h"
 #include "decision_making.h"
 #include "message_center.h"
 #include "ins.h"
 #include "robot_definitions.h"
+#include "robot_task.h"
+#include "vofa.h"
 
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
@@ -43,13 +46,13 @@ static void Gimbal_motor_init(void) {
         .motor_status = MOTOR_ENABLED,
         .motor_controller_init = {
             .close_loop = ANGLE_AND_SPEED_LOOP,
-            .angle_source = OTHER_FEEDBACK,
-            .speed_source = OTHER_FEEDBACK,
+            .angle_source = MOTOR_FEEDBACK,
+            .speed_source = MOTOR_FEEDBACK,
             //使用ins模块姿态数据作为反馈
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.yaw),
             .angle_pid = {
-                .kp = 8,
+                .kp = 12,
                 .ki = 0,
                 .kd = 0,
                 .deadband = 0.1f,
@@ -58,12 +61,12 @@ static void Gimbal_motor_init(void) {
 
             },
             .speed_pid = {
-                .kp = 5,
-                .ki = 0,
+                .kp = 40,
+                .ki = 2.0,
                 .kd = 0,
                 .deadband = 0.1f,
-                .max_out = 3000,
-                .max_iout = 20000,
+                .max_out = 30000,
+                .max_iout = 15000,
             },
 
         },
@@ -161,6 +164,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_target(pitch_motor, cmd->pitch);
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
+
                 break;
             //云台视觉模式
             case GIMBAL_VISION_MODE:
@@ -171,6 +175,9 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             default:
                 break;
         }
+    // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f,%d\r\n",cmd->yaw,yaw_motor->motor_measure.total_angle
+    //     ,yaw_motor->out_current);
+    VOFA_Send(test_uart,cmd->yaw,yaw_motor->motor_measure.total_angle,yaw_motor->out_current);
         //反馈数据
         gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
 

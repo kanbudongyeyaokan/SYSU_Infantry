@@ -108,6 +108,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Ins/ins.c
         3-Function_Module_Layer/Ins/ins.h
 
+
         3-Function_Module_Layer/Decision_making/decision_making.c
         3-Function_Module_Layer/Decision_making/decision_making.h
         2-Hardware_Driver_Layer/Buzzer_Driver/buzzer_driver.h
@@ -118,6 +119,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Ins/imu_temp.h
         0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.c
         0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.h
+        3-Function_Module_Layer/Vofa/vofa.c
+        3-Function_Module_Layer/Vofa/vofa.h
 
 )
 
@@ -175,6 +178,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Referee
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Vofa
         
 
 )
