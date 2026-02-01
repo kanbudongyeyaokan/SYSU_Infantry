@@ -12,6 +12,8 @@
 #include "gimbal.h"
 #include "cmsis_os.h"
 
+#include "robot_task.h"
+#include "bsp_usart.h"
 
 /**
  * @brief 云台控制任务函数
@@ -25,7 +27,7 @@ void Gimbal_control_task(void const *argument) {
     for (;;) {
         //处理控制指令
         Gimbal_handle_command();
-
+      //  Uart_printf(test_uart,"Gimbal_control_task\r\n");
         //修改控制频率，保持200Hz
         osDelay(5);
     }

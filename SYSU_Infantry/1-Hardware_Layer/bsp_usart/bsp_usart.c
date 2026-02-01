@@ -3,108 +3,206 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "stdbool.h"
-#include "bsp_dwt.h"
-#include "cmsis_os.h"
-#include "usart.h"
 #include "main.h"
 
-//串口实例序号
-static uint8_t uart_ix = 0;
-static Uart_instance_t* uart_instance[UART_MAX_COUNT] = {0};
+// 管理所有注册的串口实例
+static Uart_instance_t* uart_instances[UART_MAX_COUNT] = {NULL};
+static uint8_t uart_cnt = 0;
 
-// 全局调试串口实例
-Uart_instance_t* debug_uart = NULL;
-
-//初始化串口实例
-static void Uart_init(Uart_instance_t* instance,UART_HandleTypeDef *huart) {
-    //安全检查
-    if (instance == NULL || huart == NULL) {
+// ============================================================
+// 核心内部函数：尝试启动 DMA 发送
+// ============================================================
+static void Uart_Try_Transmit(Uart_instance_t *inst)
+{
+    if (inst->is_sending) {
         return;
     }
-    //正常初始化
-    memset(instance,0,sizeof(Uart_instance_t));
-    instance->uart_handle = huart;
-    instance->rx_buf_length = RX_BUF_SIZE;
-    //接收初始化
-    HAL_UARTEx_ReceiveToIdle_DMA(instance->uart_handle, instance->rx_buffer, instance->rx_buf_length);
-    //关闭DMA半传输中断
-    __HAL_DMA_DISABLE_IT(instance->uart_handle->hdmarx, DMA_IT_HT);
-}
+    // 检查缓冲区是否为空 (读指针 == 写指针)
+    if (inst->fifo_read_pos == inst->fifo_write_pos) {
+        return;
+    }
 
-//串口注册
-Uart_instance_t* Uart_register(UART_HandleTypeDef *register_huart,uart_receive_callback receive_callback)
-{
-    //安全检查
-    if (uart_ix >= UART_MAX_COUNT) // 超过最大实例数
-        return NULL;
-    for (uint8_t i = 0; i < uart_ix; i++) // 检查是否已经注册过
-        if (uart_instance[i]->uart_handle == register_huart)
-            return NULL;
-    //正常，进行注册
-    Uart_instance_t *instance = (Uart_instance_t *)malloc(sizeof(Uart_instance_t));
-    memset(instance, 0, sizeof(Uart_instance_t));
-    Uart_init(instance,register_huart);
-    instance->receive_callback = receive_callback;
-    //记录该串口实例
-    uart_instance[uart_ix++] = instance;
-    return instance;
-}
+    // 计算本次 DMA 需要发送的长度
+    // RingBuffer 可能发生回绕 (Wrap Around)
+    // 情况 A: [ ... Tail ... Head ... ]  -> 发送长度 = Head - Tail
+    // 情况 B: [ ... Head ... Tail ... ]  -> 先发送 Tail 到 End，中断后再发 0 到 Head
+    uint16_t head = inst->fifo_write_pos;
+    uint16_t tail = inst->fifo_read_pos;
+    uint16_t send_len = 0;
 
-//打印调试信息
-void Uart_printf(Uart_instance_t *uart_instance,const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    int len = vsnprintf((char*)uart_instance->tx_buffer, TX_BUF_SIZE, fmt, args);
-    va_end(args);
+    if (head > tail) {
+        // 线性段，未回绕
+        send_len = head - tail;
+    } else {
+        // 回绕了，先发尾巴那一段
+        send_len = UART_FIFO_SIZE - tail;
+    }
 
+    // 启动 DMA 发送
+    // 标记忙状态，防止其他任务再次触发
+    inst->is_sending = 1;
 
-    //发送调试字符串信息
-    if (len > 0) {
-        HAL_UART_Transmit_DMA(uart_instance->uart_handle, uart_instance->tx_buffer, len);
+    if (HAL_UART_Transmit_DMA(inst->uart_handle, &inst->tx_fifo[tail], send_len) != HAL_OK) {
+        // 如果发送失败，清除标志位让下次重试
+        inst->is_sending = 0;
     }
 }
 
-//发送数据/数据包
-void Uart_sendData(Uart_instance_t *uart_instance,uint8_t* data,uint16_t length) {
-    // 长度限制
-    length = (length > TX_BUF_SIZE) ? TX_BUF_SIZE : length;
-    //发送数据
-    memcpy(uart_instance->tx_buffer, data, length);
-    HAL_UART_Transmit_DMA(uart_instance->uart_handle, uart_instance->tx_buffer, length);
+// ============================================================
+// 初始化与注册
+// ============================================================
+static void Uart_init(Uart_instance_t* inst, UART_HandleTypeDef *huart) {
+    if(!inst || !huart) return;
+    memset(inst, 0, sizeof(Uart_instance_t));
+
+    inst->uart_handle = huart;
+    inst->rx_buf_length = 128; // 接收缓冲区大小，根据需要调整
+
+    // 创建互斥锁
+    osMutexDef(uart_mutex);
+    inst->fifo_mutex = osMutexCreate(osMutex(uart_mutex));
+
+    // 启动空闲中断接收
+    HAL_UARTEx_ReceiveToIdle_DMA(inst->uart_handle, inst->rx_buffer, inst->rx_buf_length);
+    __HAL_DMA_DISABLE_IT(inst->uart_handle->hdmarx, DMA_IT_HT); // 关闭半传输中断
 }
 
-/**
- * @brief 每次dma/idle中断发生时，都会调用此函数.对于每个uart实例会调用对应的回调进行进一步的处理
- *        例如:视觉协议解析/遥控器解析/裁判系统解析
- *
- * @note  通过__HAL_DMA_DISABLE_IT(huart->hdmarx,DMA_IT_HT)关闭dma half transfer中断防止两次进入HAL_UARTEx_RxEventCallback()
- *        这是HAL库的一个设计失误,发生DMA传输完成/半完成以及串口IDLE中断都会触发HAL_UARTEx_RxEventCallback()
- *        我们只希望处理，因此直接关闭DMA半传输中断第一种和第三种情况
- *
- * @param huart 发生中断的串口
- * @param Size 此次接收到的总数据量,暂时没用
- */
+Uart_instance_t* Uart_register(UART_HandleTypeDef *huart, uart_receive_callback cb) {
+    if (uart_cnt >= UART_MAX_COUNT) return NULL;
+
+    // 查重
+    for(int i=0; i<uart_cnt; i++) {
+        if (uart_instances[i]->uart_handle == huart) return uart_instances[i];
+    }
+
+    Uart_instance_t *inst = malloc(sizeof(Uart_instance_t));
+    if (inst == NULL) return NULL;
+
+    Uart_init(inst, huart);
+    inst->receive_callback = cb;
+    uart_instances[uart_cnt++] = inst;
+
+    return inst;
+}
+
+// ============================================================
+// 发送接口
+// ============================================================
+
+// 发送二进制数据
+void Uart_sendData(Uart_instance_t *inst, uint8_t* data, uint16_t length)
+{
+    if (!inst || !data || length == 0) return;
+
+    // 获取锁：保证多任务写 FIFO 时指针不会乱
+    if (osMutexWait(inst->fifo_mutex, 10) != osOK) return;
+
+    // 检查剩余空间是否足够
+    uint16_t free_space = 0;
+    if (inst->fifo_read_pos > inst->fifo_write_pos) {
+        free_space = inst->fifo_read_pos - inst->fifo_write_pos - 1;
+    } else {
+        free_space = (UART_FIFO_SIZE - inst->fifo_write_pos) + inst->fifo_read_pos - 1;
+    }
+    if (length > free_space) {
+        // 空间不足，放弃发送
+        osMutexRelease(inst->fifo_mutex);
+        return;
+    }
+
+    // 拷贝数据到 FIFO (处理回绕)
+    for (uint16_t i = 0; i < length; i++) {
+        inst->tx_fifo[inst->fifo_write_pos] = data[i];
+        inst->fifo_write_pos++;
+
+        // 处理回绕
+        if (inst->fifo_write_pos >= UART_FIFO_SIZE) {
+            inst->fifo_write_pos = 0;
+        }
+    }
+    // 4. 释放锁
+    osMutexRelease(inst->fifo_mutex);
+
+    // 尝试触发发送 (在临界区保护下检查，防止中断竞争)
+    // 这里的 taskENTER_CRITICAL 是为了防止 Uart_Try_Transmit 执行判断到一半被中断打断
+    taskENTER_CRITICAL();
+    Uart_Try_Transmit(inst);
+    taskEXIT_CRITICAL();
+}
+
+// 格式化打印
+void Uart_printf(Uart_instance_t *inst, const char* fmt, ...)
+{
+    if (!inst) return;
+
+    // 使用任务栈上的临时 buffer
+    // 注意：确保任务堆栈够大 (建议 > 512 Bytes)
+    char temp_buf[256];
+
+    va_list args;
+    va_start(args, fmt);
+    // vsnprintf 安全地格式化字符串，防止溢出
+    int len = vsnprintf(temp_buf, sizeof(temp_buf), fmt, args);
+    va_end(args);
+
+    if (len > 0) {
+        // 调用通用发送函数
+        Uart_sendData(inst, (uint8_t*)temp_buf, (uint16_t)len);
+    }
+}
+
+// ============================================================
+// 中断回调函数
+// ============================================================
+
+// 发送完成回调 (DMA发完一段后触发)
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    for (uint8_t i = 0; i < uart_cnt; ++i)
+    {
+        if (huart == uart_instances[i]->uart_handle)
+        {
+            Uart_instance_t *inst = uart_instances[i];
+
+            // 标记为空闲
+            inst->is_sending = 0;
+
+            // 更新读指针 (Tail)
+            // huart->TxXferSize 记录了刚才 DMA 实际请求发送的长度
+            inst->fifo_read_pos += huart->TxXferSize;
+
+            // 处理回绕
+            if (inst->fifo_read_pos >= UART_FIFO_SIZE) {
+                inst->fifo_read_pos -= UART_FIFO_SIZE; // 归位
+            }
+
+            // 继续尝试发送剩余数据 (如果有的话)
+            Uart_Try_Transmit(inst);
+
+            return;
+        }
+    }
+}
+
+// 接收回调 (Idle 中断)
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-   // printf("huart3\r\n");
-   // if (huart == &huart3) {
-   //     printf("huart3\r\n");
-   // }
-    //检索已经注册的串口实例，调用回调函数并开启DMA空闲中断接收
-    for (uint8_t i = 0; i < uart_ix; ++i)
+    for (uint8_t i = 0; i < uart_cnt; ++i)
     {
-        if (huart == uart_instance[i]->uart_handle)
+        if (huart == uart_instances[i]->uart_handle)
         {
-            if (uart_instance[i]->receive_callback != NULL)
+            uart_instances[i]->rx_data_len = Size; // 记录长度
+
+            if (uart_instances[i]->receive_callback != NULL)
             {
-                uart_instance[i]->receive_callback();
-                memset(uart_instance[i]->rx_buffer, 0, Size); // 接收结束后清空buffer,对于变长数据是必要的
+                uart_instances[i]->receive_callback();
             }
-            HAL_UARTEx_ReceiveToIdle_DMA(uart_instance[i]->uart_handle,
-                uart_instance[i]->rx_buffer, uart_instance[i]->rx_buf_length);
-            //禁用DMA半传输中断
-            __HAL_DMA_DISABLE_IT(uart_instance[i]->uart_handle->hdmarx, DMA_IT_HT);
+
+            // 重新开启接收
+            HAL_UARTEx_ReceiveToIdle_DMA(uart_instances[i]->uart_handle,
+                uart_instances[i]->rx_buffer, uart_instances[i]->rx_buf_length);
+            __HAL_DMA_DISABLE_IT(uart_instances[i]->uart_handle->hdmarx, DMA_IT_HT);
+
             return;
         }
     }

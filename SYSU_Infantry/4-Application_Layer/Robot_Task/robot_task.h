@@ -5,6 +5,7 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "bsp_usart.h"
 
 //任务句柄外部声明
 extern osThreadId chassis_task_handle; //底盘任务
@@ -23,6 +24,7 @@ extern osThreadId rc_test_task_handle; //单独遥控器测试任务
 /*队列*/
 extern QueueHandle_t Chassis_cmd_queue_handle;
 
+extern Uart_instance_t* test_uart;
 
 //机器人任务创建
 void Robot_task_init(void);

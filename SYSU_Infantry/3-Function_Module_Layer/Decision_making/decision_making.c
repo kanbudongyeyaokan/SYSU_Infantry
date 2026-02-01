@@ -21,7 +21,7 @@
 #include "SBUS.h"
 #include "gimbal.h"  // 用于获取云台状态
 #include "robot_task.h"
-
+#include "bsp_usart.h"
 
 /**********************发出决策信息***************************/
 //存储遥控器数据，CURRENT-当前数据,LAST-上一次数据
@@ -111,6 +111,8 @@ void Receive_feedback_infomation()
 
 void Send_command_to_all_task()
 {
+    //printf("HELLO\r\n");
+    // Uart_printf(test_uart,"Sending command to all tasks\r\n");
     //发送底盘控制信息
     // Pub_push_message(chassis_cmd_pub,(void *)(&chassis_cmd_send));
     // 即使底盘卡顿没有读走旧数据，新数据也会覆盖旧的，防止队列堆积延迟

@@ -46,11 +46,14 @@ osThreadId motor_task_handle;
 /**创建各个进程控制队列**/
 QueueHandle_t Chassis_cmd_queue_handle;
 
-
+Uart_instance_t* test_uart = NULL;
 
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
+    test_uart = Uart_register(&huart1,NULL);
+
+
     // 创建队列 (必须在任务创建之前!)
     // ============================================================
     // 深度为1，启用覆盖写模式，始终保持最新指令
