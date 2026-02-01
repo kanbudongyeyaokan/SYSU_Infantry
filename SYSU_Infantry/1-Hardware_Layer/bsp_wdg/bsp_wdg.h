@@ -28,7 +28,7 @@ typedef struct
 {
     uint16_t reload_count;
     wdg_callback_func callback;         // 默认离线回调
-    wdg_callback_func online_callback;  // [新增] 上线回调
+    wdg_callback_func online_callback;  // 上线回调
     void *owner_id;
 } Watchdog_init_t;
 

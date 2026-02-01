@@ -86,7 +86,7 @@ void Robot_task_init(void)
 
 
     //看门狗任务
-    osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityNormal, 0, 512);
+    osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityHigh, 0, 512);
     watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
     // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
     osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 256);

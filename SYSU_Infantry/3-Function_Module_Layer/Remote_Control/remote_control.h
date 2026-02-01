@@ -5,6 +5,7 @@
 #include "stdbool.h"
 #include "main.h"
 #include "usart.h"
+#include "bsp_wdg.h"
 
 /************************遥控器类型选择************************
  * USE_SBUS_RECEIVER: 遥控器协议选择宏
@@ -123,7 +124,6 @@
 #define LAST 1
 
 
-
 //键盘按键状态
 typedef union
 {
@@ -180,6 +180,9 @@ typedef struct
 /**遥控器协议解析**/
 //获取遥控器数据
 RC_ctrl_t *RC_Data_Get(UART_HandleTypeDef *rc_uart_handle);
+
+//检查遥控器是否在线 (提供给决策层使用)
+uint8_t RC_Is_Online(void);
 
 #pragma pack(pop)       // 恢复原始对齐
 

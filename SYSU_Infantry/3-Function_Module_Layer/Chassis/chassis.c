@@ -174,7 +174,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 {
     //testing
     //printf("vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
-    Uart_printf(test_uart,"vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
+    //Uart_printf(test_uart,"vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
     //printf("chassis_mode: %d\r\n", cmd->chassis_mode);
 
     // 1. 使用传入的 'cmd' 指针代替原来的全局变量
