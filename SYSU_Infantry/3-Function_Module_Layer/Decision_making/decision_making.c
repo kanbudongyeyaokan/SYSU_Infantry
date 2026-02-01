@@ -39,7 +39,6 @@ static Gimbal_cmd_send_t  gimbal_cmd_send;  //存储决策层给云台应用层�
 static float gimbal_virtual_target = 0.0f;
 
 //发射机构控制模式/控制量发布
-static Publisher_t *shoot_cmd_pub;           //发射机构控制信息发布者
 static Shoot_cmd_send_t   shoot_cmd_send;   //存储决策层给发射机构应用层的控制信息
 
 //机器人整体工作状态（二元）：----ON：在线 OFF：离线
@@ -90,7 +89,6 @@ void Decision_making_task_init()
     //云台
     gimbal_feedback_sub = Sub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
     //发射机构
-    shoot_cmd_pub = Pub_register("shoot_cmd", sizeof(Shoot_cmd_send_t));
     shoot_feedback_sub = Sub_register("shoot_feedback", sizeof(Shoot_feedback_info_t));
 
     //机器人开始工作 - 关键！缺少此初始化会导致控制无响应
@@ -125,7 +123,7 @@ void Send_command_to_all_task()
     xQueueOverwrite(Gimbal_cmd_queue_handle, &gimbal_cmd_send);
 
     //发送发射机构控制信息
-    Pub_push_message(shoot_cmd_pub,(void *)(&shoot_cmd_send));
+    xQueueOverwrite(Shoot_cmd_queue_handle, &shoot_cmd_send);
 }
 
 /**

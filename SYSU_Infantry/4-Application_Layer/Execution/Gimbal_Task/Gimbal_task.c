@@ -28,9 +28,9 @@ void Gimbal_control_task(void const *argument) {
         // 如果有新指令就更新 cmd_recv，没有就沿用上一帧的指令
         xQueueReceive(Gimbal_cmd_queue_handle, &cmd_recv, 0);
 
-        Uart_printf(test_uart,"yaw:%f, pitch:%f\r\n",cmd_recv.yaw,cmd_recv.pitch);
+        // Uart_printf(test_uart,"yaw:%f, pitch:%f\r\n",cmd_recv.yaw,cmd_recv.pitch);
 
-        // 调用逻辑层 (传入地址)
+        // 调用逻辑层
         // 这一步包含了 状态机逻辑 + PID计算 (算发分离)
         Gimbal_handle_command(&cmd_recv);
 

@@ -1,32 +1,41 @@
-/**
-* @file    Gimbal_task.c
- * @brief   云台控制任务源文件
- * @author  SYSU电控组
- * @date    2025-09-20
- * @version 1.0
- *
- * @note    调用来自方法层中的云台接口进行云台控制
- */
-
 #include "Shoot_task.h"
 #include "shoot.h"
-#include "cmsis_os.h"
+#include "robot_task.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
 
+// 发射任务频率 1000Hz (1ms)
+#define SHOOT_TASK_PERIOD 1
 
-/**
- * @brief 发射机构控制任务函数
- * @param argument 任务参数（未使用）
- * @note 按照应用层设计，此任务只负责调用功能模块层接口执行控制
- */
 void Shoot_control_task(void const *argument) {
-    //任务初始化
+    // 初始化
     Shoot_task_init();
 
-    for (;;) {
-        //处理控制指令
-        Shoot_handle_command();
+    // 本地指令缓存
+    Shoot_cmd_send_t cmd_recv;
+    // 默认初始化：全停
+    cmd_recv.shoot_mode = SHOOT_OFF;
+    cmd_recv.loader_mode = LOAD_STOP;
+    cmd_recv.shoot_rate = 0;
 
-        //修改控制频率
-        osDelay(2);
+    // 绝对延时变量
+    TickType_t PreviousWakeTime = xTaskGetTickCount();
+
+    for (;;) {
+        // ============================================================
+        // 非阻塞查询队列
+        // ============================================================
+        xQueueReceive(Shoot_cmd_queue_handle, &cmd_recv, 0);
+
+        Uart_printf(test_uart,"shoot_mode:%d,loader_mode:%d\r\n",cmd_recv.shoot_mode,cmd_recv.loader_mode);
+        // ============================================================
+        // 调用逻辑层 (传入指令 -> 状态机 -> 算发分离)
+        // ============================================================
+        Shoot_handle_command(&cmd_recv);
+        // ============================================================
+        // 绝对延时 1ms
+        // ============================================================
+        vTaskDelayUntil(&PreviousWakeTime, SHOOT_TASK_PERIOD);
     }
 }

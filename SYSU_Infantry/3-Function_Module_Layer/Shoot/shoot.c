@@ -15,8 +15,6 @@
 #define ONE_BULLET_DELTA_ANGLE  36.0f
 #define REDUCTION_RATIO_LOADER 36.0f
 /****************接收决策层的射击控制信息********************/
-// 订阅决策层发来的底盘控制指令
-static Subscriber_t *shoot_cmd_sub;
 // 存储决策层发来的控制命令
 static Shoot_cmd_send_t shoot_cmd_recv;
 static float M2006_last_angle;
@@ -50,16 +48,6 @@ void Shoot_motors_init(void)
                 .max_out = 10000,
 				
             },
-			
-            .current_pid = {
-                .kp = 0.7, // 0.7
-                .ki = 0.1, // 0.1
-                .kd = 0,
-				.max_iout = 2000,
-                .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                .max_out = 10000,
-                
-            },
 			},
 			.can_init = {.can_handle = &hcan2, .can_id = 0x200, .tx_id = 1, .rx_id = 0x201}
 		},{
@@ -79,16 +67,6 @@ void Shoot_motors_init(void)
                 .max_out = 10000,
 				
             },
-			
-            .current_pid = {
-                .kp = 0.7, // 0.7
-                .ki = 0.1, // 0.1
-                .kd = 0.1,
-				.max_iout = 2000,
-                .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                .max_out = 10000,
-                
-            },
 		},
 			.can_init = {.can_handle = &hcan2, .can_id = 0x200, .tx_id = 2, .rx_id = 0x202}
 		},{
@@ -97,10 +75,10 @@ void Shoot_motors_init(void)
 			.motor_status = MOTOR_STOP,
             .deadzone_compensation = 100,
             .motor_controller_init = {
-				.close_loop = SPEED_LOOP,
+				.close_loop = ANGLE_AND_SPEED_LOOP,
 				.angle_source = MOTOR_FEEDBACK,
 				.speed_source = MOTOR_FEEDBACK,
-				 .angle_pid = {
+				.angle_pid = {
                 // 如果启用位置环来控制发弹,需要较大的I值保证输出力矩的线性度否则出现接近拨出的力矩大幅下降
                 .kp = 10, // 10
                 .ki = 0.5,
@@ -133,92 +111,69 @@ void Shoot_motors_init(void)
 //发射任务初始化
 void Shoot_task_init(void) {
 	Shoot_motors_init();
-    
-	shoot_cmd_sub = Sub_register("shoot_cmd",sizeof(Shoot_cmd_send_t));
+
 	shoot_feedback_pub = Pub_register("shoot_feedback",sizeof(Shoot_feedback_info_t));
 }
 
 //发射任务处理控制命令
-void Shoot_handle_command(void) {
-	// 从消息中心获取最新的发射机构控制指令
+void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
 
-	/*仅仅做测试用，后续修改或删除*/
-	if (Sub_get_message(shoot_cmd_sub, &shoot_cmd_recv)) {
-		if (shoot_cmd_recv.shoot_mode == SHOOT_OFF) {
-			//关闭摩擦轮
-			Djimotor_set_status(shoot_motors[0], MOTOR_STOP);
-			Djimotor_set_status(shoot_motors[1], MOTOR_STOP);
-			Djimotor_set_status(shoot_motors[2], MOTOR_STOP);
-			Djimotor_set_target(shoot_motors[0],0);
-			Djimotor_set_target(shoot_motors[1],0);
-			Djimotor_set_target(shoot_motors[2],0);
+    // 1. 处理摩擦轮 (SHOOT_MODE)
+    if (cmd->shoot_mode == SHOOT_OFF) {
+        // 关闭摩擦轮
+        Djimotor_set_status(shoot_motors[0], MOTOR_STOP);
+        Djimotor_set_status(shoot_motors[1], MOTOR_STOP);
+        Djimotor_set_target(shoot_motors[0], 0);
+        Djimotor_set_target(shoot_motors[1], 0);
+    }
+    else {
+        // 开启摩擦轮
+        Djimotor_set_status(shoot_motors[0], MOTOR_ENABLED);
+        Djimotor_set_status(shoot_motors[1], MOTOR_ENABLED);
+        Djimotor_set_target(shoot_motors[0], 2500);  // 上摩擦轮
+        Djimotor_set_target(shoot_motors[1], -2500); // 下摩擦轮
+    }
 
-		}
-		else
-		{
-			//开启摩擦轮
-			Djimotor_set_status(shoot_motors[0], MOTOR_ENABLED);
-			Djimotor_set_status(shoot_motors[1], MOTOR_ENABLED);
-			Djimotor_set_target(shoot_motors[0],2500);//上
-			Djimotor_set_target(shoot_motors[1], -2500);//下
-		}
+    // 2. 处理拨弹盘 (LOADER_MODE)
+    switch (cmd->loader_mode)
+    {
+        case LOAD_STOP:
+            shoot_motors[2]->motor_pid.close_loop = SPEED_LOOP;
+            Djimotor_set_target(shoot_motors[2], 0);
+            Djimotor_set_status(shoot_motors[2], MOTOR_STOP);
+            break;
 
-		switch (shoot_cmd_recv.loader_mode)
-		{
-			// 停止拨盘
-			case LOAD_STOP:
-				// 切换到速度环
-				shoot_motors[2]->motor_pid.close_loop =  SPEED_LOOP;
-				Djimotor_set_target(shoot_motors[2],0);         // 同时设定参考值为0,这样停止的速度最快
-				Djimotor_set_status(shoot_motors[2], MOTOR_STOP);
+        case LOAD_1_BULLET: // 单发
+            // 边沿检测：只有当模式发生变化时才触发
+            if (loader_last_mode != cmd->loader_mode) {
+                shoot_motors[2]->motor_pid.close_loop = ANGLE_LOOP;
+                Djimotor_set_status(shoot_motors[2], MOTOR_ENABLED);
+                Djimotor_set_target(shoot_motors[2], shoot_motors[2]->motor_measure.current_angle - ONE_BULLET_DELTA_ANGLE);
+            }
+            break;
 
-				break;
-				// 单发模式,根据鼠标按下的时间,触发一次之后需要进入不响应输入的状态(否则按下的时间内可能多次进入,导致多次发射)
-			case LOAD_1_BULLET:
-				if(loader_last_mode == shoot_cmd_recv.loader_mode)   {
-					break; // 如果上次模式和这次一样,说明是持续按下,不做处理
-				}
+        case LOAD_BURSTFIRE: // 连发
+            shoot_motors[2]->motor_pid.close_loop = SPEED_LOOP;
+            Djimotor_set_status(shoot_motors[2], MOTOR_ENABLED);
+            // 注意：这里引用 cmd->shoot_rate
+            Djimotor_set_target(shoot_motors[2], -cmd->shoot_rate * ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER);
+            break;
 
-				else{
-					shoot_motors[2]->motor_pid.close_loop =  ANGLE_LOOP;                                             // 切换到角度环
-				   Djimotor_set_status(shoot_motors[2], MOTOR_ENABLED);
+        default:
+            Djimotor_set_status(shoot_motors[2], MOTOR_STOP);
+            break;
+    }
 
-                   Djimotor_set_target(shoot_motors[2], shoot_motors[2]->motor_measure.current_angle - ONE_BULLET_DELTA_ANGLE); // 控制量增加一发弹丸的角度
-                
-					break;
-					} 
-				// 连发模式,对速度闭环,射频后续修改为可变,目前固定为80发/min
-			case LOAD_BURSTFIRE:
-				shoot_motors[2]->motor_pid.close_loop =  SPEED_LOOP;                                             // 切换到速度环
-				Djimotor_set_status(shoot_motors[2], MOTOR_ENABLED);
-				// 电机角速度 = 射速(发/秒) × 每发弹丸拨盘角度 × 减速比
-				Djimotor_set_target(shoot_motors[2], -shoot_cmd_recv.shoot_rate * ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER);
-				break;
-				// x颗/秒换算成速度: 已知一圈的载弹量,由此计算出1s需要转的角度,注意换算角速度(DJIMotor的速度单位是angle per second)shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 10
-				
-				// 拨盘反转,对速度闭环,后续增加卡弹检测(通过裁判系统剩余热量反馈和电机电流)-(shoot_cmd_recv.shoot_rate * 360  )/ 1
-				// 也有可能需要从switch-case中独立出来
-				/*  case LOAD_REVERSE:
-						shoot_motors[2]->motor_pid.close_loop =  SPEED_LOOP;                                             // 切换到角度环
-						Djimotor_set_status(shoot_motors[2], MOTOR_ENABLED);
-						Djimotor_set_target(shoot_motors[2], -5);
-				//     // ...
-					 break; */
-			 // 未知模式,停止运行,检查指针越界,内存溢出等问题
-			default:
-				shoot_motors[2]->motor_pid.close_loop =  SPEED_LOOP;
-				Djimotor_set_status(shoot_motors[0], MOTOR_STOP);
-				Djimotor_set_status(shoot_motors[1], MOTOR_STOP);
-				Djimotor_set_status(shoot_motors[2], MOTOR_STOP);
-				Djimotor_set_target(shoot_motors[0],0);
-				Djimotor_set_target(shoot_motors[1],0);
-				Djimotor_set_target(shoot_motors[2],0);
-				break;
+    // 更新上次模式
+    loader_last_mode = cmd->loader_mode;
 
+    // 3. [核心] 算发分离：计算 PID
+    // 摩擦轮
+    Djimotor_Calc_Output(shoot_motors[0]);
+    Djimotor_Calc_Output(shoot_motors[1]);
+    // 拨弹盘
+    Djimotor_Calc_Output(shoot_motors[2]);
 
-		}
-
-		loader_last_mode = shoot_cmd_recv.loader_mode;
-		Pub_push_message(shoot_feedback_pub, (void *)& shoot_feedback);
-	}
+    // 其他反馈赋值
+    Pub_push_message(shoot_feedback_pub, (void *)&shoot_feedback);
 }

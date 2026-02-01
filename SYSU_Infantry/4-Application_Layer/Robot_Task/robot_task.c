@@ -48,6 +48,7 @@ QueueHandle_t Chassis_cmd_queue_handle;
 
 QueueHandle_t Gimbal_cmd_queue_handle;
 
+QueueHandle_t Shoot_cmd_queue_handle;
 
 Uart_instance_t* test_uart = NULL;
 
@@ -64,6 +65,7 @@ void Robot_task_init(void)
 
     Gimbal_cmd_queue_handle = xQueueCreate(1, sizeof(Gimbal_cmd_send_t));
 
+    Shoot_cmd_queue_handle = xQueueCreate(1,sizeof(Shoot_cmd_send_t));
     // 选择要运行的测试任务（取消注释需要的测试）
     
     // === 单元测试 ===

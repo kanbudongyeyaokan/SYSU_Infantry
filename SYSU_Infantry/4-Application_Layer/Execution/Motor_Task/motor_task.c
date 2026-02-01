@@ -32,7 +32,6 @@ void Motor_control_task(void const *argument)
     {
         // 后台发送CAN报文，实现算发分离
         Djimotor_Send_All_Bus();
-        //printf("HELLO\r\n");
         // 使用绝对延时，保证严格的 1kHz 节拍
         vTaskDelayUntil(&PreviousWakeTime, TimeIncrement);
     }
