@@ -12,9 +12,10 @@
 #include "dji_motor.h"
 #include <stdio.h>
 #include "robot_task.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 
-#include "cmsis_os.h"
 
 /**
  * @brief 电机控制任务函数
@@ -24,7 +25,7 @@
 void Motor_control_task(void const *argument)
 {
     // 获取当前时间 tick
-    uint32_t PreviousWakeTime = osKernelSysTick();
+    TickType_t PreviousWakeTime = xTaskGetTickCount();
     const uint32_t TimeIncrement = 1; // 1ms
 
     for (;;)
@@ -33,6 +34,6 @@ void Motor_control_task(void const *argument)
         Djimotor_Send_All_Bus();
         //printf("HELLO\r\n");
         // 使用绝对延时，保证严格的 1kHz 节拍
-        osDelayUntil(&PreviousWakeTime, TimeIncrement);
+        vTaskDelayUntil(&PreviousWakeTime, TimeIncrement);
     }
 }

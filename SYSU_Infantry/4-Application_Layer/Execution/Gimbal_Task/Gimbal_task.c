@@ -1,34 +1,40 @@
-/**
-* @file    Gimbal_task.c
- * @brief   云台控制任务源文件
- * @author  SYSU电控组
- * @date    2025-09-20
- * @version 1.0
- *
- * @note    调用来自方法层中的云台接口进行云台控制
- */
-
 #include "Gimbal_task.h"
 #include "gimbal.h"
-#include "cmsis_os.h"
-
 #include "robot_task.h"
-#include "bsp_usart.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
 
-/**
- * @brief 云台控制任务函数
- * @param argument 任务参数（未使用）
- * @note 按照应用层设计，此任务只负责调用功能模块层接口执行控制
- */
+
+// 云台控制频率 1000Hz (1ms)
+#define GIMBAL_TASK_PERIOD 1
+
 void Gimbal_control_task(void const *argument) {
-    //任务初始化
+    // 初始化
     Gimbal_task_init();
 
+    // 本地指令缓存
+    Gimbal_cmd_send_t cmd_recv;
+    // 默认初始化为无力模式
+    cmd_recv.gimbal_mode = GIMBAL_ZERO_FORCE;
+    cmd_recv.yaw = 0;
+    cmd_recv.pitch = 0;
+
+    // 绝对延时变量
+    TickType_t PreviousWakeTime = xTaskGetTickCount();
+
     for (;;) {
-        //处理控制指令
-        Gimbal_handle_command();
-      //  Uart_printf(test_uart,"Gimbal_control_task\r\n");
-        //修改控制频率，保持200Hz
-        osDelay(5);
+        // 非阻塞查询队列 (Receive 0)
+        // 如果有新指令就更新 cmd_recv，没有就沿用上一帧的指令
+        xQueueReceive(Gimbal_cmd_queue_handle, &cmd_recv, 0);
+
+        Uart_printf(test_uart,"yaw:%f, pitch:%f\r\n",cmd_recv.yaw,cmd_recv.pitch);
+
+        // 调用逻辑层 (传入地址)
+        // 这一步包含了 状态机逻辑 + PID计算 (算发分离)
+        Gimbal_handle_command(&cmd_recv);
+
+        // 绝对延时，保证严格的 1kHz 计算频率
+        vTaskDelayUntil(&PreviousWakeTime, GIMBAL_TASK_PERIOD);
     }
 }

@@ -32,11 +32,9 @@ static RC_ctrl_t *rc_data;      // DJI遥控器数据
 #endif
 
 //底盘控制模式/控制量发布
-static Publisher_t *chassis_cmd_pub;        //底盘控制信息发布者
 static Chassis_cmd_send_t chassis_cmd_send;//存储决策层给底盘应用层的控制信息
 
 //云台控制模式/控制量发布
-static Publisher_t *gimbal_cmd_pub;          //云台控制信息发布者
 static Gimbal_cmd_send_t  gimbal_cmd_send;  //存储决策层给云台应用层的控制信息
 static float gimbal_virtual_target = 0.0f;
 
@@ -65,6 +63,14 @@ static Subscriber_t *shoot_feedback_sub;                 //发射反馈信息订
 static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层发给决策层的信息
 /************************************************************/
 
+// 定义灵敏度系数
+// 之前是 0.0018 (200Hz)，现在是 1000Hz，理论上应该除以 5
+// 建议改小到 0.0003 ~ 0.0005 之间，手感会比较细腻
+#define GIMBAL_RC_MOVE_RATIO_YAW   0.0004f
+#define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
+// 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
+#define RC_DEADBAND 10
+
 /**
  * @brief 任务初始化函数，初始化决策层的发布者和订阅者,获取遥控器数据
  *
@@ -80,10 +86,8 @@ void Decision_making_task_init()
 
     /***********************************初始化决策层的发布者和订阅者***************************************/
     //底盘
-    // chassis_cmd_pub = Pub_register("chassis_cmd",sizeof(Chassis_cmd_send_t));
     chassis_feedback_sub = Sub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));//底盘反馈数据订阅者
     //云台
-    gimbal_cmd_pub = Pub_register("gimbal_cmd", sizeof(Gimbal_cmd_send_t));//云台注册的话题是gimbal_cmd
     gimbal_feedback_sub = Sub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
     //发射机构
     shoot_cmd_pub = Pub_register("shoot_cmd", sizeof(Shoot_cmd_send_t));
@@ -114,12 +118,12 @@ void Send_command_to_all_task()
     //printf("HELLO\r\n");
     // Uart_printf(test_uart,"Sending command to all tasks\r\n");
     //发送底盘控制信息
-    // Pub_push_message(chassis_cmd_pub,(void *)(&chassis_cmd_send));
     // 即使底盘卡顿没有读走旧数据，新数据也会覆盖旧的，防止队列堆积延迟
     xQueueOverwrite(Chassis_cmd_queue_handle, &chassis_cmd_send);
 
     //发送云台控制信息
-    Pub_push_message(gimbal_cmd_pub,(void *)(&gimbal_cmd_send));
+    xQueueOverwrite(Gimbal_cmd_queue_handle, &gimbal_cmd_send);
+
     //发送发射机构控制信息
     Pub_push_message(shoot_cmd_pub,(void *)(&shoot_cmd_send));
 }
@@ -152,8 +156,8 @@ void Robot_set_command()
     // printf("rc_data[CURRENT].rc.Rrocker_y:%d\r\n",rc_data[CURRENT].rc.Rrocker_y);
     // printf("rc_data[CURRENT].rc.Lrocker_x:%d\r\n",rc_data[CURRENT].rc.Lrocker_x);
 
-    Uart_printf(test_uart,"lx:%d,ly:%d,rx:%d,ry:%d\r\n",rc_data[CURRENT].rc.Lrocker_x,
-        rc_data[CURRENT].rc.Lrocker_y,rc_data[CURRENT].rc.Rrocker_x,rc_data[CURRENT].rc.Rrocker_y);
+    // Uart_printf(test_uart,"lx:%d,ly:%d,rx:%d,ry:%d\r\n",rc_data[CURRENT].rc.Lrocker_x,
+    //     rc_data[CURRENT].rc.Lrocker_y,rc_data[CURRENT].rc.Rrocker_x,rc_data[CURRENT].rc.Rrocker_y);
 
 
     //左边开关打下，进入遥控器控制模式
@@ -320,12 +324,29 @@ void RC_ctrl_set()
      chassis_cmd_send.vx = 2.0f * (float)rc_data[CURRENT].rc.Lrocker_x; //水平方向
 
     // //云台控制量
-    gimbal_cmd_send.yaw -= 0.0018*(float)(rc_data[CURRENT].rc.Rrocker_x);
-    gimbal_cmd_send.pitch += 0.002f * (float)(rc_data[CURRENT].rc.Rrocker_y);
+    // 1. 获取原始数据
+    float yaw_input = (float)rc_data[CURRENT].rc.Rrocker_x;
+    float pitch_input = (float)rc_data[CURRENT].rc.Rrocker_y;
+
+    // 2. YAW 轴处理 (死区 + 降速)
+    if (fabsf(yaw_input) > RC_DEADBAND)
+    {
+        // 只有超过死区才累加
+        gimbal_cmd_send.yaw -= GIMBAL_RC_MOVE_RATIO_YAW * yaw_input;
+    }
+
+    // 3. PITCH 轴处理 (死区 + 降速)
+    if (fabsf(pitch_input) > RC_DEADBAND)
+    {
+        gimbal_cmd_send.pitch += GIMBAL_RC_MOVE_RATIO_PITCH * pitch_input;
+    }
+
+    // 4. 限幅保持不变
     if (gimbal_cmd_send.pitch > 40)
         gimbal_cmd_send.pitch = 40;
     else if (gimbal_cmd_send.pitch < -30)
         gimbal_cmd_send.pitch = -30;
+
 #endif
 }
 

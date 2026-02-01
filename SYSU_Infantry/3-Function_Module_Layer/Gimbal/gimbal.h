@@ -10,6 +10,7 @@
 
 #ifndef SYSU_INFANTRY_GIMBAL_H
 #define SYSU_INFANTRY_GIMBAL_H
+#include "decision_making.h"
 
 /**
  * @brief 云台状态枚举 - 用于上电归中状态机
@@ -33,6 +34,6 @@ void Gimbal_task_init(void);
 /**
  * @brief 处理云台控制指令
  */
-void Gimbal_handle_command(void);
+void Gimbal_handle_command(Gimbal_cmd_send_t *cmd);
 #endif //SYSU_INFANTRY_GIMBAL_H
 

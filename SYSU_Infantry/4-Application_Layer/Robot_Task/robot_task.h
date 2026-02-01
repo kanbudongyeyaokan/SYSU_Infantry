@@ -23,6 +23,8 @@ extern osThreadId rc_test_task_handle; //单独遥控器测试任务
 
 /*队列*/
 extern QueueHandle_t Chassis_cmd_queue_handle;
+extern QueueHandle_t Gimbal_cmd_queue_handle;
+
 
 extern Uart_instance_t* test_uart;
 

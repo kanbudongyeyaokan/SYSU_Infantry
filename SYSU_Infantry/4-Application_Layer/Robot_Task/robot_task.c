@@ -46,6 +46,9 @@ osThreadId motor_task_handle;
 /**创建各个进程控制队列**/
 QueueHandle_t Chassis_cmd_queue_handle;
 
+QueueHandle_t Gimbal_cmd_queue_handle;
+
+
 Uart_instance_t* test_uart = NULL;
 
 /**机器人任务创建**/
@@ -58,10 +61,8 @@ void Robot_task_init(void)
     // ============================================================
     // 深度为1，启用覆盖写模式，始终保持最新指令
     Chassis_cmd_queue_handle = xQueueCreate(1, sizeof(Chassis_cmd_send_t));
-    if(Chassis_cmd_queue_handle == NULL) {
-        // 错误处理：内存不足
-        printf("Chassis_cmd_queue_handle is NULL\n");
-    }
+
+    Gimbal_cmd_queue_handle = xQueueCreate(1, sizeof(Gimbal_cmd_send_t));
 
     // 选择要运行的测试任务（取消注释需要的测试）
     
