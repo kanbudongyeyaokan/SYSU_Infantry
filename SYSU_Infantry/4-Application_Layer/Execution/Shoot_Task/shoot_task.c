@@ -28,7 +28,6 @@ void Shoot_control_task(void const *argument) {
         // ============================================================
         xQueueReceive(Shoot_cmd_queue_handle, &cmd_recv, 0);
 
-        Uart_printf(test_uart,"shoot_mode:%d,loader_mode:%d\r\n",cmd_recv.shoot_mode,cmd_recv.loader_mode);
         // ============================================================
         // 调用逻辑层 (传入指令 -> 状态机 -> 算发分离)
         // ============================================================

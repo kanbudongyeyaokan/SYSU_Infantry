@@ -98,7 +98,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/For_Testing_Task/chassis_motor_integration_test.h
         4-Application_Layer/Decision_Making/Decision_making_task.c
         4-Application_Layer/Decision_Making/Decision_making_task.h
-
+        4-Application_Layer/Decision_Making/Shell_task.c
+        4-Application_Layer/Decision_Making/Shell_task.h
 
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
@@ -130,6 +131,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.h
         3-Function_Module_Layer/Vofa/vofa.c
         3-Function_Module_Layer/Vofa/vofa.h
+        4-Application_Layer/Decision_Making/Shell_task.c
+        4-Application_Layer/Decision_Making/Shell_task.h
+        3-Function_Module_Layer/Shell/shell_port.c
+        3-Function_Module_Layer/Shell/shell_port.h
 
 )
 
@@ -190,7 +195,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Vofa
-        
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shell
 
 )
 

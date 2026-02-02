@@ -102,6 +102,19 @@ SECTIONS
     *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     . = ALIGN(4);
   } >FLASH
+  
+  /* ==================================================================== */
+  /* Letter Shell Command Section                                         */
+  /* ==================================================================== */
+  .shell_cmd :
+  {
+    . = ALIGN(4);
+    _shell_command_start = .;
+    KEEP (*(shellCommand))
+    _shell_command_end = .;
+    . = ALIGN(4);
+  } >FLASH
+  /* ==================================================================== */
 
   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
   .ARM : {

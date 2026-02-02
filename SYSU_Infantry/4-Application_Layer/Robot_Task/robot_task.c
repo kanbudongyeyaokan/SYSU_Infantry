@@ -24,7 +24,7 @@
 #include "Gimbal_task.h"
 #include "Ins_task.h"
 #include "shoot_task.h"
-
+#include "Shell_task.h"
 
 /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
@@ -36,6 +36,8 @@ osThreadId referee_task_handle;//裁判系统通信任务
 osThreadId others_task_handle; //处理其他任务，比如与视觉通信，电量读取等琐碎任务，后续根据实际进行修改
 osThreadId watchdog_task_handle; //看门狗任务
 
+/*Shell任务句柄*/
+osThreadId shell_task_handle;
 
 osThreadId bmi088_test_task_handle; //bmi088测试任务
 osThreadId can_motors_test_task_handle; // can电机测试任务
@@ -108,15 +110,18 @@ void Robot_task_init(void)
 
     // === 启动底盘与电机任务（必需） ===
     // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
-    // osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
-    // chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
+     osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
+     chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
 
     osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
     gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
 
-    // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
-    // shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+     osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 1024);
+     shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
+
+    osThreadDef(shell_task, Shell_task, osPriorityNormal, 0, 512);
+    shell_task_handle = osThreadCreate(osThread(shell_task), NULL);
 
 }
 

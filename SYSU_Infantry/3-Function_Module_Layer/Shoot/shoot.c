@@ -30,7 +30,7 @@ static Djimotor_device_t *shoot_motors[3] = {0};
 
 void Shoot_motors_init(void)
 {
-	Djimotor_init_config_t cfg[3] = {
+	static  Djimotor_init_config_t cfg[3] = {
 		{
 			.motor_name = "FRICTION_L",
 			.motor_type = M3508,
