@@ -177,7 +177,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         }
     // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f,%d\r\n",cmd->yaw,yaw_motor->motor_measure.total_angle
     //     ,yaw_motor->out_current);
-    VOFA_Send(test_uart,cmd->yaw,yaw_motor->motor_measure.total_angle,yaw_motor->out_current);
+   // VOFA_Send(test_uart,cmd->yaw,yaw_motor->motor_measure.total_angle,yaw_motor->out_current);
         //反馈数据
         gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
 

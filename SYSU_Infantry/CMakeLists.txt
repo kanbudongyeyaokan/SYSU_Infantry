@@ -79,6 +79,15 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/Kalman_Fliter/algorithm_kf.h
         0-Middleware_Layer/Kalman_Fliter/algorithm_kf.c
 
+        0-Middleware_Layer/letter-shell-master/src/shell.c
+        0-Middleware_Layer/letter-shell-master/src/shell.h
+        0-Middleware_Layer/letter-shell-master/src/shell_cfg.h
+        0-Middleware_Layer/letter-shell-master/src/shell_cmd_list.c
+        0-Middleware_Layer/letter-shell-master/src/shell_companion.c
+        0-Middleware_Layer/letter-shell-master/src/shell_ext.c
+        0-Middleware_Layer/letter-shell-master/src/shell_ext.h
+
+
         4-Application_Layer/For_Testing_Task/can_motors_test_task.h
         4-Application_Layer/For_Testing_Task/can_motors_test_task.c
         4-Application_Layer/For_Testing_Task/rc_test_task.h
@@ -156,6 +165,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Message_Center
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Kalman_Fliter
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Math_lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/letter-shell-master/src
+
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
