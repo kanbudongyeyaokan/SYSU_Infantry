@@ -24,9 +24,9 @@
 #include "Gimbal_task.h"
 #include "Ins_task.h"
 #include "shoot_task.h"
-
-
-/**任务句柄声明**/
+#include "buzzer_alarm_task.h"
+#include "buzzer_alarm.h"
+  /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
 osThreadId gimbal_task_handle; //云台任务
 osThreadId shoot_task_handle;  //发射任务
@@ -35,7 +35,7 @@ osThreadId decision_making_task_handle;     //决策任务
 osThreadId referee_task_handle;//裁判系统通信任务
 osThreadId others_task_handle; //处理其他任务，比如与视觉通信，电量读取等琐碎任务，后续根据实际进行修改
 osThreadId watchdog_task_handle; //看门狗任务
-
+osThreadId buzzer_alarm_task_handle;
 
 osThreadId bmi088_test_task_handle; //bmi088测试任务
 osThreadId can_motors_test_task_handle; // can电机测试任务
@@ -49,6 +49,8 @@ QueueHandle_t Chassis_cmd_queue_handle;
 QueueHandle_t Gimbal_cmd_queue_handle;
 
 QueueHandle_t Shoot_cmd_queue_handle;
+
+QueueHandle_t Buzzer_cmd_queue_handle;
 
 Uart_instance_t* test_uart = NULL;
 
@@ -66,6 +68,8 @@ void Robot_task_init(void)
     Gimbal_cmd_queue_handle = xQueueCreate(1, sizeof(Gimbal_cmd_send_t));
 
     Shoot_cmd_queue_handle = xQueueCreate(1,sizeof(Shoot_cmd_send_t));
+
+    Buzzer_cmd_queue_handle = xQueueCreate(10,sizeof(Buzzer_Alarm_Type_e));
     // 选择要运行的测试任务（取消注释需要的测试）
     
     // === 单元测试 ===
@@ -117,7 +121,8 @@ void Robot_task_init(void)
     // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
     // shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
-
+    osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 512);
+    buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
 }
 
 

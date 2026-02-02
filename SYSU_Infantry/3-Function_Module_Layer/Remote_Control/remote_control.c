@@ -2,7 +2,7 @@
 #include "string.h"
 #include "bsp_usart.h"
 #include "bsp_wdg.h"
-
+#include "buzzer_alarm.h"
 /**遥控器数据定义区**/
 static RC_ctrl_t rc_data[2];//0-当前数据 ， 1-上一次数据
 static Uart_instance_t *rc_uart;//获取遥控器数据的串口实例
@@ -16,6 +16,8 @@ static void RC_Offline_Callback(void *arg)
     // 遥控器断联，为了安全，必须将数据全部清零
     memset(&rc_data[CURRENT], 0, sizeof(RC_ctrl_t));
     memset(&rc_data[LAST], 0, sizeof(RC_ctrl_t));
+
+    Buzzer_send_alarm(BUZZER_ALARM_UART);
 }
 
 

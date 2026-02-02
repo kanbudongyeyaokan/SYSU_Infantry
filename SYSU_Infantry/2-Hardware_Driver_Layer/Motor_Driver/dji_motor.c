@@ -15,8 +15,9 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-
-// 电机实例数组
+#include "buzzer_music.h"
+#include "buzzer_alarm.h"
+ // 电机实例数组
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
 static uint8_t motor_count = 0;
 
@@ -47,6 +48,8 @@ static void Motor_Offline_Callback(void *device)
 
     // 将状态设为 STOP，停止计算输出
     motor->motor_status = MOTOR_STOP;
+
+    Buzzer_send_alarm(BUZZER_ALARM_MOTOR);
 }
 
 // 解译电机反馈数据

@@ -121,6 +121,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/Kalman_Fliter/MahonyAHRS.h
         3-Function_Module_Layer/Vofa/vofa.c
         3-Function_Module_Layer/Vofa/vofa.h
+        3-Function_Module_Layer/Buzzer_Alarm/buzzer_alarm.c
+        3-Function_Module_Layer/Buzzer_Alarm/buzzer_alarm.h
+        4-Application_Layer/Buzzer_Alarm_Task/buzzer_alarm_task.c
+        4-Application_Layer/Buzzer_Alarm_Task/buzzer_alarm_task.h
 
 )
 
@@ -179,7 +183,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Vofa
-        
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Buzzer_Alarm
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Buzzer_Alarm_Task
 
 )
 
