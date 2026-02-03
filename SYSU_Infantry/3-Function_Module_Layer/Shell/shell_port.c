@@ -10,6 +10,9 @@
 #include "queue.h"
 #include "task.h"
 
+#include <stdlib.h> // 用于 atof
+#include <string.h> // 用于 strcmp
+
 // ===================================================
 // 外部引用
 // ===================================================
@@ -113,6 +116,8 @@ void User_Shell_Init(void)
     }
 }
 
+
+/********测试部分*******/
 // 1. 定义一个简单的测试函数
 int shell_test_hello(int argc, char *argv[])
 {

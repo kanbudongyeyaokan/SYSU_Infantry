@@ -22,6 +22,11 @@
 #include "robot_task.h"
 #include "vofa.h"
 
+#include "shell.h"
+#include "shell_port.h"
+#include <stdlib.h> // 包含 atof
+#include <string.h> // 包含 strcmp
+
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
 
@@ -175,12 +180,89 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             default:
                 break;
         }
-    // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f,%d\r\n",cmd->yaw,yaw_motor->motor_measure.total_angle
-    //     ,yaw_motor->out_current);
+
+    /***************************************测试SHELL改云台电机参数********************/
+    // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f,%d,%f\r\n",cmd->yaw,yaw_motor->motor_measure.total_angle
+    //     ,yaw_motor->out_current,yaw_motor->motor_pid.speed_pid.kp);
    // VOFA_Send(test_uart,cmd->yaw,yaw_motor->motor_measure.total_angle,yaw_motor->out_current);
         //反馈数据
         gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
-
         //推送消息
         Pub_push_message(gimbal_pub, (void *) &gimbal_feedback);
 }
+/**
+ * @brief 在线修改 Yaw 电机 PID 及限幅
+ * @usage yaw_pid -s/-a <kp> <ki> <kd> [max_out] [max_iout]
+ */
+int set_yaw_pid_cmd(int argc, char *argv[])
+{
+    // 1. 安全检查
+    if (yaw_motor == NULL) {
+        shellPrint(&shell, "Error: Yaw motor is NULL!\r\n");
+        return -1;
+    }
+
+    // 2. 参数数量检查
+    if (argc < 5) {
+        shellPrint(&shell, "Usage: yaw_pid -s(speed)/-a(angle) <kp> <ki> <kd> [max_out] [max_iout]\r\n");
+        return -1;
+    }
+
+    // 3. 【关键点】定义一个局部指针，指向我们要修改的目标 PID 结构体
+    // 请检查你的 dji_motor.h，确认 PID 结构体的类型名是 pid_t 还是 Pid_t ？
+    // 这里假设是 pid_t，如果报错请修改此处类型
+    Pid_instance_t *target_pid = NULL;
+
+    char *mode_str = argv[1];
+    char *type_name = "";
+
+    // 4. 根据输入决定指针指向谁
+    if (strcmp(mode_str, "-s") == 0) {
+        // 指向速度环 PID
+        target_pid = &(yaw_motor->motor_pid.speed_pid);
+        type_name = "Speed";
+    }
+    else if (strcmp(mode_str, "-a") == 0) {
+        // 指向角度环 PID
+        target_pid = &(yaw_motor->motor_pid.angle_pid);
+        type_name = "Angle";
+    }
+    else {
+        shellPrint(&shell, "Error: Unknown mode '%s'. Use -s or -a\r\n", mode_str);
+        return -1;
+    }
+
+    // 5. 修改参数 (通过指针操作)
+    target_pid->kp = (float)atof(argv[2]);
+    target_pid->ki = (float)atof(argv[3]);
+    target_pid->kd = (float)atof(argv[4]);
+
+    // 6. 修改限幅 (如果有输入的话)
+    if (argc >= 6) target_pid->max_out  = (float)atof(argv[5]);
+    if (argc >= 7) target_pid->max_iout = (float)atof(argv[6]);
+
+    // 7. 打印反馈
+    shellPrint(&shell, "[Gimbal] Set Yaw %s PID Success!\r\n", type_name);
+    shellPrint(&shell, "  Kp: %.3f, Ki: %.3f, Kd: %.3f\r\n",
+               target_pid->kp, target_pid->ki, target_pid->kd);
+    shellPrint(&shell, "  MaxOut: %.0f, MaxIOut: %.0f\r\n",
+               target_pid->max_out, target_pid->max_iout);
+
+    return 0;
+}
+
+// 导出命令
+// 注意：虽然函数在 gimbal.c，但 Letter-Shell 会通过链接脚本自动找到它，无论它在哪里
+SHELL_EXPORT_CMD(SHELL_CMD_PERMISSION(0)|SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN), yaw_pid, set_yaw_pid_cmd, Tune Yaw PID);
+
+/*
+你的“极简调参”工作流是这样的：
+上电：单片机加载代码里写死的默认参数（比如 kp=10）。
+Shell 改参：你发现软了，输入 yaw_pid -s 20 0 0。
+此时 RAM 里的变量变成了 20。
+电机立刻按 20 跑。
+VOFA+ 波形立马变硬。
+循环调试：你觉得不行，又改为 30，再改为 25... 直到找到一组完美的参数（比如 kp=28, ki=0.5, kd=1）。
+抄写代码 (关键)：你把这组 28, 0.5, 1 记在纸上或者直接修改 gimbal.c 的初始化代码。
+重新编译烧录：下次上电，这组完美参数就变成默认值了。
+*/

@@ -87,6 +87,22 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/letter-shell-master/src/shell_ext.c
         0-Middleware_Layer/letter-shell-master/src/shell_ext.h
 
+        0-Middleware_Layer/SystemView-main/SEGGER/SEGGER.h
+        0-Middleware_Layer/SystemView-main/SYSVIEW/SEGGER_SYSVIEW.c
+        0-Middleware_Layer/SystemView-main/SYSVIEW/SEGGER_SYSVIEW.h
+        0-Middleware_Layer/SystemView-main/SYSVIEW/SEGGER_SYSVIEW_ConfDefaults.h
+        0-Middleware_Layer/SystemView-main/SYSVIEW/SEGGER_SYSVIEW_Int.h
+
+        0-Middleware_Layer/SystemView-main/Sample/FreeRTOSV10/SEGGER_SYSVIEW_FreeRTOS.c
+        0-Middleware_Layer/SystemView-main/Sample/FreeRTOSV10/SEGGER_SYSVIEW_FreeRTOS.h
+        0-Middleware_Layer/SystemView-main/Config/SEGGER_SYSVIEW_Conf.h
+        0-Middleware_Layer/SystemView-main/Config/Global.h
+
+        0-Middleware_Layer/RTT-main/RTT/SEGGER_RTT.c
+        0-Middleware_Layer/RTT-main/RTT/SEGGER_RTT.h
+        0-Middleware_Layer/RTT-main/RTT/SEGGER_RTT_ASM_ARMv7M.S
+        0-Middleware_Layer/RTT-main/RTT/SEGGER_RTT_printf.c
+        0-Middleware_Layer/RTT-main/Config/SEGGER_RTT_Conf.h
 
         4-Application_Layer/For_Testing_Task/can_motors_test_task.h
         4-Application_Layer/For_Testing_Task/can_motors_test_task.c
@@ -157,7 +173,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add include paths
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         # Add user defined include paths
         ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Include
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usart
@@ -170,7 +186,19 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Message_Center
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Kalman_Fliter
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Math_lib
+
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/letter-shell-master/src
+
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/SystemView-main/SEGGER
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/SystemView-main/SYSVIEW
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/SystemView-main/Config
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/SystemView-main/Sample
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/SystemView-main/Sample/FreeRTOSV10
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/SystemView-main/Sample/FreeRTOSV10/Patch
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/SystemView-main/Sample/FreeRTOSV10/Config
+
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/RTT-main/Config
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/RTT-main/RTT
 
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
