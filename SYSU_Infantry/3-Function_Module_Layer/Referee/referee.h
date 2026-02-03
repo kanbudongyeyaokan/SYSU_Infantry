@@ -17,29 +17,29 @@
 // 2. 命令码 ID 定义 (CmdID)
 // ---------------------------------------------------------
 typedef enum {
-    GAME_STATUS_CMD_ID          = 0x0001, // 比赛状态 [cite: 66]
-    GAME_RESULT_CMD_ID          = 0x0002, // 比赛结果 [cite: 66]
-    ROBOT_HP_CMD_ID             = 0x0003, // 机器人血量 [cite: 66]
+    GAME_STATUS_CMD_ID          = 0x0001, // 比赛状态
+    GAME_RESULT_CMD_ID          = 0x0002, // 比赛结果
+    ROBOT_HP_CMD_ID             = 0x0003, // 机器人血量
 
-    EVENT_DATA_CMD_ID           = 0x0101, // 场地事件 [cite: 66]
-    referee_WARNING_CMD_ID      = 0x0104, // 裁判警告 [cite: 66]
-    DART_INFO_CMD_ID            = 0x0105, // 飞镖发射信息 [cite: 66]
+    EVENT_DATA_CMD_ID           = 0x0101, // 场地事件
+    referee_WARNING_CMD_ID      = 0x0104, // 裁判警告
+    DART_INFO_CMD_ID            = 0x0105, // 飞镖发射信息
 
-    ROBOT_STATUS_CMD_ID         = 0x0201, // 机器人状态 (验收核心) [cite: 66]
-    POWER_HEAT_DATA_CMD_ID      = 0x0202, // 实时功率热量 (2026新版) [cite: 66]
-    ROBOT_POS_CMD_ID            = 0x0203, // 机器人位置 [cite: 66]
-    BUFF_MUSCLE_CMD_ID          = 0x0204, // 机器人增益 [cite: 66]
-    ROBOT_HURT_CMD_ID           = 0x0206, // 伤害数据 (验收核心) [cite: 66]
-    SHOOT_DATA_CMD_ID           = 0x0207, // 实时射击 (验收核心) [cite: 70]
-    PROJECTILE_ALLOWANCE_CMD_ID = 0x0208, // 允许发弹量 [cite: 70]
-    RFID_STATUS_CMD_ID          = 0x0209, // RFID状态 (验收核心) [cite: 70]
-    DART_CLIENT_CMD_ID          = 0x020A, // 飞镖选手端指令 [cite: 70]
-    GROUND_ROBOT_POS_CMD_ID     = 0x020B, // 地面机器人位置(哨兵用) [cite: 70]
-    RADAR_MARK_CMD_ID           = 0x020C, // 雷达标记进度 [cite: 70]
-    SENTRY_INFO_CMD_ID          = 0x020D, // 哨兵自主决策信息 [cite: 70]
-    RADAR_INFO_CMD_ID           = 0x020E, // 雷达自主决策信息 [cite: 70]
+    ROBOT_STATUS_CMD_ID         = 0x0201, // 机器人状态
+    POWER_HEAT_DATA_CMD_ID      = 0x0202, // 实时功率热量
+    ROBOT_POS_CMD_ID            = 0x0203, // 机器人位置
+    BUFF_MUSCLE_CMD_ID          = 0x0204, // 机器人增益
+    ROBOT_HURT_CMD_ID           = 0x0206, // 伤害数据
+    SHOOT_DATA_CMD_ID           = 0x0207, // 实时射击
+    PROJECTILE_ALLOWANCE_CMD_ID = 0x0208, // 允许发弹量
+    RFID_STATUS_CMD_ID          = 0x0209, // RFID状态
+    DART_CLIENT_CMD_ID          = 0x020A, // 飞镖选手端指令
+    GROUND_ROBOT_POS_CMD_ID     = 0x020B, // 地面机器人位置(哨兵用)
+    RADAR_MARK_CMD_ID           = 0x020C, // 雷达标记进度
+    SENTRY_INFO_CMD_ID          = 0x020D, // 哨兵自主决策信息
+    RADAR_INFO_CMD_ID           = 0x020E, // 雷达自主决策信息
 
-    INTERACTIVE_DATA_CMD_ID     = 0x0301, // 机器人交互/图传UI [cite: 70]
+    INTERACTIVE_DATA_CMD_ID     = 0x0301, // 机器人交互/图传UI
 } Ref_Cmd_Id_e;
 
 // ---------------------------------------------------------
@@ -55,7 +55,7 @@ typedef struct {
     uint8_t CRC8;
 } frame_header_t;
 
-// 0x0001 比赛状态 [cite: 82]
+// 0x0001 比赛状态
 typedef struct {
     uint8_t game_type : 4;
     uint8_t game_progress : 4;
@@ -63,12 +63,12 @@ typedef struct {
     uint64_t SyncTimeStamp;
 } ext_game_status_t;
 
-// 0x0002 比赛结果 [cite: 99]
+// 0x0002 比赛结果
 typedef struct {
     uint8_t winner;
 } ext_game_result_t;
 
-// 0x0003 机器人血量 [cite: 105]
+// 0x0003 机器人血量
 typedef struct {
     uint16_t red_1_robot_HP;
     uint16_t red_2_robot_HP;
@@ -88,12 +88,12 @@ typedef struct {
     uint16_t blue_base_HP;
 } ext_game_robot_HP_t;
 
-// 0x0101 场地事件 [cite: 120]
+// 0x0101 场地事件
 typedef struct {
     uint32_t event_type;
 } ext_event_data_t;
 
-// 0x0201 机器人状态 [cite: 151]
+// 0x0201 机器人状态
 typedef struct {
     uint8_t robot_id;
     uint8_t robot_level;
@@ -107,7 +107,7 @@ typedef struct {
     uint8_t power_management_shooter_output : 1;
 } ext_game_robot_status_t;
 
-// 0x0202 实时功率热量 (2026修正版) [cite: 168]
+// 0x0202 实时功率热量
 typedef struct {
     uint16_t reserved_volt;         // 保留 (原电压)
     uint16_t reserved_current;      // 保留 (原电流)
@@ -117,14 +117,14 @@ typedef struct {
     uint16_t shooter_42mm_barrel_heat;
 } ext_power_heat_data_t;
 
-// 0x0203 机器人位置 [cite: 180]
+// 0x0203 机器人位置
 typedef struct {
     float x;
     float y;
     float angle;
 } ext_robot_pos_t;
 
-// 0x0204 机器人增益 [cite: 191]
+// 0x0204 机器人增益
 typedef struct {
     uint8_t recovery_buff;
     uint16_t cooling_buff;
@@ -134,13 +134,13 @@ typedef struct {
     uint8_t remaining_energy;
 } ext_buff_t;
 
-// 0x0206 伤害数据 [cite: 204]
+// 0x0206 伤害数据
 typedef struct {
     uint8_t armor_id : 4;
     uint8_t hurt_type : 4;
 } ext_robot_hurt_t;
 
-// 0x0207 实时射击数据 [cite: 212]
+// 0x0207 实时射击数据
 typedef struct {
     uint8_t bullet_type;
     uint8_t shooter_id;
@@ -148,7 +148,7 @@ typedef struct {
     float bullet_speed;
 } ext_shoot_data_t;
 
-// 0x0208 允许发弹量 [cite: 224]
+// 0x0208 允许发弹量
 typedef struct {
     uint16_t projectile_allowance_17mm;
     uint16_t projectile_allowance_42mm;
@@ -156,7 +156,7 @@ typedef struct {
     uint16_t projectile_allowance_fortress;
 } ext_projectile_allowance_t;
 
-// 0x0209 RFID状态 [cite: 234]
+// 0x0209 RFID状态
 typedef struct {
     uint32_t rfid_status;
 } ext_rfid_status_t;
@@ -168,7 +168,7 @@ typedef struct {
     uint16_t receiver_id;
 } ext_student_interactive_header_data_t;
 
-// 图形数据结构 (0x0101) [cite: 326]
+// 图形数据结构 (0x0101)
 typedef struct {
     uint8_t graphic_name[3];
     uint32_t operate_tpye:3;

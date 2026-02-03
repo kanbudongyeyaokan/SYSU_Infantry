@@ -91,7 +91,7 @@ Referee_Data_t* Referee_Get_Data(UART_HandleTypeDef *huart)
     return &referee_data;
 }
 
-// UI 发送测试 (保持不变)
+// UI 发送测试
 void Referee_Send_UI_Test(void)
 {
     if (referee_uart == NULL) return;
