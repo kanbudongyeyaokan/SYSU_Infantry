@@ -49,7 +49,7 @@ static void Motor_Offline_Callback(void *device)
     // 将状态设为 STOP，停止计算输出
     motor->motor_status = MOTOR_STOP;
 
-    Buzzer_send_alarm(BUZZER_ALARM_MOTOR);
+    Watchdog_buzzer_alarm(motor->motor_name);
 }
 
 // 解译电机反馈数据

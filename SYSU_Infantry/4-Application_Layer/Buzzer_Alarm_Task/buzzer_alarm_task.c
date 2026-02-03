@@ -2,28 +2,18 @@
 #include "buzzer_alarm_task.h"
 #include "queue.h"
 #include "robot_task.h"
-
-
-#define BUZZER_ALARM_TASK_PERIOD 100
+#include "buzzer_music.h"
 
 void Buzzer_alarm_control_task(void const *argument) {
-    // 初始化
     Buzzer_alarm_init();
+    uint8_t recv_alarm_times = 0;
 
-    Buzzer_Alarm_Type_e type;
-    // 绝对延时变量
-    TickType_t PreviousWakeTime = xTaskGetTickCount();
+    for (;;)
+    {
+        BaseType_t xQueueStatus = xQueueReceive(Buzzer_cmd_queue_handle, &recv_alarm_times, portMAX_DELAY);
 
-    for (;;) {
-        if(xQueueReceive(Buzzer_cmd_queue_handle, &type, pdMS_TO_TICKS(10)) == pdPASS)
-        {
-            Buzzer_alarm_handle_command(type);
-
-            type = BUZZER_ALARM_NONE;
+        if (xQueueStatus == pdPASS) {
+            Alarm_handle_command(&recv_alarm_times);
         }
-
-        vTaskDelayUntil(&PreviousWakeTime, BUZZER_ALARM_TASK_PERIOD);
-
-
     }
 }

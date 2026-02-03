@@ -14,19 +14,23 @@
 #include "bmi088_reg_def.h"
 #include "gpio.h"
 #include "spi.h"
-
+#include "buzzer_alarm.h"
 // 包含EKF模块头文件
 #include "algorithm_ekf.h"
 #include "main.h"
-
+#include "bsp_wdg.h"
 // 静态BMI088设备实例存储区
 static Bmi088_device_t bmi088_instances[1]; // 可以根据需要增加
 static uint8_t bmi088_instance_count = 0;
-
+static Watchdog_device_t *bmi088_wdg;
 #define BMI088_INIT_MAX_ATTEMPTS        3U
 #define BMI088_READY_TIMEOUT_MS       300U
 #define BMI088_READY_STABLE_COUNT      10U
 
+static void BMI088_Offline_Callback(void *arg)
+{
+    Watchdog_buzzer_alarm("BMI088");
+}
 static void Bmi088_set_identity_matrix(float matrix[3][3]) {
     memset(matrix, 0, sizeof(float) * 9);
     matrix[0][0] = 1.0f;
@@ -78,6 +82,14 @@ Bmi088_device_t* Bmi088_device_init(Bmi088_config_t* config)
     if (bmi088->last_error != NO_ERROR) {
         bmi088->data.state = IMU_STATE_ERROR;
     }
+
+    Watchdog_init_t wdg_config = {
+        .owner_id = bmi088_instances,
+        .reload_count = 30,
+        .callback = BMI088_Offline_Callback,
+        .name = "bmi088_wdg"
+    };
+    bmi088_wdg = Watchdog_register(&wdg_config);
 
     return bmi088;
 }

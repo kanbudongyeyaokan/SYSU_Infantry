@@ -69,7 +69,7 @@ void Robot_task_init(void)
 
     Shoot_cmd_queue_handle = xQueueCreate(1,sizeof(Shoot_cmd_send_t));
 
-    Buzzer_cmd_queue_handle = xQueueCreate(10,sizeof(Buzzer_Alarm_Type_e));
+    Buzzer_cmd_queue_handle = xQueueCreate(5,sizeof(uint8_t));
     // 选择要运行的测试任务（取消注释需要的测试）
     
     // === 单元测试 ===
@@ -121,7 +121,7 @@ void Robot_task_init(void)
     // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
     // shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
-    osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 512);
+    osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityBelowNormal, 0, 512);
     buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
 }
 

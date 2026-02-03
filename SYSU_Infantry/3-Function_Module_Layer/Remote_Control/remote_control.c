@@ -17,7 +17,7 @@ static void RC_Offline_Callback(void *arg)
     memset(&rc_data[CURRENT], 0, sizeof(RC_ctrl_t));
     memset(&rc_data[LAST], 0, sizeof(RC_ctrl_t));
 
-    Buzzer_send_alarm(BUZZER_ALARM_UART);
+    Watchdog_buzzer_alarm("RC");
 }
 
 
@@ -130,7 +130,8 @@ RC_ctrl_t *RC_Data_Get(UART_HandleTypeDef *rc_uart_handle)
     Watchdog_init_t wdg_config = {
         .owner_id = rc_uart,
         .reload_count = 30,
-        .callback = RC_Offline_Callback
+        .callback = RC_Offline_Callback,
+        .name = "RC"
     };
     rc_wdg = Watchdog_register(&wdg_config);
 

@@ -5,20 +5,17 @@
 #include "FreeRTOS.h"
 #include "buzzer_driver.h" // 你的蜂鸣器驱动头文件
 
-
-// ********** 第一步：定义多模块枚举（区分不同模块的离线告警）**********
-typedef enum {
-    BUZZER_ALARM_NONE = 0,        // 无告警
-    BUZZER_ALARM_MOTOR,          // 电机离线(can)
-    BUZZER_ALARM_UART,            // UART模块离线(遥控器)
-    BUZZER_ALARM_MAX              // 告警类型最大值
-} Buzzer_Alarm_Type_e;
-
-
+// 定义特殊报警值：大于电机的1-9，避免冲突
+#define ALARM_RC          20  // RC离线：播放专属音乐
+#define ALARM_BMI088      21  // BMI088离线：播放专属音乐
+#define ALARM_REFEREE     22  // 裁判系统离线：播放专属音乐
+#define BUZZER_SINGLE_MS       300 // 单下响铃时长
+#define BUZZER_INTERVAL_MS     100 // 同组响铃间隔
+#define BUZZER_PAUSE_MS        1000// 响完一组后的停顿时长
 
 // 函数声明
 void Buzzer_alarm_init(void);
-void Buzzer_send_alarm(Buzzer_Alarm_Type_e alarm_type);
-void Buzzer_alarm_handle_command(Buzzer_Alarm_Type_e type);
+void Watchdog_buzzer_alarm(const char *wdg_name);
+void Alarm_handle_command(uint8_t *cmd);
 
 #endif //SYSU_INFANTRY_BUZZER_ALARM_H
