@@ -56,7 +56,7 @@ static void Uart_init(Uart_instance_t* inst, UART_HandleTypeDef *huart) {
     memset(inst, 0, sizeof(Uart_instance_t));
 
     inst->uart_handle = huart;
-    inst->rx_buf_length = 128; // 接收缓冲区大小，根据需要调整
+    inst->rx_buf_length = 256; // 接收缓冲区大小，根据需要调整
 
     // 创建互斥锁
     osMutexDef(uart_mutex);

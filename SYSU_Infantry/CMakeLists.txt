@@ -79,6 +79,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/Kalman_Fliter/algorithm_kf.h
         0-Middleware_Layer/Kalman_Fliter/algorithm_kf.c
 
+
         0-Middleware_Layer/letter-shell-master/src/shell.c
         0-Middleware_Layer/letter-shell-master/src/shell.h
         0-Middleware_Layer/letter-shell-master/src/shell_cfg.h
@@ -151,6 +152,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Decision_Making/Shell_task.h
         3-Function_Module_Layer/Shell/shell_port.c
         3-Function_Module_Layer/Shell/shell_port.h
+        0-Middleware_Layer/Crc/crc_referee.c
+        0-Middleware_Layer/Crc/crc_referee.h
 
 )
 
@@ -186,6 +189,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Message_Center
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Kalman_Fliter
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Math_lib
+
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Crc
 
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/letter-shell-master/src
 

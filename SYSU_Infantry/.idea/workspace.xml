@@ -40,13 +40,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
+      <change afterPath="$PROJECT_DIR$/0-Middleware_Layer/Crc/crc_referee.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/0-Middleware_Layer/Crc/crc_referee.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Gimbal/gimbal.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Shell/shell.md" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Shell/shell.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Shell/shell_port.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Shell/shell_port.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/1-Hardware_Layer/bsp_usart/bsp_usart.c" beforeDir="false" afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_usart/bsp_usart.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Referee/referee.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Referee/referee.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Referee/referee.h" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Referee/referee.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Perception/Referee_Task/Referee_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Perception/Referee_Task/Referee_task.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Perception/Referee_Task/Referee_task.h" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Perception/Referee_Task/Referee_task.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Middlewares/Third_Party/FreeRTOS/Source/include/task.h" beforeDir="false" afterPath="$PROJECT_DIR$/Middlewares/Third_Party/FreeRTOS/Source/include/task.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Middlewares/Third_Party/FreeRTOS/Source/tasks.c" beforeDir="false" afterPath="$PROJECT_DIR$/Middlewares/Third_Party/FreeRTOS/Source/tasks.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

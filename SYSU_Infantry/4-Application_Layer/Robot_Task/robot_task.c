@@ -26,6 +26,8 @@
 #include "shoot_task.h"
 #include "Shell_task.h"
 
+#include "Referee_task.h"
+
 /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
 osThreadId gimbal_task_handle; //云台任务
@@ -104,9 +106,13 @@ void Robot_task_init(void)
     osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
     decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
 
+
     //ins任务
     osThreadDef(ins_task,Ins_task,osPriorityAboveNormal,0,4096);
     ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
+
+    osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
+    referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
 
     // === 启动底盘与电机任务（必需） ===
     // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
