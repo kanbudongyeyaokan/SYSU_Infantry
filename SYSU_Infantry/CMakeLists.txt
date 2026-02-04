@@ -154,6 +154,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Shell/shell_port.h
         0-Middleware_Layer/Crc/crc_referee.c
         0-Middleware_Layer/Crc/crc_referee.h
+        1-Hardware_Layer/bsp_usb/bsp_usb.c
+        1-Hardware_Layer/bsp_usb/bsp_usb.h
 
 )
 
@@ -176,7 +178,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add include paths
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         # Add user defined include paths
         ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Include
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usart
@@ -208,6 +210,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
+
+        ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usb
+
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Buzzer_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Gimbal_Task
