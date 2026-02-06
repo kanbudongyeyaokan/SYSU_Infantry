@@ -156,6 +156,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/Crc/crc_referee.h
         1-Hardware_Layer/bsp_usb/bsp_usb.c
         1-Hardware_Layer/bsp_usb/bsp_usb.h
+        1-Hardware_Layer/bsp_spi/bsp_spi.c
+        1-Hardware_Layer/bsp_spi/bsp_spi.h
 
 )
 
@@ -212,6 +214,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
 
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usb
+        ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_spi
+        ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_iic
 
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Buzzer_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis_Task

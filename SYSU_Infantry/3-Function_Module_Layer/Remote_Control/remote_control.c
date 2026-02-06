@@ -67,7 +67,7 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf)
     rc_data[CURRENT].rc.Rrocker_x = -((((sbus_buf[2] >> 6) | (sbus_buf[3] << 2) | (sbus_buf[4] << 10)) & 0x07ff) - RC_CH_VALUE_OFFSET);
 
     // ---------------- [针对右摇杆Y轴的特殊校准] ----------------
-    // 1. 先获取原始的错误值
+    // 先获取原始的错误值
     int16_t raw_ry = -((((sbus_buf[4] >> 1) | (sbus_buf[5] << 7)) & 0x07ff) - RC_CH_VALUE_OFFSET);
 
     // 根据实际情况微调这几个宏
@@ -75,7 +75,7 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf)
     const int16_t REAL_TOP = 420;  // 实际推到最上面的值
     const int16_t REAL_BOT = -660; // 实际推到最下面的值
 
-    // 3. 分段映射
+    // 分段映射
     if (raw_ry >= REAL_MID)
     {
         // 上半段：将 [REAL_MID, REAL_TOP] 映射到 [0, 660]
@@ -91,13 +91,11 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf)
     }
     // --------------------------------------------------------
 
-    // Channel 4 (拨轮)
+    // 拨轮
     rc_data[CURRENT].rc.dial = -(((sbus_buf[16] | (sbus_buf[17] << 8)) & 0x07FF) - RC_CH_VALUE_OFFSET);
 
     // 最后的限幅处理 (防止校准后稍微超出 660)
     Rectify_rc_data();
-
-    /* --- 开关与外设 --- */
     rc_data[CURRENT].rc.Rswitch = ((sbus_buf[5] >> 4) & 0x0003);
     rc_data[CURRENT].rc.Lswitch = ((sbus_buf[5] >> 4) & 0x000C) >> 2;
 
