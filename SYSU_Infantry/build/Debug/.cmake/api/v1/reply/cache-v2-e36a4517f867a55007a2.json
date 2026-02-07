@@ -191,7 +191,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "3"
+			"value" : "4"
 		},
 		{
 			"name" : "CMAKE_CACHE_MINOR_VERSION",
@@ -203,7 +203,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "28"
+			"value" : "0"
 		},
 		{
 			"name" : "CMAKE_CACHE_PATCH_VERSION",
@@ -215,7 +215,19 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "1"
+			"value" : "2"
+		},
+		{
+			"name" : "CMAKE_COLOR_DIAGNOSTICS",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Enable colored diagnostics throughout."
+				}
+			],
+			"type" : "BOOL",
+			"value" : "ON"
 		},
 		{
 			"name" : "CMAKE_COMMAND",
@@ -227,7 +239,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/ST/STM32CubeCLT_1.18.0/CMake/bin/cmake.exe"
+			"value" : "D:/Clion/CLion 2025.2/bin/cmake/win/x64/bin/cmake.exe"
 		},
 		{
 			"name" : "CMAKE_CPACK_COMMAND",
@@ -239,7 +251,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/ST/STM32CubeCLT_1.18.0/CMake/bin/cpack.exe"
+			"value" : "D:/Clion/CLion 2025.2/bin/cmake/win/x64/bin/cpack.exe"
 		},
 		{
 			"name" : "CMAKE_CTEST_COMMAND",
@@ -251,7 +263,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/ST/STM32CubeCLT_1.18.0/CMake/bin/ctest.exe"
+			"value" : "D:/Clion/CLion 2025.2/bin/cmake/win/x64/bin/ctest.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
@@ -598,6 +610,22 @@
 			"value" : ""
 		},
 		{
+			"name" : "CMAKE_EXPORT_BUILD_DATABASE",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Enable/Disable output of build database during the build."
+				}
+			],
+			"type" : "BOOL",
+			"value" : ""
+		},
+		{
 			"name" : "CMAKE_EXTRA_GENERATOR",
 			"properties" : 
 			[
@@ -692,6 +720,18 @@
 			],
 			"type" : "PATH",
 			"value" : "C:/Program Files (x86)"
+		},
+		{
+			"name" : "CMAKE_LIST_FILE_NAME",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Name of CMakeLists files to read"
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : "CMakeLists.txt"
 		},
 		{
 			"name" : "CMAKE_MAKE_PROGRAM",
@@ -923,7 +963,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28"
+			"value" : "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1155,10 +1195,10 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "The CMake toolchain file"
 				}
 			],
-			"type" : "UNINITIALIZED",
+			"type" : "FILEPATH",
 			"value" : "D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/cmake/gcc-arm-none-eabi.cmake"
 		},
 		{
