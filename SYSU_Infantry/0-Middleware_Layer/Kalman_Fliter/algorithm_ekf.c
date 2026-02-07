@@ -1,7 +1,7 @@
 /**
- * @Author         : SYSU电控组 & RoboMaster移植
+ * @Author         : SYSU电控组
  * @Date           : 2025-09-29
- * @Note           : 基于QuaternionEKF的移植版本，适配现有接口
+ * @Note           : 适配现有接口
  * 核心策略：6状态EKF (4四元数+2零偏)，Z轴零偏不估计，卡方检验抗干扰
  */
 #include "algorithm_ekf.h"

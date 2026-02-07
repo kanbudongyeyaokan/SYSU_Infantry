@@ -111,8 +111,8 @@ void Robot_task_init(void)
     osThreadDef(ins_task,Ins_task,osPriorityAboveNormal,0,4096);
     ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
 
-    osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
-    referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
+    // osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
+    // referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
 
     // === 启动底盘与电机任务（必需） ===
     // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
@@ -125,9 +125,8 @@ void Robot_task_init(void)
      osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 1024);
      shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
-
-    osThreadDef(shell_task, Shell_task, osPriorityNormal, 0, 512);
-    shell_task_handle = osThreadCreate(osThread(shell_task), NULL);
+    // osThreadDef(shell_task, Shell_task, osPriorityNormal, 0, 512);
+    // shell_task_handle = osThreadCreate(osThread(shell_task), NULL);
 
 }
 

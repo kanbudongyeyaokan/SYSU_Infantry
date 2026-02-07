@@ -31,7 +31,7 @@
 static Djimotor_device_t *yaw_motor, *pitch_motor;
 
 //云台模块的姿态数据指针，指向ins模块的全局变量
-static attitude_t *gimbal_imu_data;
+//static attitude_t *gimbal_imu_data;
 
 // 发布给决策层的云台反馈信息
 static Publisher_t*gimbal_pub;
@@ -54,8 +54,8 @@ static void Gimbal_motor_init(void) {
             .angle_source = MOTOR_FEEDBACK,
             .speed_source = MOTOR_FEEDBACK,
             //使用ins模块姿态数据作为反馈
-            .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.yaw),
-            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.yaw),
+            // .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.yaw),
+            // .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.yaw),
             .angle_pid = {
                 .kp = 12,
                 .ki = 0,
@@ -95,8 +95,8 @@ static void Gimbal_motor_init(void) {
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
             //使用ins模块姿态数据作为反馈
-            .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.pitch),
-            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.pitch),
+            // .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.pitch),
+            // .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.pitch),
             .angle_pid = {
                 .kp = 10,
                 .ki = 0,
@@ -134,7 +134,7 @@ static void Gimbal_motor_init(void) {
  */
 void Gimbal_task_init(void) {
     // 获取ins模块的姿态数据指针
-    gimbal_imu_data = get_attitude_data();
+  //  gimbal_imu_data = get_attitude_data();
 
     //初始化云台电机
     Gimbal_motor_init();

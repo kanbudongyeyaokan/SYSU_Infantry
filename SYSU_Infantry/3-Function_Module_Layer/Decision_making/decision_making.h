@@ -65,7 +65,7 @@ typedef struct
     //IMU输出的Yaw角速度（度/秒）
     float imu_yaw_rate;
     //IMU状态
-    Imu_state_e imu_state;
+    // Imu_state_e imu_state;
 }Gimbal_feedback_info_t;
 //发射机构
 typedef struct 

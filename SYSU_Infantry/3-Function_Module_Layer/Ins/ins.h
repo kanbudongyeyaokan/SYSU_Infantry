@@ -1,48 +1,97 @@
 #ifndef SYSU_INFANTRY_INS_H
 #define SYSU_INFANTRY_INS_H
 
-#include "bmi088.h" // 包含bmi088.h以获取数据结构定义
+#include <stdint.h>
+#include <stdbool.h>
+
+// ================= 1. 标准物理量定义 =================
+
+// 语法：typedef struct { ... } Name_t;
+// 含义：定义一个结构体类型。
+// 用法：统一三维向量的格式。以后不管底层数据是数组 float[3] 还是 x,y,z，都要转成这个。
+typedef struct {
+    float x;
+    float y;
+    float z;
+} Ins_vector3_t;
+
+// 统一欧拉角格式
+typedef struct {
+    float roll;
+    float pitch;
+    float yaw;
+} Ins_euler_t;
+
+// 定义状态枚举
+typedef enum {
+    INS_STATE_INIT = 0,     // 初始化中
+    INS_STATE_READY,        // 数据正常，可以使用
+    INS_STATE_ERROR,        // 传感器故障或通信超时
+} Ins_state_e;
 
 /**
- * @brief 姿态数据结构体，包含原始数据和解算后的欧拉角
+ * @brief 核心 INS 数据包 (这是给上层控制代码看的“最终结果”)
  */
 typedef struct {
-    Acc_raw_data_t accel_raw;       // 加速度计原始数据
-    Gyro_raw_data_t gyro_raw;       // 陀螺仪原始数据
-    Euler_angles_t euler_angles;    // 解算后的欧拉角 (Roll, Pitch, Yaw)
-    float yaw_total_angle;          // 累积多圈的Yaw角（单位：度）
-    float yaw_rate_dps;             // Yaw角速度（单位：度/秒）
-    int32_t yaw_round_count;        // 累积圈数
-    Imu_state_e state;              // IMU整体状态
-} attitude_t;
+    Ins_vector3_t acc_body;    // 机体系加速度 (单位必须统一: m/s^2)
+    Ins_vector3_t gyro_body;   // 机体系角速度 (单位必须统一: deg/s 或 rad/s，建议 deg/s)
+    Ins_euler_t   euler;       // 欧拉角 (单位: 度)
+
+    float total_yaw;           // 累计 Yaw 角度 (用于过零处理，比如转了 720度)
+    int32_t round_count;       // 圈数记录
+    float temp;                // 温度 (用于温控监测)
+    float dt_s;                // 两次更新的时间间隔 (秒)，对于积分和微分控制很重要
+
+    Ins_state_e state;         // 当前 INS 模块的状态
+} Ins_data_t;
+
+// ================= 2. 硬件驱动抽象接口 (核心中的核心) =================
+
+// 这是一个结构体，但成员全是“函数指针”。
+// 含义：这是一份“合同”。任何想接入 INS 层的驱动，都必须签署这份合同，
+//       并提供这些函数的具体执行方式。
+typedef struct {
+    // 语法：bool (*init)(void);
+    // 含义：一个指向“返回bool，参数为void”的函数的指针，名字叫 init。
+    // 用法：INS层调用它来初始化底层硬件。
+    bool (*init)(void);
+
+    // 启动读取 (Kick)
+    // 对应 BMI088 的 start_dma，或 HWT606 的请求数据
+    void (*start_read)(void);
+
+    // 等待数据 (Wait)
+    // 对应 BMI088 的 osSemaphoreWait
+    // 如果返回 false，说明超时了
+    bool (*wait_data)(void);
+
+    // 数据处理 (Process)
+    // 含义：底层驱动要把自己乱七八糟的原始数据，算好填入 out_data 里。
+    // 对于 BMI088，EKF 就在这个函数里运行。
+    // 对于 HWT606，这里只是简单的赋值拷贝。
+    void (*process_data)(Ins_data_t *out_data, float dt_s);
+
+} Ins_driver_interface_t;
+
+
+// ================= 3. INS 层 API (这是给 Task 层调用的) =================
 
 /**
- * @brief 获取最新的姿态数据
- * @return 返回一个指向全局姿态数据结构体的常量指针
- * @note 返回的是一个指针，指向的数据会由ins_task实时更新
+ * @brief 注册底层驱动
+ * @param driver_impl 这是一个指针，指向具体的驱动实现（合同的签署者）
  */
-attitude_t* get_attitude_data(void);
+void Ins_init(const Ins_driver_interface_t *driver_impl);
 
 /**
- * @brief 更新姿态数据（由Ins_task调用）
- * @param acc 最新的加速度数据
- * @param gyro 最新的陀螺仪数据
- * @param euler 最新的欧拉角数据
+ * @brief 更新 INS 数据
+ * @note  Task 层只需要死循环调用这个函数，里面的 Kick->Wait->Process 流程自动完成
  */
-void update_attitude_data(const Acc_raw_data_t* acc,
-                          const Gyro_raw_data_t* gyro,
-                          const Euler_angles_t* euler,
-                          const float* yaw_total_angle,
-                          Imu_state_e state);
+void Ins_update(void);
 
 /**
- * @brief 查询INS当前状态
+ * @brief 获取 INS 数据指针 (只读)
+ * @note  Task 层或者控制层通过这个函数拿到最终的数据
  */
-Imu_state_e ins_get_state(void);
+const Ins_data_t* Ins_get_data(void);
 
-/**
- * @brief 查询INS当前状态
- */
-Imu_state_e ins_get_state(void);
-
-#endif //SYSU_INFANTRY_INS_H
+#endif // SYSU_INFANTRY_INS_H

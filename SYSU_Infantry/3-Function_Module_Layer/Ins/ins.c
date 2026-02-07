@@ -1,109 +1,97 @@
 #include "ins.h"
-#include <string.h>
-#include <stdbool.h>
-#include <math.h>
-#include <stdint.h>
-#include "main.h"
-#include "bsp_dwt.h"
-#include "math_lib.h"
+#include "bsp_dwt.h" // 我们需要高精度时间戳来计算 dt
+#include <stddef.h>  // 为了使用 NULL
 
-// 双缓冲姿态数据（恢复双缓冲机制，防止数据竞争）
-static attitude_t g_attitude_buffer[2];
-static volatile uint8_t g_active_buffer_index = 0U;
+// 1. 私有变量 (static)
+// 语法：static 表示这个变量只在这个 .c 文件内可见，外部访问不到。
+// 含义：保存当前的“合同”是谁签的。
+static const Ins_driver_interface_t *current_driver = NULL;
 
-static float g_yaw_total_deg = 0.0f;
-static int32_t g_yaw_round_count = 0;
-static bool g_yaw_total_valid = false;
-static float g_last_update_timestamp_s = 0.0f;  // 改用秒为单位的float
-static Imu_state_e g_ins_state = IMU_STATE_INIT;
+// 全局唯一的 INS 数据实例
+static Ins_data_t g_ins_data;
 
-/**
- * @brief 获取最新的姿态数据
- * @return 返回一个指向全局姿态数据结构体的常量指针
- */
-attitude_t* get_attitude_data(void)
+// 上一次更新的时间戳 (用于算 dt)
+static float last_time_s = 0.0f;
+
+// ================= API 实现 =================
+
+// 初始化函数
+void Ins_init(const Ins_driver_interface_t *driver_impl)
 {
-    return (attitude_t *)&g_attitude_buffer[g_active_buffer_index];
-}
+    // 防御性编程：如果传进来的指针是空的，直接返回，防止死机
+    if (driver_impl == NULL) return;
 
-/**
- * @brief 更新姿态数据（由Ins_task调用）
- * @param acc 最新的加速度数据
- * @param gyro 最新的陀螺仪数据
- * @param euler 最新的欧拉角数据
- */
-void update_attitude_data(const Acc_raw_data_t* acc,
-                          const Gyro_raw_data_t* gyro,
-                          const Euler_angles_t* euler,
-                          const float* yaw_total_angle,
-                          Imu_state_e state)
-{
-    uint8_t inactive_index = g_active_buffer_index ^ 1U;
-    attitude_t *target = &g_attitude_buffer[inactive_index];  // 写入非活动缓冲区
+    // 保存驱动接口指针
+    current_driver = driver_impl;
 
-    float dt = 0.001f; // 默认1ms
-    float now_s;
+    // 先标记状态为初始化
+    g_ins_data.state = INS_STATE_INIT;
 
-    g_ins_state = state;
-    target->state = g_ins_state;
-
-    if (g_ins_state == IMU_STATE_INIT || g_ins_state == IMU_STATE_ERROR) {
-        g_yaw_total_valid = false;
-    }
-
-    // 修复：使用正确的时间获取方式（秒为单位）
-    now_s = DWT_GetTimeline_s();
-    if (g_last_update_timestamp_s > 0.0f) {
-        float delta_s = now_s - g_last_update_timestamp_s;
-        if (delta_s > 0.0f && delta_s < 1.0f) {
-            dt = delta_s;
-        }
-    }
-    g_last_update_timestamp_s = now_s;
-
-    if (acc) {
-        memcpy(&target->accel_raw, acc, sizeof(Acc_raw_data_t));
-    }
-    if (gyro) {
-        target->gyro_raw.roll = RAD_TO_DEG(gyro->roll);
-        target->gyro_raw.pitch = RAD_TO_DEG(gyro->pitch);
-        target->gyro_raw.yaw = RAD_TO_DEG(gyro->yaw);
-        target->yaw_rate_dps = target->gyro_raw.yaw;
-    }
-    if (euler) {
-        float current_yaw;
-        bool has_external_total;
-
-        memcpy(&target->euler_angles, euler, sizeof(Euler_angles_t));
-
-        current_yaw = euler->yaw;
-        has_external_total = (yaw_total_angle != NULL) && isfinite(*yaw_total_angle);
-
-        if (has_external_total) {
-            g_yaw_total_deg = *yaw_total_angle;
-            g_yaw_round_count = (int32_t)floorf((g_yaw_total_deg + 180.0f) / 360.0f);
-            g_yaw_total_valid = true;
-        } else if (!g_yaw_total_valid) {
-            g_yaw_total_deg = current_yaw;
-            g_yaw_round_count = (int32_t)floorf((g_yaw_total_deg + 180.0f) / 360.0f);
+    // 调用驱动的初始化函数 (如果驱动提供了的话)
+    // 语法：if (current_driver->init != NULL)
+    // 含义：检查驱动里有没有写 init 函数？写了就调用，没写(NULL)就跳过。
+    if (current_driver->init != NULL) {
+        if (current_driver->init()) {
+            g_ins_data.state = INS_STATE_READY; // 初始化成功
+        } else {
+            g_ins_data.state = INS_STATE_ERROR; // 初始化失败
         }
     }
 
-    target->yaw_round_count = g_yaw_round_count;
-    target->yaw_total_angle = g_yaw_total_deg;
-    if (!gyro) {
-        target->yaw_rate_dps = target->gyro_raw.yaw;
-    }
-
-    target->state = g_ins_state;
-
-    // 原子切换缓冲区索引（中断保护）
-    __disable_irq();
-    g_active_buffer_index = inactive_index;
-    __enable_irq();
+    // 记录当前时间，为下一次计算 dt 做准备
+    last_time_s = DWT_GetTimeline_s();
 }
 
-Imu_state_e ins_get_state(void)
+// 核心更新函数 (Task 层循环调用的就是它)
+void Ins_update(void)
 {
-    return g_ins_state;
+    // 如果没有注册驱动，或者处于错误状态，就不跑了
+    if (current_driver == NULL) return;
+
+    // --- 步骤 1: 计算时间间隔 dt ---
+    float now_s = DWT_GetTimeline_s();
+    float dt = now_s - last_time_s;
+
+    // 保护：防止时间倒流或过小导致除以零错误
+    if (dt <= 0.0001f) dt = 0.001f;
+
+    last_time_s = now_s;
+    g_ins_data.dt_s = dt;
+
+    // --- 步骤 2: 启动读取 (Kick) ---
+    // 对应 BMI088 就是启动 DMA 传输
+    if (current_driver->start_read) {
+        current_driver->start_read();
+    }
+
+    // --- 步骤 3: 等待数据 (Wait) ---
+    // 对应 BMI088 就是等待 RTOS 信号量。
+    // 此时 Task 会挂起，CPU 去处理别的任务。
+    if (current_driver->wait_data && current_driver->wait_data())
+    {
+        // 醒来后，说明数据到了
+
+        // --- 步骤 4: 处理数据 (Process) ---
+        // 调用驱动的解析函数。
+        // 如果是 BMI088，EKF 就在这里面默默地跑完了。
+        // 结果会被填入 g_ins_data 中。
+        if (current_driver->process_data) {
+            current_driver->process_data(&g_ins_data, dt);
+        }
+
+        // 更新状态为就绪
+        g_ins_data.state = INS_STATE_READY;
+    }
+    else {
+        // 如果 wait_data 返回 false，说明超时了（比如线断了）
+        g_ins_data.state = INS_STATE_ERROR;
+    }
+}
+
+// 获取数据的接口
+// 语法：const Ins_Data_t* ...
+// 含义：返回一个“只读”指针。外部只能看数据，不能改数据。
+const Ins_data_t* Ins_get_data(void)
+{
+    return &g_ins_data;
 }
