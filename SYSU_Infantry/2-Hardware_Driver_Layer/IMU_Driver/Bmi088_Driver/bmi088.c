@@ -1,15 +1,14 @@
 /**
  * @file    bmi088.c
- * @brief   BMI088 驱动 (直接调用 HAL 库原语版)
+ * @brief   BMI088 驱动
  * @note    抛弃 bsp_spi 封装，用于彻底解决初始化和读取失败的问题
  */
-
 #include "bmi088.h"
 #include "bmi088_reg_def.h"
 #include "algorithm_ekf.h"
 #include "bsp_dwt.h"
-#include "main.h" // 获取 GPIO 定义
-#include "spi.h"  // 获取 hspi1 定义
+#include "main.h" 
+#include "spi.h"  
 #include <string.h>
 #include <math.h>
 
@@ -30,99 +29,77 @@ extern SPI_HandleTypeDef hspi1;
 // ================= 内部底层函数 (直接 HAL 操作) =================
 
 static void Bmi088_Write_Reg(GPIO_TypeDef* port, uint16_t pin, uint8_t addr, uint8_t data) {
-    // 1. 拉低片选
+    // 拉低片选
     HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET);
-    
-    // 2. 发送地址 (bit7 = 0 表示写)
+    // 发送地址 (bit7 = 0 表示写)
     uint8_t tx_addr = addr & BMI088_SPI_WRITE_CODE;
     HAL_SPI_Transmit(&hspi1, &tx_addr, 1, 100);
-    
-    // 3. 发送数据
+    // 发送数据
     HAL_SPI_Transmit(&hspi1, &data, 1, 100);
-    
-    // 4. 【老代码核心】写入时的延时
+    // 写入延时
     HAL_Delay(1);
-    
-    // 5. 拉高片选
+    // 拉高片选
     HAL_GPIO_WritePin(port, pin, GPIO_PIN_SET);
 }
-
 static void Bmi088_Read_Reg(GPIO_TypeDef* port, uint16_t pin, uint8_t addr, uint8_t *data, uint8_t len) {
-    // 1. 拉低片选
+    // 拉低片选
     HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET);
-    
-    // 2. 发送地址 (bit7 = 1 表示读)
+    // 发送地址 (bit7 = 1 表示读)
     uint8_t tx_addr = addr | BMI088_SPI_READ_CODE;
     HAL_SPI_Transmit(&hspi1, &tx_addr, 1, 100);
-    
-    // 3. 读取 (如果是 Accel，第一个字节是 Dummy，需要在上层处理或者这里处理)
+    // 读取 (如果是 Accel，第一个字节是 Dummy，需要在上层处理或者这里处理)
     // 为了简单，我们这里只负责透传读取，不做 Dummy 处理，让上层去偏移
     HAL_SPI_Receive(&hspi1, data, len, 100);
-    
-    // 4. 拉高片选
+    // 拉高片选
     HAL_GPIO_WritePin(port, pin, GPIO_PIN_SET);
 }
 
 static void Bmi088_Config_HardWare(void) {
     // ---------------- Accel 配置 ----------------
-    // 1. 软复位
+    // 软复位
     Bmi088_Write_Reg(CS_ACC_GPIO_Port, CS_ACC_Pin, ACC_SOFTRESET_ADDR, ACC_SOFTRESET_VAL);
     HAL_Delay(50);
-    
-    // 2. 打开电源 (老代码顺序: 先开电源，再切模式)
+    // 打开电源 (老代码顺序: 先开电源，再切模式)
     Bmi088_Write_Reg(CS_ACC_GPIO_Port, CS_ACC_Pin, ACC_PWR_CTRL_ADDR, ACC_PWR_CTRL_ON);
     HAL_Delay(10);
-    
-    // 3. 切换 Active 模式
+    // 切换 Active 模式
     Bmi088_Write_Reg(CS_ACC_GPIO_Port, CS_ACC_Pin, ACC_PWR_CONF_ADDR, ACC_PWR_CONF_ACT);
     HAL_Delay(10);
-    
-    // 4. 量程 3G
+    // 量程 3G
     Bmi088_Write_Reg(CS_ACC_GPIO_Port, CS_ACC_Pin, ACC_RANGE_ADDR, ACC_RANGE_3G);
-    
-    // 5. 带宽 (老代码配置: 0x8C)
+    // 带宽 (老代码配置: 0x8C)
     Bmi088_Write_Reg(CS_ACC_GPIO_Port, CS_ACC_Pin, ACC_CONF_ADDR, 0x8C);
-
     // ---------------- Gyro 配置 ----------------
-    // 1. 软复位
+    // 软复位
     Bmi088_Write_Reg(CS_GYRO_GPIO_Port, CS_GYRO_Pin, GYRO_SOFTRESET_ADDR, GYRO_SOFTRESET_VAL);
     HAL_Delay(50);
-    
-    // 2. 切换 Normal 模式
+    // 切换 Normal 模式
     Bmi088_Write_Reg(CS_GYRO_GPIO_Port, CS_GYRO_Pin, GYRO_LPM1_ADDR, GYRO_LPM1_NOR);
     HAL_Delay(10);
-    
-    // 3. 量程 500dps
+    // 量程 500dps
     Bmi088_Write_Reg(CS_GYRO_GPIO_Port, CS_GYRO_Pin, GYRO_RANGE_ADDR, GYRO_RANGE_500_DEG_S);
-    
-    // 4. 带宽
+    // 带宽
     Bmi088_Write_Reg(CS_GYRO_GPIO_Port, CS_GYRO_Pin, GYRO_BANDWIDTH_ADDR, GYRO_ODR_2000Hz_BANDWIDTH_532Hz);
 }
 
 // ================= 接口实现 =================
 
 static bool BMI088_Interface_Init(void) {
-    // 1. 初始化 GPIO (CS引脚)
-    // 这一步通常在 gpio.c 里做了，但为了保险，确保它们是推挽输出且初始拉高
+    // 初始化 GPIO 
     HAL_GPIO_WritePin(CS_ACC_GPIO_Port, CS_ACC_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(CS_GYRO_GPIO_Port, CS_GYRO_Pin, GPIO_PIN_SET);
-
-    // 2. 配置硬件
+    // 配置硬件
     Bmi088_Config_HardWare();
     HAL_Delay(50);
-
-    // 3. ID 校验
+    // ID 校验
     uint8_t buf[2] = {0};
-    
-    // Accel ID (读2字节: Dummy + ID)
+    // Accel ID 
     Bmi088_Read_Reg(CS_ACC_GPIO_Port, CS_ACC_Pin, ACC_CHIP_ID_ADDR, buf, 2);
     if (buf[1] != ACC_CHIP_ID_VAL) return false;
-
-    // Gyro ID (读1字节: ID)
+    // Gyro ID 
     Bmi088_Read_Reg(CS_GYRO_GPIO_Port, CS_GYRO_Pin, GYRO_CHIP_ID_ADDR, buf, 1);
     if (buf[0] != GYRO_CHIP_ID_VAL) return false;
-
-    // 4. EKF 初始化
+    // EKF 初始化
     Ekf_config_t ekf_conf = {
         .process_noise_q = 10.0f, .measurement_noise_r = 1000000.0f,
         .dt = 0.001f, .fading_factor = 0.9996f, .gyro_bias_noise = 0.001f,
@@ -134,20 +111,18 @@ static bool BMI088_Interface_Init(void) {
 }
 
 static void BMI088_Interface_Start_Read(void) {
-    // 模拟 DMA 行为，实际上是阻塞读
     // Accel: 读 7 字节 (Dummy + 6 Data)
     Bmi088_Read_Reg(CS_ACC_GPIO_Port, CS_ACC_Pin, ACC_X_LSB_ADDR, acc_rx_buf, 7);
 }
 
 static bool BMI088_Interface_Wait_Data(void) {
-    // Gyro: 读 6 字节 (6 Data)
+    // Gyro: 读 6 字节 
     Bmi088_Read_Reg(CS_GYRO_GPIO_Port, CS_GYRO_Pin, GYRO_RATE_X_LSB_ADDR, gyro_rx_buf, 6);
-    return true; // 阻塞模式永远成功
+    return true; 
 }
 
 static void BMI088_Interface_Process(Ins_data_t *out_data, float dt_s) {
     // --- Accel 解析 ---
-    // acc_rx_buf: [0]Dummy, [1]XL, [2]XH ...
     int16_t acc_int[3];
     acc_int[0] = (int16_t)((acc_rx_buf[2] << 8) | acc_rx_buf[1]);
     acc_int[1] = (int16_t)((acc_rx_buf[4] << 8) | acc_rx_buf[3]);
@@ -158,7 +133,6 @@ static void BMI088_Interface_Process(Ins_data_t *out_data, float dt_s) {
     float acc_mzs[3] = { acc_int[0] * ACC_K, acc_int[1] * ACC_K, acc_int[2] * ACC_K };
 
     // --- Gyro 解析 ---
-    // gyro_rx_buf: [0]XL, [1]XH ...
     int16_t gyro_int[3];
     gyro_int[0] = (int16_t)((gyro_rx_buf[1] << 8) | gyro_rx_buf[0]);
     gyro_int[1] = (int16_t)((gyro_rx_buf[3] << 8) | gyro_rx_buf[2]);

@@ -126,3 +126,5 @@
 426	1122	7921583176467349	SYSU_Infantry.elf	c493e7e851497ffe
 14	405	7921585274541526	CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c.obj	8281887dd39d734a
 405	1003	7921585280222160	SYSU_Infantry.elf	c493e7e851497ffe
+13	476	7921588252367894	CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Perception/Ins_Task/Ins_task.c.obj	1c421f658a2c458f
+476	1170	7921588258940784	SYSU_Infantry.elf	c493e7e851497ffe

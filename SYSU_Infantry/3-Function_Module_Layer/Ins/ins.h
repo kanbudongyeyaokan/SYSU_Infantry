@@ -4,11 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// ================= 1. 标准物理量定义 =================
+// ================= 标准物理量定义 =================
 
-// 语法：typedef struct { ... } Name_t;
-// 含义：定义一个结构体类型。
-// 用法：统一三维向量的格式。以后不管底层数据是数组 float[3] 还是 x,y,z，都要转成这个。
+// 用法：统一三维向量的格式。
 typedef struct {
     float x;
     float y;
@@ -45,15 +43,11 @@ typedef struct {
     Ins_state_e state;         // 当前 INS 模块的状态
 } Ins_data_t;
 
-// ================= 2. 硬件驱动抽象接口 (核心中的核心) =================
+// ================= 硬件驱动抽象接口 ================
 
-// 这是一个结构体，但成员全是“函数指针”。
-// 含义：这是一份“合同”。任何想接入 INS 层的驱动，都必须签署这份合同，
-//       并提供这些函数的具体执行方式。
+//使用一个函数指针表来管理接口
 typedef struct {
-    // 语法：bool (*init)(void);
-    // 含义：一个指向“返回bool，参数为void”的函数的指针，名字叫 init。
-    // 用法：INS层调用它来初始化底层硬件。
+    // INS层调用它来初始化底层硬件。
     bool (*init)(void);
 
     // 启动读取 (Kick)
@@ -61,24 +55,21 @@ typedef struct {
     void (*start_read)(void);
 
     // 等待数据 (Wait)
-    // 对应 BMI088 的 osSemaphoreWait
     // 如果返回 false，说明超时了
     bool (*wait_data)(void);
 
     // 数据处理 (Process)
-    // 含义：底层驱动要把自己乱七八糟的原始数据，算好填入 out_data 里。
-    // 对于 BMI088，EKF 就在这个函数里运行。
-    // 对于 HWT606，这里只是简单的赋值拷贝。
+    // 含义：底层驱动要把自己的原始数据，算好填入 out_data 里。
     void (*process_data)(Ins_data_t *out_data, float dt_s);
 
 } Ins_driver_interface_t;
 
 
-// ================= 3. INS 层 API (这是给 Task 层调用的) =================
+// ================= INS 层 API =================
 
 /**
  * @brief 注册底层驱动
- * @param driver_impl 这是一个指针，指向具体的驱动实现（合同的签署者）
+ * @param driver_impl 这是一个指针，指向具体的驱动实现
  */
 void Ins_init(const Ins_driver_interface_t *driver_impl);
 

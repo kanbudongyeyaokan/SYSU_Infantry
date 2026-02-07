@@ -116,7 +116,6 @@ void Send_command_to_all_task()
     //printf("HELLO\r\n");
     // Uart_printf(test_uart,"Sending command to all tasks\r\n");
     //发送底盘控制信息
-    // 即使底盘卡顿没有读走旧数据，新数据也会覆盖旧的，防止队列堆积延迟
     xQueueOverwrite(Chassis_cmd_queue_handle, &chassis_cmd_send);
 
     //发送云台控制信息

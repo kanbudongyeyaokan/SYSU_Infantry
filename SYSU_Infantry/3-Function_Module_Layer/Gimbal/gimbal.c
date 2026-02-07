@@ -24,21 +24,20 @@
 
 #include "shell.h"
 #include "shell_port.h"
-#include <stdlib.h> // 包含 atof
-#include <string.h> // 包含 strcmp
+#include <stdlib.h> 
+#include <string.h> 
+
 
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
 
 //云台模块的姿态数据指针，指向ins模块的全局变量
-//static attitude_t *gimbal_imu_data;
+static Ins_data_t *gimbal_imu_data;
 
 // 发布给决策层的云台反馈信息
 static Publisher_t*gimbal_pub;
 // 存储发送给决策层的反馈信息
 static Gimbal_feedback_info_t gimbal_feedback;
-
-
 
 /**
  * @brief 云台初始化
@@ -54,8 +53,8 @@ static void Gimbal_motor_init(void) {
             .angle_source = MOTOR_FEEDBACK,
             .speed_source = MOTOR_FEEDBACK,
             //使用ins模块姿态数据作为反馈
-            // .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.yaw),
-            // .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.yaw),
+            .other_angle_feedback_ptr = &(gimbal_imu_data->euler.yaw),
+            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
                 .kp = 12,
                 .ki = 0,
@@ -95,8 +94,8 @@ static void Gimbal_motor_init(void) {
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
             //使用ins模块姿态数据作为反馈
-            // .other_angle_feedback_ptr = &(gimbal_imu_data->euler_angles.pitch),
-            // .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_raw.pitch),
+            .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
+            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.y),
             .angle_pid = {
                 .kp = 10,
                 .ki = 0,
@@ -134,7 +133,7 @@ static void Gimbal_motor_init(void) {
  */
 void Gimbal_task_init(void) {
     // 获取ins模块的姿态数据指针
-  //  gimbal_imu_data = get_attitude_data();
+    gimbal_imu_data = Ins_get_data();
 
     //初始化云台电机
     Gimbal_motor_init();
@@ -196,21 +195,18 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
  */
 int set_yaw_pid_cmd(int argc, char *argv[])
 {
-    // 1. 安全检查
+    // 安全检查
     if (yaw_motor == NULL) {
         shellPrint(&shell, "Error: Yaw motor is NULL!\r\n");
         return -1;
     }
 
-    // 2. 参数数量检查
+    // 参数数量检查
     if (argc < 5) {
         shellPrint(&shell, "Usage: yaw_pid -s(speed)/-a(angle) <kp> <ki> <kd> [max_out] [max_iout]\r\n");
         return -1;
     }
 
-    // 3. 【关键点】定义一个局部指针，指向我们要修改的目标 PID 结构体
-    // 请检查你的 dji_motor.h，确认 PID 结构体的类型名是 pid_t 还是 Pid_t ？
-    // 这里假设是 pid_t，如果报错请修改此处类型
     Pid_instance_t *target_pid = NULL;
 
     char *mode_str = argv[1];
@@ -255,14 +251,3 @@ int set_yaw_pid_cmd(int argc, char *argv[])
 // 注意：虽然函数在 gimbal.c，但 Letter-Shell 会通过链接脚本自动找到它，无论它在哪里
 SHELL_EXPORT_CMD(SHELL_CMD_PERMISSION(0)|SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN), yaw_pid, set_yaw_pid_cmd, Tune Yaw PID);
 
-/*
-你的“极简调参”工作流是这样的：
-上电：单片机加载代码里写死的默认参数（比如 kp=10）。
-Shell 改参：你发现软了，输入 yaw_pid -s 20 0 0。
-此时 RAM 里的变量变成了 20。
-电机立刻按 20 跑。
-VOFA+ 波形立马变硬。
-循环调试：你觉得不行，又改为 30，再改为 25... 直到找到一组完美的参数（比如 kp=28, ki=0.5, kd=1）。
-抄写代码 (关键)：你把这组 28, 0.5, 1 记在纸上或者直接修改 gimbal.c 的初始化代码。
-重新编译烧录：下次上电，这组完美参数就变成默认值了。
-*/
