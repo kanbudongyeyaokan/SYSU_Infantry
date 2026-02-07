@@ -40,11 +40,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_spi/bsp_spi.c" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_spi/bsp_spi.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_iic/bsp_iic.c" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_iic/bsp_iic.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Remote_Control/remote_control.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Remote_Control/remote_control.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Perception/Referee_Task/Referee_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Perception/Referee_Task/Referee_task.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -355,7 +353,7 @@
       <workItem from="1770028914774" duration="8523000" />
       <workItem from="1770197197454" duration="2031000" />
       <workItem from="1770209498618" duration="6227000" />
-      <workItem from="1770298637477" duration="7625000" />
+      <workItem from="1770298637477" duration="12486000" />
     </task>
     <servers />
   </component>

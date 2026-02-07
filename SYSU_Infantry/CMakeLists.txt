@@ -154,10 +154,13 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Shell/shell_port.h
         0-Middleware_Layer/Crc/crc_referee.c
         0-Middleware_Layer/Crc/crc_referee.h
+
         1-Hardware_Layer/bsp_usb/bsp_usb.c
         1-Hardware_Layer/bsp_usb/bsp_usb.h
         1-Hardware_Layer/bsp_spi/bsp_spi.c
         1-Hardware_Layer/bsp_spi/bsp_spi.h
+        1-Hardware_Layer/bsp_iic/bsp_iic.c
+        1-Hardware_Layer/bsp_iic/bsp_iic.h
 
 )
 
