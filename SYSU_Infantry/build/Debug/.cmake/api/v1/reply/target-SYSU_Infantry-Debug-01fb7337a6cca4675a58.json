@@ -35,7 +35,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 260,
+				"line" : 262,
 				"parent" : 0
 			},
 			{
@@ -50,13 +50,13 @@
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 252,
+				"line" : 254,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 188,
+				"line" : 190,
 				"parent" : 0
 			},
 			{
@@ -68,7 +68,7 @@
 			{
 				"command" : 4,
 				"file" : 0,
-				"line" : 179,
+				"line" : 181,
 				"parent" : 0
 			}
 		]
@@ -419,7 +419,6 @@
 				106,
 				108,
 				110,
-				112,
 				113,
 				114,
 				115,
@@ -440,9 +439,11 @@
 				130,
 				131,
 				132,
+				133,
 				134,
-				135,
-				136
+				136,
+				137,
+				138
 			]
 		},
 		{
@@ -730,7 +731,7 @@
 			"sourceIndexes" : 
 			[
 				60,
-				133
+				135
 			]
 		}
 	],
@@ -756,10 +757,6 @@
 		[
 			{
 				"fragment" : "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g",
-				"role" : "flags"
-			},
-			{
-				"fragment" : "",
 				"role" : "flags"
 			},
 			{
@@ -841,7 +838,8 @@
 				105,
 				107,
 				109,
-				111
+				111,
+				112
 			]
 		},
 		{
@@ -900,7 +898,6 @@
 				106,
 				108,
 				110,
-				112,
 				113,
 				114,
 				115,
@@ -921,9 +918,11 @@
 				130,
 				131,
 				132,
+				133,
 				134,
-				135,
-				136
+				136,
+				137,
+				138
 			]
 		},
 		{
@@ -931,15 +930,13 @@
 			"sourceIndexes" : 
 			[
 				60,
-				133
+				135
 			]
 		},
 		{
 			"name" : "Object Libraries",
 			"sourceIndexes" : 
 			[
-				137,
-				138,
 				139,
 				140,
 				141,
@@ -982,7 +979,9 @@
 				178,
 				179,
 				180,
-				181
+				181,
+				182,
+				183
 			]
 		}
 	],
@@ -1600,6 +1599,17 @@
 			"backtrace" : 1,
 			"path" : "2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.h",
 			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c",
+			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 7,
