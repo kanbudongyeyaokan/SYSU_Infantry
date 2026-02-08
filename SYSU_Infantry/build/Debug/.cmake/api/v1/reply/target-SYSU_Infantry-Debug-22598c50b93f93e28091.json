@@ -35,7 +35,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 256,
+				"line" : 260,
 				"parent" : 0
 			},
 			{
@@ -50,13 +50,13 @@
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 248,
+				"line" : 252,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 186,
+				"line" : 188,
 				"parent" : 0
 			},
 			{
@@ -68,7 +68,7 @@
 			{
 				"command" : 4,
 				"file" : 0,
-				"line" : 177,
+				"line" : 179,
 				"parent" : 0
 			}
 		]
@@ -79,7 +79,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g -std=gnu11 -fdiagnostics-color=always"
+					"fragment" : " -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g -std=gnu11 -fdiagnostics-color=always"
 				}
 			],
 			"defines" : 
@@ -266,6 +266,10 @@
 				{
 					"backtrace" : 6,
 					"path" : "D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver"
 				},
 				{
 					"backtrace" : 6,
@@ -415,7 +419,6 @@
 				106,
 				108,
 				110,
-				111,
 				112,
 				113,
 				114,
@@ -435,16 +438,18 @@
 				128,
 				129,
 				130,
+				131,
 				132,
-				133,
-				134
+				134,
+				135,
+				136
 			]
 		},
 		{
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -x assembler-with-cpp -MMD -MP -g"
+					"fragment" : " -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -x assembler-with-cpp -MMD -MP -g"
 				}
 			],
 			"defines" : 
@@ -634,6 +639,10 @@
 				},
 				{
 					"backtrace" : 6,
+					"path" : "D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver"
+				},
+				{
+					"backtrace" : 6,
 					"path" : "D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/4-Application_Layer/Decision_Making"
 				},
 				{
@@ -721,7 +730,7 @@
 			"sourceIndexes" : 
 			[
 				60,
-				131
+				133
 			]
 		}
 	],
@@ -746,7 +755,11 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g",
+				"fragment" : "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -Wextra -Wpedantic -fdata-sections -ffunction-sections -O0 -g3 -g",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "",
 				"role" : "flags"
 			},
 			{
@@ -827,7 +840,8 @@
 				103,
 				105,
 				107,
-				109
+				109,
+				111
 			]
 		},
 		{
@@ -886,7 +900,6 @@
 				106,
 				108,
 				110,
-				111,
 				112,
 				113,
 				114,
@@ -906,9 +919,11 @@
 				128,
 				129,
 				130,
+				131,
 				132,
-				133,
-				134
+				134,
+				135,
+				136
 			]
 		},
 		{
@@ -916,15 +931,13 @@
 			"sourceIndexes" : 
 			[
 				60,
-				131
+				133
 			]
 		},
 		{
 			"name" : "Object Libraries",
 			"sourceIndexes" : 
 			[
-				135,
-				136,
 				137,
 				138,
 				139,
@@ -967,7 +980,9 @@
 				176,
 				177,
 				178,
-				179
+				179,
+				180,
+				181
 			]
 		}
 	],
@@ -1573,6 +1588,17 @@
 		{
 			"backtrace" : 1,
 			"path" : "1-Hardware_Layer/bsp_iic/bsp_iic.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.h",
 			"sourceGroupIndex" : 0
 		},
 		{

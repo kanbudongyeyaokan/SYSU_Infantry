@@ -3,11 +3,7 @@ CMake Warning (dev) at CMakeLists.txt:29 (enable_language):
   project() should be called prior to this enable_language() call.
 This warning is for project developers.  Use -Wno-dev to suppress it.
 
--- The C compiler identification is GNU 13.3.1
--- The ASM compiler identification is GNU
--- Found assembler: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe
--- The CXX compiler identification is GNU 13.3.1
 Build type: Debug
--- Configuring done (6.9s)
+-- Configuring done (0.1s)
 -- Generating done (0.1s)
 -- Build files have been written to: D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug
