@@ -15,8 +15,8 @@ void Ins_task(void const *argument)
     extern I2C_HandleTypeDef hi2c2; 
     // 目前兼容三个IMU驱动：BMI088、HWT101、HWT606
     // const Ins_driver_interface_t *driver = BMI088_Get_Driver();
-    // const Ins_driver_interface_t *driver = HWT101_Get_Driver(&hi2c2);
-    const Ins_driver_interface_t *driver = HWT606_Get_Driver(&hi2c2);
+    const Ins_driver_interface_t *driver = HWT101_Get_Driver(&hi2c2);
+    // const Ins_driver_interface_t *driver = HWT606_Get_Driver(&hi2c2);
 
     const Ins_data_t *data;
     // 初始化 INS 层 
@@ -34,6 +34,6 @@ void Ins_task(void const *argument)
         //             data->acc_body.z, 
         //             data->dt_s);
 
-        osDelay(5); 
+        osDelay(1); 
     }
 }
