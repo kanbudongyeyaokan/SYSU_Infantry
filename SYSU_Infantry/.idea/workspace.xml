@@ -40,23 +40,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/cache-v2-b5838f9447d393c882fd.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/cmakeFiles-v1-9b437e85a69d5fcfd21d.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/codemodel-v2-a161c2c0119d9c191b48.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/index-2026-02-08T02-22-05-0585.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/target-SYSU_Infantry-Debug-22598c50b93f93e28091.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_deps" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeCache.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/clion-Debug-STM32-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/clion-Debug-STM32-log.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/rules.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/rules.ninja" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/build.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/build.ninja" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/cmake/stm32cubemx/cmake_install.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/cmake/stm32cubemx/cmake_install.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/cmake_install.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/cmake_install.cmake" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -367,7 +351,7 @@
       <workItem from="1770197197454" duration="2031000" />
       <workItem from="1770209498618" duration="6227000" />
       <workItem from="1770298637477" duration="16004000" />
-      <workItem from="1770481540699" duration="4237000" />
+      <workItem from="1770481540699" duration="5838000" />
     </task>
     <servers />
   </component>

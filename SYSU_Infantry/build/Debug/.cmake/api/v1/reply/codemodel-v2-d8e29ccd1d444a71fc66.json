@@ -78,7 +78,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "SYSU_Infantry::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-SYSU_Infantry-Debug-01fb7337a6cca4675a58.json",
+					"jsonFile" : "target-SYSU_Infantry-Debug-788dfb9042ad95c8c1b7.json",
 					"name" : "SYSU_Infantry",
 					"projectIndex" : 0
 				},
@@ -101,6 +101,6 @@
 	"version" : 
 	{
 		"major" : 2,
-		"minor" : 8
+		"minor" : 6
 	}
 }

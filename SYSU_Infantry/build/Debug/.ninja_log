@@ -26,7 +26,7 @@
 84765	87707	7922206315510030	CMakeFiles/SYSU_Infantry.dir/Core/Src/main.c.obj	d9fa1917b7a6f14f
 86	83102	7922206268893895	CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Robot_Task/robot_task.c.obj	e41dc4ecd083e51a
 8108	10697	7921853622234374	cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c.obj	932655f9c1c75dbe
-18	535	7922255928121639	CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Perception/Ins_Task/Ins_task.c.obj	36229df7f8225026
+15	638	7922261679765026	CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Perception/Ins_Task/Ins_task.c.obj	36229df7f8225026
 81104	81314	7922206252285313	CMakeFiles/SYSU_Infantry.dir/0-Middleware_Layer/letter-shell-master/src/shell_companion.c.obj	393d330b1c5e20da
 81060	81303	7922206252166228	CMakeFiles/SYSU_Infantry.dir/0-Middleware_Layer/letter-shell-master/src/shell_cmd_list.c.obj	98457009fad28f36
 144	82093	7922206259165818	CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Execution/Shoot_Task/shoot_task.c.obj	318933664fa59afc
@@ -103,7 +103,7 @@
 8068	10852	7921853623505233	cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c.obj	729af413b46b2dc7
 9249	10988	7921853624732799	cmake/stm32cubemx/CMakeFiles/USB_Device_Library.dir/__/__/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c.obj	98bd506fd200252f
 8183	10790	7921853623161147	cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc_ex.c.obj	a7f1e409150230be
-11	355	7922258387957547	build.ninja	7fc39859eb6ebaee
+11	355	7922459135941857	build.ninja	7fc39859eb6ebaee
 7982	10658	7921853621924788	cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c.obj	5991925e2d2ffa49
 7960	10367	7921853619174320	cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c.obj	2b8b3fba5e7816ed
 9005	10766	7921853623175805	cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c.obj	4012b64c5f515765
@@ -122,13 +122,11 @@
 9257	11051	7921853625379082	cmake/stm32cubemx/CMakeFiles/USB_Device_Library.dir/__/__/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c.obj	1a2ea52a4258e634
 9268	10989	7921853624732799	cmake/stm32cubemx/CMakeFiles/USB_Device_Library.dir/__/__/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c.obj	728d97b18a9bc0f2
 10367	11679	7921853632367792	cmake/stm32cubemx/CMakeFiles/USB_Device_Library.dir/__/__/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c.obj	f78cb4a37c7e9b4
-535	1201	7922255934635574	SYSU_Infantry.elf	87083b1a024dcfbd
+562	1328	7922263505351873	SYSU_Infantry.elf	78299502ba6f8b9a
 11	355	7922258387820841	D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug/cmake_install.cmake	7fc39859eb6ebaee
 11	355	7922258387908607	D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug/cmake/stm32cubemx/cmake_install.cmake	7fc39859eb6ebaee
-30	487	7922255927633433	CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj	a923cfcea4f62576
 28	624	7922261679623270	CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj	a923cfcea4f62576
-36	632	7922261679707676	CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj	270715ed7faced5
-15	638	7922261679765026	CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Perception/Ins_Task/Ins_task.c.obj	36229df7f8225026
-638	1328	7922261686532058	SYSU_Infantry.elf	78299502ba6f8b9a
 17	561	7922263498110260	CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj	270715ed7faced5
-562	1328	7922263505351873	SYSU_Infantry.elf	78299502ba6f8b9a
+18	1450	7922459900744136	CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Perception/Ins_Task/Ins_task.c.obj	36229df7f8225026
+29	1466	7922459900880307	CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj	270715ed7faced5
+1466	2233	7922459908410654	SYSU_Infantry.elf	bcd1f30c524fd712
