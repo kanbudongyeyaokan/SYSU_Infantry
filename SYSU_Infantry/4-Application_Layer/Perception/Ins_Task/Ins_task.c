@@ -12,10 +12,9 @@
 
 void Ins_task(void const *argument)
 {
-    // 获取 C板 BMI088 的标准驱动
-    // const Ins_driver_interface_t *driver = BMI088_Get_Driver();
-
     extern I2C_HandleTypeDef hi2c2; 
+    // 目前兼容三个IMU驱动：BMI088、HWT101、HWT606
+    // const Ins_driver_interface_t *driver = BMI088_Get_Driver();
     // const Ins_driver_interface_t *driver = HWT101_Get_Driver(&hi2c2);
     const Ins_driver_interface_t *driver = HWT606_Get_Driver(&hi2c2);
 
