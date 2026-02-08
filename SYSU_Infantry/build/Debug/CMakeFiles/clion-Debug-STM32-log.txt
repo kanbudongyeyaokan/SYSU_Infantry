@@ -4,6 +4,6 @@ CMake Warning (dev) at CMakeLists.txt:29 (enable_language):
 This warning is for project developers.  Use -Wno-dev to suppress it.
 
 Build type: Debug
--- Configuring done (0.5s)
+-- Configuring done (0.2s)
 -- Generating done (0.1s)
 -- Build files have been written to: D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug

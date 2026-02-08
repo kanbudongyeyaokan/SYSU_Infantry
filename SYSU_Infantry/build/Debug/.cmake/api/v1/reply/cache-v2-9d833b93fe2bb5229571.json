@@ -191,7 +191,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "3"
+			"value" : "4"
 		},
 		{
 			"name" : "CMAKE_CACHE_MINOR_VERSION",
@@ -203,7 +203,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "28"
+			"value" : "0"
 		},
 		{
 			"name" : "CMAKE_CACHE_PATCH_VERSION",
@@ -215,7 +215,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "1"
+			"value" : "2"
 		},
 		{
 			"name" : "CMAKE_COLOR_DIAGNOSTICS",
@@ -239,7 +239,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/ST/STM32CubeCLT_1.18.0/CMake/bin/cmake.exe"
+			"value" : "D:/Clion/CLion 2025.2/bin/cmake/win/x64/bin/cmake.exe"
 		},
 		{
 			"name" : "CMAKE_CPACK_COMMAND",
@@ -251,7 +251,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/ST/STM32CubeCLT_1.18.0/CMake/bin/cpack.exe"
+			"value" : "D:/Clion/CLion 2025.2/bin/cmake/win/x64/bin/cpack.exe"
 		},
 		{
 			"name" : "CMAKE_CTEST_COMMAND",
@@ -263,7 +263,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/ST/STM32CubeCLT_1.18.0/CMake/bin/ctest.exe"
+			"value" : "D:/Clion/CLion 2025.2/bin/cmake/win/x64/bin/ctest.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
@@ -963,7 +963,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28"
+			"value" : "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1198,7 +1198,7 @@
 					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "UNINITIALIZED",
+			"type" : "FILEPATH",
 			"value" : "D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/cmake/gcc-arm-none-eabi.cmake"
 		},
 		{

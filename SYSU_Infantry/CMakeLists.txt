@@ -165,6 +165,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.h
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c
+        2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_spi.c
+        2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_spi.h
 
 )
 
