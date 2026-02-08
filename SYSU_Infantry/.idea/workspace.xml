@@ -41,6 +41,15 @@
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/1-Hardware_Layer/bsp_iic/bsp_iic.c" beforeDir="false" afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_iic/bsp_iic.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/index-2026-02-08T10-20-14-0213.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_deps" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/clion-Debug-STM32-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/clion-Debug-STM32-log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/SYSU_Infantry.elf" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/SYSU_Infantry.elf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/SYSU_Infantry.map" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/SYSU_Infantry.map" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -170,7 +179,7 @@
   &quot;keyToString&quot;: {
     &quot;CMake 应用程序.SYSU_Infantry.executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;OpenOCD 下载并运行.SYSU_Infantry.executor&quot;: &quot;Debug&quot;,
+    &quot;OpenOCD 下载并运行.SYSU_Infantry.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
@@ -197,11 +206,6 @@
     </key>
   </component>
   <component name="RunManager" selected="OpenOCD 下载并运行.SYSU_Infantry">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="FreeRTOS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="FreeRTOS" CONFIG_NAME="Debug-STM32">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -352,6 +356,8 @@
       <workItem from="1770209498618" duration="6227000" />
       <workItem from="1770298637477" duration="16004000" />
       <workItem from="1770481540699" duration="5838000" />
+      <workItem from="1770557681892" duration="21000" />
+      <workItem from="1770558792763" duration="10000" />
     </task>
     <servers />
   </component>

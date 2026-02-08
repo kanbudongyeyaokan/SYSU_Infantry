@@ -5,6 +5,7 @@
 
 #include "hwt101_iic.h"
 #include <string.h>
+#include "bsp_dwt.h" 
 
 // ================= 寄存器定义 =================
 // 仅保留需要的两个寄存器地址
@@ -24,6 +25,8 @@ typedef struct {
 
     bool is_ready;
     bool read_success;
+
+    
 } HWT101_Driver_t;
 
 static HWT101_Driver_t hwt_dev;
@@ -77,8 +80,8 @@ static void HWT101_Start_Read(void) {
     }
     
     // 加微小延时，防止传感器来不及准备数据导致下一次读取 NACK
-    HAL_Delay(1); 
-
+    HAL_Delay(1); // 1毫秒延时，足够让传感器准备好数据
+    // DWT_Delay_us(100); // 100微秒延时，足够让传感器准备好数据
     // 读取 角速度 (Gyro Z)
     if (HWT101_ReadReg16(HWT101_REG_GYRO_Z, &hwt_dev.raw.gyro_z) != HAL_OK) {
         all_ok = false;

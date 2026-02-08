@@ -21955,7 +21955,7 @@ LOAD C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/
  .debug_rnglists
                 0x00002498       0x44 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-nano-svfprintf.o)
 
-.debug_macro    0x00000000    0x34b8b
+.debug_macro    0x00000000    0x34b95
  .debug_macro   0x00000000      0x275 cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Core/Src/system_stm32f4xx.c.obj
  .debug_macro   0x00000275      0xad8 cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Core/Src/system_stm32f4xx.c.obj
  .debug_macro   0x00000d4d       0x2e cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Core/Src/system_stm32f4xx.c.obj
@@ -22139,65 +22139,65 @@ LOAD C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/
  .debug_macro   0x0002e97b      0x4e1 CMakeFiles/SYSU_Infantry.dir/1-Hardware_Layer/bsp_usb/bsp_usb.c.obj
  .debug_macro   0x0002ee5c       0x10 CMakeFiles/SYSU_Infantry.dir/1-Hardware_Layer/bsp_usb/bsp_usb.c.obj
  .debug_macro   0x0002ee6c      0x2ba CMakeFiles/SYSU_Infantry.dir/1-Hardware_Layer/bsp_iic/bsp_iic.c.obj
- .debug_macro   0x0002f126      0x372 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj
- .debug_macro   0x0002f498      0x372 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj
- .debug_macro   0x0002f80a      0x408 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/Target/usbd_conf.c.obj
- .debug_macro   0x0002fc12       0x82 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/Target/usbd_conf.c.obj
- .debug_macro   0x0002fc94      0x424 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usb_device.c.obj
- .debug_macro   0x000300b8       0x22 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usb_device.c.obj
- .debug_macro   0x000300da       0x16 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usb_device.c.obj
- .debug_macro   0x000300f0      0x42e CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_desc.c.obj
- .debug_macro   0x0003051e       0x1c CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_desc.c.obj
- .debug_macro   0x0003053a      0x4d2 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_cdc_if.c.obj
- .debug_macro   0x00030a0c      0x511 CMakeFiles/SYSU_Infantry.dir/Core/Src/main.c.obj
- .debug_macro   0x00030f1d       0x16 CMakeFiles/SYSU_Infantry.dir/Core/Src/main.c.obj
- .debug_macro   0x00030f33      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/gpio.c.obj
- .debug_macro   0x000311c1      0x366 CMakeFiles/SYSU_Infantry.dir/Core/Src/freertos.c.obj
- .debug_macro   0x00031527      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/adc.c.obj
- .debug_macro   0x000317b5      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/can.c.obj
- .debug_macro   0x00031a43      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/crc.c.obj
- .debug_macro   0x00031cd1      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/dma.c.obj
- .debug_macro   0x00031f5f      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/i2c.c.obj
- .debug_macro   0x000321ed      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/rng.c.obj
- .debug_macro   0x0003247b      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/rtc.c.obj
- .debug_macro   0x00032709      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/spi.c.obj
- .debug_macro   0x00032997      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/tim.c.obj
- .debug_macro   0x00032c25      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/usart.c.obj
- .debug_macro   0x00032eb3      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_it.c.obj
- .debug_macro   0x00033141      0x284 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_hal_msp.c.obj
- .debug_macro   0x000333c5      0x275 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_hal_timebase_tim.c.obj
- .debug_macro   0x0003363a       0xff CMakeFiles/SYSU_Infantry.dir/Core/Src/sysmem.c.obj
- .debug_macro   0x00033739       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/sysmem.c.obj
- .debug_macro   0x00033749      0x23c CMakeFiles/SYSU_Infantry.dir/Core/Src/sysmem.c.obj
- .debug_macro   0x00033985      0x265 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033bea       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033bfa       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033c0a       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033c1a       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033c2a       0x1c CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033c46       0x52 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033c98       0x22 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033cba       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033cca       0x52 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033d1c       0xcf CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033deb       0x1c CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033e07       0x3d CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033e44       0x35 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033e79      0x12c CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00033fa5      0x242 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x000341e7       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x000341f7      0x18a CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00034381       0x16 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00034397       0xce CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_macro   0x00034465      0x1f2 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
- .debug_macro   0x00034657       0x3c CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
- .debug_macro   0x00034693       0x3b CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
- .debug_macro   0x000346ce       0x1c CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
- .debug_macro   0x000346ea       0xc7 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
- .debug_macro   0x000347b1      0x1f2 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_sin_f32.c.obj
- .debug_macro   0x000349a3      0x1e8 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/CommonTables/arm_common_tables.c.obj
+ .debug_macro   0x0002f126      0x37c CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj
+ .debug_macro   0x0002f4a2      0x372 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj
+ .debug_macro   0x0002f814      0x408 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/Target/usbd_conf.c.obj
+ .debug_macro   0x0002fc1c       0x82 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/Target/usbd_conf.c.obj
+ .debug_macro   0x0002fc9e      0x424 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usb_device.c.obj
+ .debug_macro   0x000300c2       0x22 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usb_device.c.obj
+ .debug_macro   0x000300e4       0x16 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usb_device.c.obj
+ .debug_macro   0x000300fa      0x42e CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_desc.c.obj
+ .debug_macro   0x00030528       0x1c CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_desc.c.obj
+ .debug_macro   0x00030544      0x4d2 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_cdc_if.c.obj
+ .debug_macro   0x00030a16      0x511 CMakeFiles/SYSU_Infantry.dir/Core/Src/main.c.obj
+ .debug_macro   0x00030f27       0x16 CMakeFiles/SYSU_Infantry.dir/Core/Src/main.c.obj
+ .debug_macro   0x00030f3d      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/gpio.c.obj
+ .debug_macro   0x000311cb      0x366 CMakeFiles/SYSU_Infantry.dir/Core/Src/freertos.c.obj
+ .debug_macro   0x00031531      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/adc.c.obj
+ .debug_macro   0x000317bf      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/can.c.obj
+ .debug_macro   0x00031a4d      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/crc.c.obj
+ .debug_macro   0x00031cdb      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/dma.c.obj
+ .debug_macro   0x00031f69      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/i2c.c.obj
+ .debug_macro   0x000321f7      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/rng.c.obj
+ .debug_macro   0x00032485      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/rtc.c.obj
+ .debug_macro   0x00032713      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/spi.c.obj
+ .debug_macro   0x000329a1      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/tim.c.obj
+ .debug_macro   0x00032c2f      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/usart.c.obj
+ .debug_macro   0x00032ebd      0x28e CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_it.c.obj
+ .debug_macro   0x0003314b      0x284 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_hal_msp.c.obj
+ .debug_macro   0x000333cf      0x275 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_hal_timebase_tim.c.obj
+ .debug_macro   0x00033644       0xff CMakeFiles/SYSU_Infantry.dir/Core/Src/sysmem.c.obj
+ .debug_macro   0x00033743       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/sysmem.c.obj
+ .debug_macro   0x00033753      0x23c CMakeFiles/SYSU_Infantry.dir/Core/Src/sysmem.c.obj
+ .debug_macro   0x0003398f      0x265 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033bf4       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033c04       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033c14       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033c24       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033c34       0x1c CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033c50       0x52 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033ca2       0x22 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033cc4       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033cd4       0x52 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033d26       0xcf CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033df5       0x1c CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033e11       0x3d CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033e4e       0x35 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033e83      0x12c CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00033faf      0x242 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x000341f1       0x10 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x00034201      0x18a CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x0003438b       0x16 CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x000343a1       0xce CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_macro   0x0003446f      0x1f2 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
+ .debug_macro   0x00034661       0x3c CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
+ .debug_macro   0x0003469d       0x3b CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
+ .debug_macro   0x000346d8       0x1c CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
+ .debug_macro   0x000346f4       0xc7 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
+ .debug_macro   0x000347bb      0x1f2 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_sin_f32.c.obj
+ .debug_macro   0x000349ad      0x1e8 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/CommonTables/arm_common_tables.c.obj
 
-.debug_line     0x00000000    0x4eea9
+.debug_line     0x00000000    0x4eefb
  .debug_line    0x00000000      0x8e8 cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Core/Src/system_stm32f4xx.c.obj
  .debug_line    0x000008e8     0x38d9 cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c.obj
  .debug_line    0x000041c1     0x1ac4 cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c.obj
@@ -22237,63 +22237,63 @@ LOAD C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/
  .debug_line    0x00028a88     0x1182 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Robot_Task/robot_task.c.obj
  .debug_line    0x00029c0a      0xf9c CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Execution/Chassis_Task/Chassis_task.c.obj
  .debug_line    0x0002aba6      0xd48 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Execution/Gimbal_Task/Gimbal_task.c.obj
- .debug_line    0x0002b8ee      0xe42 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Perception/Ins_Task/Ins_task.c.obj
- .debug_line    0x0002c730      0xf72 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Execution/Shoot_Task/shoot_task.c.obj
- .debug_line    0x0002d6a2      0xe76 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Execution/Motor_Task/motor_task.c.obj
- .debug_line    0x0002e518      0xbc6 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c.obj
- .debug_line    0x0002f0de      0xbd9 CMakeFiles/SYSU_Infantry.dir/0-Middleware_Layer/Pid_Controller/algorithm_pid.c.obj
- .debug_line    0x0002fcb7     0x17de CMakeFiles/SYSU_Infantry.dir/0-Middleware_Layer/letter-shell-master/src/shell.c.obj
- .debug_line    0x00031495      0x7b0 CMakeFiles/SYSU_Infantry.dir/0-Middleware_Layer/letter-shell-master/src/shell_ext.c.obj
- .debug_line    0x00031c45      0xd8a CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Decision_Making/Decision_making_task.c.obj
- .debug_line    0x000329cf     0x1286 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c.obj
- .debug_line    0x00033c55     0x1596 CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Chassis/chassis.c.obj
- .debug_line    0x000351eb     0x124b CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Gimbal/gimbal.c.obj
- .debug_line    0x00036436      0x996 CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Ins/ins.c.obj
- .debug_line    0x00036dcc      0xeb4 CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Shoot/shoot.c.obj
- .debug_line    0x00037c80     0x112c CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Decision_making/decision_making.c.obj
- .debug_line    0x00038dac      0xd8c CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Shell/shell_port.c.obj
- .debug_line    0x00039b38      0xf37 CMakeFiles/SYSU_Infantry.dir/1-Hardware_Layer/bsp_usb/bsp_usb.c.obj
- .debug_line    0x0003aa6f      0x9c5 CMakeFiles/SYSU_Infantry.dir/1-Hardware_Layer/bsp_iic/bsp_iic.c.obj
- .debug_line    0x0003b434      0xac5 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj
- .debug_line    0x0003bef9      0xb49 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj
- .debug_line    0x0003ca42      0xf46 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/Target/usbd_conf.c.obj
- .debug_line    0x0003d988      0xb54 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usb_device.c.obj
- .debug_line    0x0003e4dc      0xbbb CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_desc.c.obj
- .debug_line    0x0003f097      0xe40 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_cdc_if.c.obj
- .debug_line    0x0003fed7      0xeb1 CMakeFiles/SYSU_Infantry.dir/Core/Src/main.c.obj
- .debug_line    0x00040d88      0x8eb CMakeFiles/SYSU_Infantry.dir/Core/Src/gpio.c.obj
- .debug_line    0x00041673      0xbb2 CMakeFiles/SYSU_Infantry.dir/Core/Src/freertos.c.obj
- .debug_line    0x00042225      0x979 CMakeFiles/SYSU_Infantry.dir/Core/Src/adc.c.obj
- .debug_line    0x00042b9e      0x992 CMakeFiles/SYSU_Infantry.dir/Core/Src/can.c.obj
- .debug_line    0x00043530      0x8b2 CMakeFiles/SYSU_Infantry.dir/Core/Src/crc.c.obj
- .debug_line    0x00043de2      0x883 CMakeFiles/SYSU_Infantry.dir/Core/Src/dma.c.obj
- .debug_line    0x00044665      0x9be CMakeFiles/SYSU_Infantry.dir/Core/Src/i2c.c.obj
- .debug_line    0x00045023      0x8b2 CMakeFiles/SYSU_Infantry.dir/Core/Src/rng.c.obj
- .debug_line    0x000458d5      0x8dc CMakeFiles/SYSU_Infantry.dir/Core/Src/rtc.c.obj
- .debug_line    0x000461b1      0x9fc CMakeFiles/SYSU_Infantry.dir/Core/Src/spi.c.obj
- .debug_line    0x00046bad      0xafb CMakeFiles/SYSU_Infantry.dir/Core/Src/tim.c.obj
- .debug_line    0x000476a8      0xade CMakeFiles/SYSU_Infantry.dir/Core/Src/usart.c.obj
- .debug_line    0x00048186      0xb23 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_it.c.obj
- .debug_line    0x00048ca9      0x873 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_hal_msp.c.obj
- .debug_line    0x0004951c      0x8f0 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_hal_timebase_tim.c.obj
- .debug_line    0x00049e0c      0x356 CMakeFiles/SYSU_Infantry.dir/Core/Src/sysmem.c.obj
- .debug_line    0x0004a162      0x67a CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
- .debug_line    0x0004a7dc       0x7a CMakeFiles/SYSU_Infantry.dir/startup_stm32f407xx.s.obj
- .debug_line    0x0004a856      0x598 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
- .debug_line    0x0004adee      0x595 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_sin_f32.c.obj
- .debug_line    0x0004b383      0x53a CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/CommonTables/arm_common_tables.c.obj
- .debug_line    0x0004b8bd       0xed C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-atof.o)
- .debug_line    0x0004b9aa     0x1436 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strtod.o)
- .debug_line    0x0004cde0      0x2b2 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-vsnprintf.o)
- .debug_line    0x0004d092      0x1a4 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strncmp.o)
- .debug_line    0x0004d236      0x1a4 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strncpy.o)
- .debug_line    0x0004d3da      0x180 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strnlen.o)
- .debug_line    0x0004d55a      0x185 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-errno.o)
- .debug_line    0x0004d6df       0xf6 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strcpy.o)
- .debug_line    0x0004d7d5       0xef C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libm_a-s_nan.o)
- .debug_line    0x0004d8c4      0x9fb C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-gdtoa-gethex.o)
- .debug_line    0x0004e2bf      0x379 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-gdtoa-hexnan.o)
- .debug_line    0x0004e638      0x871 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-nano-svfprintf.o)
+ .debug_line    0x0002b8ee      0xe40 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Perception/Ins_Task/Ins_task.c.obj
+ .debug_line    0x0002c72e      0xf72 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Execution/Shoot_Task/shoot_task.c.obj
+ .debug_line    0x0002d6a0      0xe76 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Execution/Motor_Task/motor_task.c.obj
+ .debug_line    0x0002e516      0xbc6 CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c.obj
+ .debug_line    0x0002f0dc      0xbd9 CMakeFiles/SYSU_Infantry.dir/0-Middleware_Layer/Pid_Controller/algorithm_pid.c.obj
+ .debug_line    0x0002fcb5     0x17de CMakeFiles/SYSU_Infantry.dir/0-Middleware_Layer/letter-shell-master/src/shell.c.obj
+ .debug_line    0x00031493      0x7b0 CMakeFiles/SYSU_Infantry.dir/0-Middleware_Layer/letter-shell-master/src/shell_ext.c.obj
+ .debug_line    0x00031c43      0xd8a CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Decision_Making/Decision_making_task.c.obj
+ .debug_line    0x000329cd     0x1286 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c.obj
+ .debug_line    0x00033c53     0x1596 CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Chassis/chassis.c.obj
+ .debug_line    0x000351e9     0x124b CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Gimbal/gimbal.c.obj
+ .debug_line    0x00036434      0x996 CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Ins/ins.c.obj
+ .debug_line    0x00036dca      0xeb4 CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Shoot/shoot.c.obj
+ .debug_line    0x00037c7e     0x112c CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Decision_making/decision_making.c.obj
+ .debug_line    0x00038daa      0xd8c CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Shell/shell_port.c.obj
+ .debug_line    0x00039b36      0xf37 CMakeFiles/SYSU_Infantry.dir/1-Hardware_Layer/bsp_usb/bsp_usb.c.obj
+ .debug_line    0x0003aa6d      0x9c5 CMakeFiles/SYSU_Infantry.dir/1-Hardware_Layer/bsp_iic/bsp_iic.c.obj
+ .debug_line    0x0003b432      0xb19 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj
+ .debug_line    0x0003bf4b      0xb49 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj
+ .debug_line    0x0003ca94      0xf46 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/Target/usbd_conf.c.obj
+ .debug_line    0x0003d9da      0xb54 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usb_device.c.obj
+ .debug_line    0x0003e52e      0xbbb CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_desc.c.obj
+ .debug_line    0x0003f0e9      0xe40 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usbd_cdc_if.c.obj
+ .debug_line    0x0003ff29      0xeb1 CMakeFiles/SYSU_Infantry.dir/Core/Src/main.c.obj
+ .debug_line    0x00040dda      0x8eb CMakeFiles/SYSU_Infantry.dir/Core/Src/gpio.c.obj
+ .debug_line    0x000416c5      0xbb2 CMakeFiles/SYSU_Infantry.dir/Core/Src/freertos.c.obj
+ .debug_line    0x00042277      0x979 CMakeFiles/SYSU_Infantry.dir/Core/Src/adc.c.obj
+ .debug_line    0x00042bf0      0x992 CMakeFiles/SYSU_Infantry.dir/Core/Src/can.c.obj
+ .debug_line    0x00043582      0x8b2 CMakeFiles/SYSU_Infantry.dir/Core/Src/crc.c.obj
+ .debug_line    0x00043e34      0x883 CMakeFiles/SYSU_Infantry.dir/Core/Src/dma.c.obj
+ .debug_line    0x000446b7      0x9be CMakeFiles/SYSU_Infantry.dir/Core/Src/i2c.c.obj
+ .debug_line    0x00045075      0x8b2 CMakeFiles/SYSU_Infantry.dir/Core/Src/rng.c.obj
+ .debug_line    0x00045927      0x8dc CMakeFiles/SYSU_Infantry.dir/Core/Src/rtc.c.obj
+ .debug_line    0x00046203      0x9fc CMakeFiles/SYSU_Infantry.dir/Core/Src/spi.c.obj
+ .debug_line    0x00046bff      0xafb CMakeFiles/SYSU_Infantry.dir/Core/Src/tim.c.obj
+ .debug_line    0x000476fa      0xade CMakeFiles/SYSU_Infantry.dir/Core/Src/usart.c.obj
+ .debug_line    0x000481d8      0xb23 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_it.c.obj
+ .debug_line    0x00048cfb      0x873 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_hal_msp.c.obj
+ .debug_line    0x0004956e      0x8f0 CMakeFiles/SYSU_Infantry.dir/Core/Src/stm32f4xx_hal_timebase_tim.c.obj
+ .debug_line    0x00049e5e      0x356 CMakeFiles/SYSU_Infantry.dir/Core/Src/sysmem.c.obj
+ .debug_line    0x0004a1b4      0x67a CMakeFiles/SYSU_Infantry.dir/Core/Src/syscalls.c.obj
+ .debug_line    0x0004a82e       0x7a CMakeFiles/SYSU_Infantry.dir/startup_stm32f407xx.s.obj
+ .debug_line    0x0004a8a8      0x598 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c.obj
+ .debug_line    0x0004ae40      0x595 CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_sin_f32.c.obj
+ .debug_line    0x0004b3d5      0x53a CMakeFiles/SYSU_Infantry.dir/Drivers/CMSIS/DSP/Source/CommonTables/arm_common_tables.c.obj
+ .debug_line    0x0004b90f       0xed C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-atof.o)
+ .debug_line    0x0004b9fc     0x1436 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strtod.o)
+ .debug_line    0x0004ce32      0x2b2 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-vsnprintf.o)
+ .debug_line    0x0004d0e4      0x1a4 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strncmp.o)
+ .debug_line    0x0004d288      0x1a4 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strncpy.o)
+ .debug_line    0x0004d42c      0x180 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strnlen.o)
+ .debug_line    0x0004d5ac      0x185 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-errno.o)
+ .debug_line    0x0004d731       0xf6 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-strcpy.o)
+ .debug_line    0x0004d827       0xef C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libm_a-s_nan.o)
+ .debug_line    0x0004d916      0x9fb C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-gdtoa-gethex.o)
+ .debug_line    0x0004e311      0x379 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-gdtoa-hexnan.o)
+ .debug_line    0x0004e68a      0x871 C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libg_nano.a(libc_a-nano-svfprintf.o)
 
 .debug_str      0x00000000    0xfd9c5
  .debug_str     0x00000000    0xfd9c5 cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Core/Src/system_stm32f4xx.c.obj
@@ -22353,7 +22353,7 @@ LOAD C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/
  .debug_str     0x000fd9c5    0xe6ba1 CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Shell/shell_port.c.obj
  .debug_str     0x000fd9c5    0xe6eda CMakeFiles/SYSU_Infantry.dir/1-Hardware_Layer/bsp_usb/bsp_usb.c.obj
  .debug_str     0x000fd9c5    0xdcf10 CMakeFiles/SYSU_Infantry.dir/1-Hardware_Layer/bsp_iic/bsp_iic.c.obj
- .debug_str     0x000fd9c5    0xdfd2e CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj
+ .debug_str     0x000fd9c5    0xdfd3a CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj
  .debug_str     0x000fd9c5    0xdfd58 CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj
  .debug_str     0x000fd9c5    0xe1e19 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/Target/usbd_conf.c.obj
  .debug_str     0x000fd9c5    0xe0fd7 CMakeFiles/SYSU_Infantry.dir/USB_DEVICE/App/usb_device.c.obj
