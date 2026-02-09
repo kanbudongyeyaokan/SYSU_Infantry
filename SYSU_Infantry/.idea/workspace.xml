@@ -41,33 +41,16 @@
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/1-Hardware_Layer/bsp_iic/bsp_iic.c" beforeDir="false" afterPath="$PROJECT_DIR$/1-Hardware_Layer/bsp_iic/bsp_iic.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.h" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h" beforeDir="false" afterPath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_spi.c" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_spi.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Ins/ins.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Robot_Task/robot_task.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/codemodel-v2-5b2e65e7d3f742039a51.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/index-2026-02-08T14-42-09-0404.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/target-SYSU_Infantry-Debug-710581e29525f231b1d4.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_deps" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Gimbal/gimbal.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Gimbal/gimbal.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Ins/ins.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Ins/ins.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Perception/Ins_Task/Ins_task.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Perception/Ins_Task/Ins_task.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Robot_Task/robot_task.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/4-Application_Layer/Robot_Task/robot_task.c.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeCache.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/clion-Debug-STM32-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/clion-Debug-STM32-log.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/SYSU_Infantry.elf" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/SYSU_Infantry.elf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/SYSU_Infantry.map" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/SYSU_Infantry.map" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/rules.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/rules.ninja" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/build.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/build.ninja" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/cmake/stm32cubemx/cmake_install.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/cmake/stm32cubemx/cmake_install.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/cmake_install.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/cmake_install.cmake" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/compile_commands.json" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/compile_commands.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -225,9 +208,9 @@
     </key>
   </component>
   <component name="RunManager" selected="OpenOCD 下载并运行.SYSU_Infantry">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
       </method>
     </configuration>
     <configuration name="FreeRTOS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="FreeRTOS" CONFIG_NAME="Debug-STM32">
@@ -383,6 +366,7 @@
       <workItem from="1770557681892" duration="21000" />
       <workItem from="1770558792763" duration="4009000" />
       <workItem from="1770608784306" duration="45000" />
+      <workItem from="1770609628384" duration="478000" />
     </task>
     <servers />
   </component>

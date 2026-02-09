@@ -120,6 +120,10 @@ add_executable(${CMAKE_PROJECT_NAME}
 
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c
         2-Hardware_Driver_Layer/Motor_Driver/dji_motor.h
+        2-Hardware_Driver_Layer/Motor_Driver/dm_motor.h
+        2-Hardware_Driver_Layer/Motor_Driver/dm_motor.c
+        2-Hardware_Driver_Layer/Motor_Driver/lk_motor.h
+        2-Hardware_Driver_Layer/Motor_Driver/lk_motor.c
 
         3-Function_Module_Layer/Robot_Definitions/robot_definitions.h
         3-Function_Module_Layer/Chassis/chassis.c
