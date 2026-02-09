@@ -16,7 +16,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
         // 尝试分发给 HWT606
         HWT606_RxCpltCallback(hi2c);
         
-        // 如果有 HWT101，也分发给它
+        // 如果有 HWT101，也分发给它 
        // HWT101_RxCpltCallback(hi2c);
     }
 }

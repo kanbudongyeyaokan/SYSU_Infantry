@@ -18,7 +18,7 @@
  * @brief 获取 HWT606 驱动实例
  * @param i2c_handle I2C句柄指针 (如 &hi2c2)
  */
-const Ins_driver_interface_t* HWT606_Get_Driver(I2C_HandleTypeDef *i2c_handle);
+const Ins_driver_interface_t* HWT606_IIC_Get_Driver(I2C_HandleTypeDef *i2c_handle);
 
 /**
  * @brief  DMA接收完成回调 (供 bsp_iic.c 调用)

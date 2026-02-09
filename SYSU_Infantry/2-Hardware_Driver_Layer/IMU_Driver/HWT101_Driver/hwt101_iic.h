@@ -21,6 +21,6 @@
  * @param i2c_handle 指向 I2C 句柄的指针 (如 &hi2c2)
  * @return 返回符合 Ins_driver_interface_t 的指针，可直接传给 Ins_init()
  */
-const Ins_driver_interface_t* HWT101_Get_Driver(I2C_HandleTypeDef *i2c_handle);
+const Ins_driver_interface_t* HWT101_IIC_Get_Driver(I2C_HandleTypeDef *i2c_handle);
 
 #endif // HWT101_IIC_H

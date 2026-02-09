@@ -108,7 +108,7 @@ void Robot_task_init(void)
 
 
     //ins任务
-    osThreadDef(ins_task,Ins_task,osPriorityAboveNormal,0,4096);
+    osThreadDef(ins_task,Ins_task,osPriorityHigh,0,4096);
     ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
 
     // osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
