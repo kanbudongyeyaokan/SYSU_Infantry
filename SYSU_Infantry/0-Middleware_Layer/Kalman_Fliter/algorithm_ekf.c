@@ -35,6 +35,8 @@ const float F_init[36] = {
 };
 
 // 初始协方差矩阵P (6x6)
+// 前4个对角元素(四元数)设置为大值100000,表示初始姿态高度不确定
+// 后2个对角元素(零偏)设置为100,表示初始零偏有一定不确定性
 const float P_init[36] = {
     100000, 0.1, 0.1, 0.1, 0.1, 0.1,
     0.1, 100000, 0.1, 0.1, 0.1, 0.1,
@@ -59,6 +61,7 @@ Ekf_error_e Ekf_init(Ekf_state_t* ekf_state, Ekf_config_t* ekf_config) {
     ekf_state->lambda = ekf_config->fading_factor;    // 渐减因子 (建议 0.9996)
 
     // 2. 初始化状态
+    // 单位四元数表示初始姿态为无旋转(机体系与导航系重合)
     ekf_state->quaternion.q0 = 1.0f;
     ekf_state->quaternion.q1 = 0.0f;
     ekf_state->quaternion.q2 = 0.0f;
@@ -81,7 +84,7 @@ Ekf_error_e Ekf_init(Ekf_state_t* ekf_state, Ekf_config_t* ekf_config) {
     ekf_state->error_count = 0;
     ekf_state->update_count = 0;
     ekf_state->chi_square = 0.0f;
-
+    // 航向角连续化相关变量,用于处理±180°跳变
     ekf_state->yaw_round_count = 0;
     ekf_state->yaw_angle_last = 0.0f;
     ekf_state->yaw_total_angle = 0.0f;
@@ -93,6 +96,9 @@ Ekf_error_e Ekf_init(Ekf_state_t* ekf_state, Ekf_config_t* ekf_config) {
 
 /**
  * @brief EKF更新函数 (核心算法移植)
+ *  使用陀螺仪角速度预测下一时刻姿态和协方差
+ *  使用加速度计测量值修正预测姿态
+ *  卡方检验判断测量可靠性,自适应调整卡尔曼增益
  */
 Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float gyro[3], float dt) {
     if (!ekf_state->is_initialized) return EKF_INIT_ERROR;
@@ -115,6 +121,7 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
     acc_norm_val = sqrtf(acc[0]*acc[0] + acc[1]*acc[1] + acc[2]*acc[2]);
 
     // 判断稳定性 (用于卡方检验逻辑)
+    // 满足条件认为设备静止,此时加速度计测量最可靠
     if (gyro_norm_val < 0.3f && acc_norm_val > 9.3f && acc_norm_val < 10.3f) {
         ekf_state->stable_flag = true;
     } else {
@@ -243,7 +250,7 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
 
     float S[9]; // 3x3
     matrix_multiply(HP, HT, S, 3, 6, 3);
-
+    // 加上测量噪声R(对角阵,三个轴相同)
     S[0] += ekf_state->R_val;
     S[4] += ekf_state->R_val;
     S[8] += ekf_state->R_val;
@@ -304,7 +311,7 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
 
     // [移植点 4] 应用自适应增益和方向余弦修正
     for(int i=0; i<18; i++) K[i] *= gain_scale;
-
+    // 当重力矢量与某轴夹角较大时,该轴的加速度计信息较弱,降低增益
     for(int i=4; i<6; i++) { // 对零偏部分(x,y)进行修正
         for(int j=0; j<3; j++) {
              float cos_val = fabsf(g_pred[i-4]);
@@ -359,7 +366,9 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
     matrix_multiply(I_KH, P_pred, ekf_state->P, 6, 6, 6);
 
     // ================== 输出转换 ==================
+    // 将四元数转换为欧拉角输出
     Ekf_quaternion_to_euler(&ekf_state->quaternion, &ekf_state->euler);
+    // 更新连续航向角(处理±180°跳变)
     Ekf_update_yaw_continuity(ekf_state);
 
     ekf_state->update_count++;
@@ -398,6 +407,7 @@ void Ekf_update_yaw_continuity(Ekf_state_t* ekf_state) {
 }
 
 // 矩阵运算辅助函数
+// 矩阵乘法: C = A * B
 static void matrix_multiply(float* A, float* B, float* C, int m, int n, int p) {
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < p; j++) {
@@ -409,7 +419,7 @@ static void matrix_multiply(float* A, float* B, float* C, int m, int n, int p) {
         }
     }
 }
-
+// 矩阵转置: B = A'
 static void matrix_transpose(float* A, float* B, int m, int n) {
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < n; j++) {
@@ -417,7 +427,7 @@ static void matrix_transpose(float* A, float* B, int m, int n) {
         }
     }
 }
-
+// 3×3矩阵求逆
 static int matrix_inverse_3x3(float* src, float* dst) {
     float det = src[0]*(src[4]*src[8] - src[5]*src[7]) -
                 src[1]*(src[3]*src[8] - src[5]*src[6]) +
@@ -439,7 +449,7 @@ static int matrix_inverse_3x3(float* src, float* dst) {
 
     return 0;
 }
-
+// 快速平方根倒数算法
 static float inv_sqrt(float x) {
     float halfx = 0.5f * x;
     float y = x;

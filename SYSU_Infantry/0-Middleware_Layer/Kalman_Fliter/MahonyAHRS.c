@@ -37,10 +37,10 @@ static float invSqrt(float x) {
  * @param   dt: 运行周期 (s)
  */
 void MahonyAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az, float dt) {
-    float recipNorm;
-    float halfvx, halfvy, halfvz;
-    float halfex, halfey, halfez;
-    float qa, qb, qc;
+    float recipNorm;  //  归一化系数（向量模的倒数）
+    float halfvx, halfvy, halfvz;  // 估计的重力向量的一半（机体坐标系）
+    float halfex, halfey, halfez;  // 误差向量的一半（测量值与估计值的叉积）
+    float qa, qb, qc;  // 四元数临时变量
 
     // 1. 如果加速度计数据无效(例如处于失重状态)，则只进行陀螺仪积分
     if(!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
