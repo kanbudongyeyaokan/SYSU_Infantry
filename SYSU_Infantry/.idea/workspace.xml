@@ -41,17 +41,17 @@
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Perception/Ins_Task/Ins_task.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_deps" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/cache-v2-9d833b93fe2bb5229571.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/cmakeFiles-v1-e89330c482cf5fefbeee.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/codemodel-v2-95386fd12ce960d90d19.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/index-2026-02-09T04-02-47-0675.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/target-SYSU_Infantry-Debug-9bf668f9e9f0cd9b1003.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeCache.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/clion-Debug-STM32-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/clion-Debug-STM32-log.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/rules.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/rules.ninja" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/build.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/build.ninja" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/cmake/stm32cubemx/cmake_install.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/cmake/stm32cubemx/cmake_install.cmake" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/cmake_install.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/cmake_install.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/compile_commands.json" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/compile_commands.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -208,11 +208,6 @@
     </key>
   </component>
   <component name="RunManager" selected="OpenOCD 下载并运行.SYSU_Infantry">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="FreeRTOS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="FreeRTOS" CONFIG_NAME="Debug-STM32">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -367,6 +362,7 @@
       <workItem from="1770558792763" duration="4009000" />
       <workItem from="1770608784306" duration="45000" />
       <workItem from="1770609628384" duration="478000" />
+      <workItem from="1770649120490" duration="373000" />
     </task>
     <servers />
   </component>
