@@ -1,10 +1,26 @@
+/**
+ * @file    bsp_wdg.c
+ * @brief   软件看门狗驱动实现
+ * @author  SYSU电控组
+ * @date    2026-02-10
+ * @version 1.0
+ * @note    提供软件看门狗的注册、喂狗、监控和状态查询功能
+ */
+
 #include "bsp_wdg.h"
 #include <string.h>
 
-static Watchdog_device_t *wdg_register[WATCHDOG_MX_NUM] = {NULL};
+// 注册表，存储所有已注册的看门狗实例
+static Watchdog_device_t* wdg_register[WATCHDOG_MX_NUM] = { NULL };
+// 当前已注册的数量
 static uint8_t idx = 0;
 
-Watchdog_device_t *Watchdog_register(Watchdog_init_t *config)
+/**
+ * @brief   注册一个新的看门狗实例
+ * @param   config: 看门狗初始化配置结构体指针
+ * @return  Watchdog_device_t*: 返回分配的看门狗实例指针
+ */
+Watchdog_device_t* Watchdog_register(Watchdog_init_t* config)
 {
     if (idx >= WATCHDOG_MX_NUM) return NULL;
 
@@ -26,8 +42,11 @@ Watchdog_device_t *Watchdog_register(Watchdog_init_t *config)
     return instance;
 }
 
-
-void Watchdog_feed(Watchdog_device_t *instance)
+/**
+ * @brief   喂狗函数，重置计数器
+ * @param   instance: 看门狗实例指针
+ */
+void Watchdog_feed(Watchdog_device_t* instance)
 {
     if (instance == NULL) return;
 
@@ -47,6 +66,10 @@ void Watchdog_feed(Watchdog_device_t *instance)
     }
 }
 
+/**
+ * @brief   看门狗总控函数，处理所有看门狗的计数递减和超时检测
+ * @note    需在定时器或任务中周期性调用
+ */
 void Watchdog_control_all(void)
 {
     Watchdog_device_t *current_dog;
@@ -76,7 +99,12 @@ void Watchdog_control_all(void)
     }
 }
 
-uint8_t Watchdog_is_online(Watchdog_device_t *instance)
+/**
+ * @brief   查询设备在线状态
+ * @param   instance: 看门狗实例指针
+ * @return  uint8_t: 1 表示在线，0 表示离线
+ */
+uint8_t Watchdog_is_online(Watchdog_device_t* instance)
 {
     if (instance == NULL) return 0;
     return (instance->is_offline == 0) ? 1 : 0;

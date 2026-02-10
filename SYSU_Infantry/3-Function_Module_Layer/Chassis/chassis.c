@@ -16,7 +16,7 @@
 #include "arm_math.h"
 #include "bsp_usart.h"
 #include "main.h"
-#include "math_lib.h
+#include "math_lib.h"
 #include "message_center.h"
 #include "robot_task.h"
 
