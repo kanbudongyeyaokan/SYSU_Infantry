@@ -124,6 +124,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Robot_Definitions/robot_definitions.h
         3-Function_Module_Layer/Chassis/chassis.c
         3-Function_Module_Layer/Chassis/chassis.h
+        3-Function_Module_Layer/Chassis/chassis_power_control.c
+        3-Function_Module_Layer/Chassis/chassis_power_control.h
         3-Function_Module_Layer/Gimbal/gimbal.c
         3-Function_Module_Layer/Gimbal/gimbal.h
         3-Function_Module_Layer/Ins/ins.c
@@ -132,6 +134,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Referee/referee.h
         3-Function_Module_Layer/Shoot/shoot.c
         3-Function_Module_Layer/Shoot/shoot.h
+        3-Function_Module_Layer/Super_Capacitor/supercap_comm.c
+        3-Function_Module_Layer/Super_Capacitor/supercap_comm.h
         3-Function_Module_Layer/Ins/ins.c
         3-Function_Module_Layer/Ins/ins.h
 
@@ -215,6 +219,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Super_Capacitor
 
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usb
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_spi

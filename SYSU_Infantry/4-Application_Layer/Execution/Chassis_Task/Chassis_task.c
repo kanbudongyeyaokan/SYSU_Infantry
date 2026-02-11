@@ -14,7 +14,7 @@
 
 #include "chassis.h"
 #include "robot_task.h"
-
+#include "supercap_comm.h"
 
 
 
@@ -33,8 +33,9 @@ void Chassis_control_task(void const *argument)
     // 任务主循环
     for (;;)
     {
-        // 任务由队列消息触发，实际运行频率取决于决策层的发送频率
-        // 如果决策层发送频率为 500Hz，则此任务也以 500Hz 运行
+        //超电发送
+        Send2SuperCap();
+
         if (xQueueReceive(Chassis_cmd_queue_handle, &cmd_recv, 100) == pdTRUE)
         {
             // === 正常接收到指令 ===
@@ -45,8 +46,7 @@ void Chassis_control_task(void const *argument)
         else
         {
             // === 超时未收到指令 (安全保护) ===
-            // 决策层卡死或通信断开，导致超过 100ms (100 ticks) 未收到指令
-            // 底盘必须急停防止疯跑
+            // 决策层卡死或通信断开，底盘必须急停防止疯跑
             cmd_recv.chassis_mode = CHASSIS_ZERO_FORCE;
             cmd_recv.vx = 0;
             cmd_recv.vy = 0;

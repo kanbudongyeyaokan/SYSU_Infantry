@@ -130,3 +130,13 @@ void Referee_Send_UI_Test(void)
     Append_CRC16_Check_Sum(tx_buf, total_len - 2);
     Uart_sendData(referee_uart, tx_buf, total_len);
 }
+
+uint16_t ChassisPower_GetMaxLimit(void)
+{
+    return referee_data.robot_status.chassis_power_limit;
+}
+
+uint16_t ChassisPower_GetBuffer(void)
+{
+    return referee_data.power_heat_data.buffer_energy;
+}
