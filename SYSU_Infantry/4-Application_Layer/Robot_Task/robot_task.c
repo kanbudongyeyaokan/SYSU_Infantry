@@ -81,8 +81,10 @@ void Robot_task_init(void) {
   // 创建队列 (必须在任务创建之前!)
   // ============================================================
   // 深度为1，启用覆盖写模式，始终保持最新指令
+  // 避免队列积压旧指令，确保执行的是最新策略，丢弃过时指令
   Chassis_cmd_queue_handle = xQueueCreate(1, sizeof(Chassis_cmd_send_t));
 
+  // 同上，保持最新云台指令
   Gimbal_cmd_queue_handle = xQueueCreate(1, sizeof(Gimbal_cmd_send_t));
 
   Shoot_cmd_queue_handle = xQueueCreate(1, sizeof(Shoot_cmd_send_t));

@@ -187,6 +187,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         //反馈数据
         gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
         //推送消息
+        // 将当前的电机状态（编码器数据）发布给决策层，用于下一帧的闭环控制或逻辑判断
         Pub_push_message(gimbal_pub, (void *) &gimbal_feedback);
 }
 /**
