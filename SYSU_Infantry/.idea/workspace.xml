@@ -40,43 +40,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="448d4f40-f84b-4711-8eef-9a660b9c162b" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis_power_control.c" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis_power_control.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Super_Capacitor/supercap_comm.c" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Super_Capacitor/supercap_comm.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../build/.cmake/api/v1/query/client-vscode/query.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../build/CMakeCache.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../build/CMakeFiles/3.28.1/CMakeRCCompiler.cmake" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../build/CMakeFiles/3.28.1/CMakeSystem.cmake" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../build/CMakeFiles/3.28.1/CompilerIdC/CMakeCCompilerId.c" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../build/CMakeFiles/3.28.1/CompilerIdC/CMakeCCompilerId.o" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../build/CMakeFiles/CMakeConfigureLog.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../build/CMakeFiles/cmake.check_cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.vscode/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/../.vscode/settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Chassis/chassis.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Referee/referee.c" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Referee/referee.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/3-Function_Module_Layer/Referee/referee.h" beforeDir="false" afterPath="$PROJECT_DIR$/3-Function_Module_Layer/Referee/referee.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/4-Application_Layer/Execution/Chassis_Task/Chassis_task.c" beforeDir="false" afterPath="$PROJECT_DIR$/4-Application_Layer/Execution/Chassis_Task/Chassis_task.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/cache-v2-b5838f9447d393c882fd.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/cmakeFiles-v1-9b437e85a69d5fcfd21d.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/codemodel-v2-fd5a7004c9b7be14c7fe.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/index-2026-02-10T05-15-44-0783.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/target-FreeRTOS-Debug-6e151d96015067502833.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/target-STM32_Drivers-Debug-d7996aad91c5306ad255.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/target-SYSU_Infantry-Debug-1a686915481c40798b32.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/target-USB_Device_Library-Debug-e40bd4d9d3d0bc5eb74e.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/.cmake/api/v1/reply/toolchains-v1-28ee18cf6f17da33a731.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_deps" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/.ninja_log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeCache.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeASMCompiler.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeASMCompiler.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeCCompiler.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeCCompiler.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeCXXCompiler.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeCXXCompiler.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeSystem.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeSystem.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CompilerIdC/CMakeCCompilerId.o" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CompilerIdC/CMakeCCompilerId.o" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CompilerIdCXX/CMakeCXXCompilerId.o" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CompilerIdCXX/CMakeCXXCompilerId.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeASMCompiler.cmake" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeCCompiler.cmake" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeCXXCompiler.cmake" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CMakeSystem.cmake" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CompilerIdC/CMakeCCompilerId.c" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CompilerIdC/CMakeCCompilerId.o" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CompilerIdCXX/CMakeCXXCompilerId.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/3.28.1/CompilerIdCXX/CMakeCXXCompilerId.o" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/4.0.2/CMakeASMCompiler.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/4.0.2/CMakeASMCompiler.cmake" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/4.0.2/CMakeCCompiler.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/4.0.2/CMakeCCompiler.cmake" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/4.0.2/CMakeCXXCompiler.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/4.0.2/CMakeCXXCompiler.cmake" afterDir="false" />
@@ -112,7 +88,6 @@
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c.obj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c.obj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_spi.c.obj" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_uart.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_uart.c.obj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/2-Hardware_Driver_Layer/Motor_Driver/dji_motor.c.obj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Chassis/chassis.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/build/Debug/CMakeFiles/SYSU_Infantry.dir/3-Function_Module_Layer/Chassis/chassis.c.obj" afterDir="false" />
@@ -359,7 +334,7 @@
     "RunOnceActivity.west.config.association.type.startup.service": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "正在合并 rtos__new__version__feature",
+    "git-widget-placeholder": "rtos__new__version",
     "ignore.virus.scanning.warn.message": "true",
     "last_opened_file_path": "D:/Musii-SnapShot/GithubRepo/Infantry/SYSU_Infantry",
     "node.js.detected.package.eslint": "true",
@@ -377,9 +352,9 @@
     </key>
   </component>
   <component name="RunManager" selected="OpenOCD 下载并运行.SYSU_Infantry">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
       </method>
     </configuration>
     <configuration name="FreeRTOS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SYSU_Infantry" TARGET_NAME="FreeRTOS" CONFIG_NAME="Debug-STM32">
@@ -538,6 +513,7 @@
       <workItem from="1770609628384" duration="478000" />
       <workItem from="1770649120490" duration="373000" />
       <workItem from="1770786992456" duration="2455000" />
+      <workItem from="1770819834034" duration="277000" />
     </task>
     <servers />
   </component>
