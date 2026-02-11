@@ -25,7 +25,6 @@ typedef enum {
     INS_STATE_INIT = 0,     // 初始化中
     INS_STATE_READY,        // 数据正常，可以使用
     INS_STATE_ERROR,        // 传感器故障或通信超时
-    INS_STATE_CALIBRATING,  // 校准中，数据不可靠
 } Ins_state_e;
 
 /**

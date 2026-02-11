@@ -3,6 +3,7 @@
 .vscode/launch.json
 .vscode/ipch
 .vscode
-
+.idea
 
 SYSU_Infantry/ref
+SYSU_Infantry/build

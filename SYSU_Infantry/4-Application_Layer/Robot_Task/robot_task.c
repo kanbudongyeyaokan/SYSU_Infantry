@@ -107,9 +107,10 @@ void Robot_task_init(void)
     decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
 
 
-    //ins任务
-    osThreadDef(ins_task,Ins_task,osPriorityHigh,0,4096);
-    ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
+  // 云台控制任务 (Priority: Normal)
+  osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0,
+              512);
+  gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
 
     // osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
     // referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
