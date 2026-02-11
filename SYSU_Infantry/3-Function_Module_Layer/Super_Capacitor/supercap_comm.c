@@ -4,7 +4,6 @@
 #include <string.h>
 
 static Can_controller_t *supercap_can = NULL;
-static volatile uint8_t supercap_has_new_rx = 0;
 
 static SuperCap_RxData supercap_rx_data;
 static SuperCap_TxData supercap_tx_data;
@@ -18,7 +17,6 @@ static void SuperCap_RxCallback(Can_controller_t *can_dev, void *context)
     }
 
     memcpy((void *) &supercap_rx_data, can_dev->rx_buffer, sizeof(supercap_rx_data));
-    supercap_has_new_rx = 1U;
 }
 
 void SuperCap_Comm_Init(CAN_HandleTypeDef *hcan)
