@@ -41,7 +41,7 @@ typedef struct
 {
     shoot_mode_e shoot_mode;    //发射模式-若打开则摩擦轮也跟着打开
     loader_mode_e loader_mode;  //子弹发射模式
-    uint8_t shoot_rate;         //发射弹频
+    uint8_t shoot_rate;         //发射弹频 (发/秒)
 }Shoot_cmd_send_t;
 
 /******************决策任务接收各个模块的反馈信息**********************/
@@ -77,21 +77,22 @@ typedef struct
 
 
 /**
- * @brief 任务初始化函数，初始化决策层的发布者和订阅者,获取遥控器数据
- *
-*/
+ * @brief 任务初始化函数
+ *        1. 初始化决策层的发布者和订阅者 (uORB 或其他消息机制)
+ *        2. 获取遥控器数据指针，准备读取遥控器输入
+ */
 void Decision_making_task_init();
 
 /**
  * @brief 接收各个应用层反馈回来的数据
- *
-*/
+ *        包括底盘电机状态、云台角度、发射机构热量等，用于决策逻辑判断
+ */
 void Receive_feedback_infomation();
 
 /**
  * @brief 发送决策层的控制信息给各个应用层
- *
-*/
+ *        将计算好的 Chassis_cmd, Gimbal_cmd, Shoot_cmd 发送出去
+ */
 void Send_command_to_all_task();
 
 /**

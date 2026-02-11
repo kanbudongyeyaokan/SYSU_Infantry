@@ -39,7 +39,7 @@ static Chassis_params_t chassis_params = {0};
 /****************底盘电机实例及控制参数*******************************/
 static Djimotor_device_t *chassis_motors[4] = {0};
 
-//底盘四个电机的输出
+// 底盘四个电机的输出
 static Chassis_output_t chassis_output;
 
 #define abs(x) ((x > 0) ? x : -x)
@@ -173,9 +173,8 @@ void Chassis_init() {
     }
 }
 
-
 /**
- * @brief [核心修改] 底盘逻辑更新函数
+ * @brief 底盘逻辑更新函数
  * @param cmd 指向接收到的指令结构体
  */
 void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
@@ -334,7 +333,6 @@ static void Chassis_mecanum_kinematics(const Chassis_cmd_send_t *cmd, Chassis_ou
         output->motor_speed[i] = angular_velocity * 60.0f / (2.0f * M_PI); // rpm
     }
 }
-
 
 /**
  * @brief 底盘运动学解算
