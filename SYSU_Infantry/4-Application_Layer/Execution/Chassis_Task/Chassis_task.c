@@ -14,7 +14,7 @@
 
 #include "chassis.h"
 #include "robot_task.h"
-
+#include "supercap_comm.h"
 
 
 
@@ -33,6 +33,9 @@ void Chassis_control_task(void const *argument)
     // 任务主循环
     for (;;)
     {
+        //超电发送
+        Send2SuperCap();
+
         if (xQueueReceive(Chassis_cmd_queue_handle, &cmd_recv, 100) == pdTRUE)
         {
             // === 正常接收到指令 ===

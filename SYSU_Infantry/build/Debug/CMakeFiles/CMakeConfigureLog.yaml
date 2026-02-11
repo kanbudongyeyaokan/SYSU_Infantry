@@ -4,37 +4,37 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineSystem.cmake:228 (message)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineSystem.cmake:200 (message)"
       - "CMakeLists.txt:29 (enable_language)"
     message: |
       The target system is: Generic -  - arm
-      The host system is: Windows - 10.0.26100 - AMD64
+      The host system is: Windows - 10.0.22631 - AMD64
   -
     kind: "message-v1"
     backtrace:
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:29 (enable_language)"
     message: |
       Compiling the C compiler identification source file "CMakeCCompilerId.c" failed.
-      Compiler: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe 
+      Compiler: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe 
       Build flags: -mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3
       Id flags:  
       
       The output was:
       1
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-exit.o): in function `exit':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-exit.o): in function `exit':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/stdlib/exit.c:65:(.text.exit+0x14): undefined reference to `_exit'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-closer.o): in function `_close_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-closer.o): in function `_close_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/closer.c:47:(.text._close_r+0xc): undefined reference to `_close'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-lseekr.o): in function `_lseek_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-lseekr.o): in function `_lseek_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/lseekr.c:49:(.text._lseek_r+0x10): undefined reference to `_lseek'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-readr.o): in function `_read_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-readr.o): in function `_read_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/readr.c:49:(.text._read_r+0x10): undefined reference to `_read'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-writer.o): in function `_write_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-writer.o): in function `_write_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/writer.c:49:(.text._write_r+0x10): undefined reference to `_write'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-sbrkr.o): in function `_sbrk_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-sbrkr.o): in function `_sbrk_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/sbrkr.c:51:(.text._sbrk_r+0xc): undefined reference to `_sbrk'
       collect2.exe: error: ld returned 1 exit status
       
@@ -42,13 +42,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:29 (enable_language)"
     message: |
       Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
-      Compiler: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe 
+      Compiler: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe 
       Build flags: -mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3
       Id flags: -c 
       
@@ -59,13 +59,13 @@ events:
       Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.o"
       
       The C compiler identification is GNU, found in:
-        D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug/CMakeFiles/3.28.1/CompilerIdC/CMakeCCompilerId.o
+        D:/software/expertise/RM/SYSU_Infantry/SYSU_Infantry/build/Debug/CMakeFiles/4.0.2/CompilerIdC/CMakeCCompilerId.o
       
   -
     kind: "message-v1"
     backtrace:
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:1131 (message)"
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineASMCompiler.cmake:131 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:1271 (message)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineASMCompiler.cmake:139 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
       - "CMakeLists.txt:29 (enable_language)"
     message: |
       Checking whether the ASM compiler is GNU using "--version" matched "(GNU assembler)|(GCC)|(Free Software Foundation)":
@@ -77,29 +77,29 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:32 (project)"
     message: |
       Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" failed.
-      Compiler: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe 
+      Compiler: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe 
       Build flags: -mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-fno-rtti;-fno-exceptions;-fno-threadsafe-statics
       Id flags:  
       
       The output was:
       1
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-exit.o): in function `exit':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-exit.o): in function `exit':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/stdlib/exit.c:65:(.text.exit+0x14): undefined reference to `_exit'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-closer.o): in function `_close_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-closer.o): in function `_close_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/closer.c:47:(.text._close_r+0xc): undefined reference to `_close'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-lseekr.o): in function `_lseek_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-lseekr.o): in function `_lseek_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/lseekr.c:49:(.text._lseek_r+0x10): undefined reference to `_lseek'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-readr.o): in function `_read_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-readr.o): in function `_read_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/readr.c:49:(.text._read_r+0x10): undefined reference to `_read'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-writer.o): in function `_write_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-writer.o): in function `_write_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/writer.c:49:(.text._write_r+0x10): undefined reference to `_write'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-sbrkr.o): in function `_sbrk_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-sbrkr.o): in function `_sbrk_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/sbrkr.c:51:(.text._sbrk_r+0xc): undefined reference to `_sbrk'
       collect2.exe: error: ld returned 1 exit status
       
@@ -107,13 +107,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "C:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "D:/software/CLion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:32 (project)"
     message: |
       Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
-      Compiler: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe 
+      Compiler: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe 
       Build flags: -mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-fno-rtti;-fno-exceptions;-fno-threadsafe-statics
       Id flags: -c 
       
@@ -124,7 +124,7 @@ events:
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.o"
       
       The CXX compiler identification is GNU, found in:
-        D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug/CMakeFiles/3.28.1/CompilerIdCXX/CMakeCXXCompilerId.o
+        D:/software/expertise/RM/SYSU_Infantry/SYSU_Infantry/build/Debug/CMakeFiles/4.0.2/CompilerIdCXX/CMakeCXXCompilerId.o
       
 ...
 
@@ -133,37 +133,37 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineSystem.cmake:200 (message)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineSystem.cmake:228 (message)"
       - "CMakeLists.txt:29 (enable_language)"
     message: |
       The target system is: Generic -  - arm
-      The host system is: Windows - 10.0.26100 - AMD64
+      The host system is: Windows - 10.0.22631 - AMD64
   -
     kind: "message-v1"
     backtrace:
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:29 (enable_language)"
     message: |
       Compiling the C compiler identification source file "CMakeCCompilerId.c" failed.
-      Compiler: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe 
+      Compiler: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe 
       Build flags: -mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3
       Id flags:  
       
       The output was:
       1
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-exit.o): in function `exit':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-exit.o): in function `exit':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/stdlib/exit.c:65:(.text.exit+0x14): undefined reference to `_exit'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-closer.o): in function `_close_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-closer.o): in function `_close_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/closer.c:47:(.text._close_r+0xc): undefined reference to `_close'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-lseekr.o): in function `_lseek_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-lseekr.o): in function `_lseek_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/lseekr.c:49:(.text._lseek_r+0x10): undefined reference to `_lseek'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-readr.o): in function `_read_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-readr.o): in function `_read_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/readr.c:49:(.text._read_r+0x10): undefined reference to `_read'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-writer.o): in function `_write_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-writer.o): in function `_write_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/writer.c:49:(.text._write_r+0x10): undefined reference to `_write'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-sbrkr.o): in function `_sbrk_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-sbrkr.o): in function `_sbrk_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/sbrkr.c:51:(.text._sbrk_r+0xc): undefined reference to `_sbrk'
       collect2.exe: error: ld returned 1 exit status
       
@@ -171,13 +171,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:29 (enable_language)"
     message: |
       Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
-      Compiler: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe 
+      Compiler: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe 
       Build flags: -mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3
       Id flags: -c 
       
@@ -188,13 +188,13 @@ events:
       Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.o"
       
       The C compiler identification is GNU, found in:
-        D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug/CMakeFiles/4.0.2/CompilerIdC/CMakeCCompilerId.o
+        D:/software/expertise/RM/SYSU_Infantry/SYSU_Infantry/build/Debug/CMakeFiles/3.28.1/CompilerIdC/CMakeCCompilerId.o
       
   -
     kind: "message-v1"
     backtrace:
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:1271 (message)"
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineASMCompiler.cmake:139 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:1131 (message)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineASMCompiler.cmake:131 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
       - "CMakeLists.txt:29 (enable_language)"
     message: |
       Checking whether the ASM compiler is GNU using "--version" matched "(GNU assembler)|(GCC)|(Free Software Foundation)":
@@ -206,29 +206,29 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:32 (project)"
     message: |
       Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" failed.
-      Compiler: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe 
+      Compiler: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe 
       Build flags: -mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-fno-rtti;-fno-exceptions;-fno-threadsafe-statics
       Id flags:  
       
       The output was:
       1
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-exit.o): in function `exit':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-exit.o): in function `exit':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/stdlib/exit.c:65:(.text.exit+0x14): undefined reference to `_exit'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-closer.o): in function `_close_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-closer.o): in function `_close_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/closer.c:47:(.text._close_r+0xc): undefined reference to `_close'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-lseekr.o): in function `_lseek_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-lseekr.o): in function `_lseek_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/lseekr.c:49:(.text._lseek_r+0x10): undefined reference to `_lseek'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-readr.o): in function `_read_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-readr.o): in function `_read_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/readr.c:49:(.text._read_r+0x10): undefined reference to `_read'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-writer.o): in function `_write_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-writer.o): in function `_write_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/writer.c:49:(.text._write_r+0x10): undefined reference to `_write'
-      C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-sbrkr.o): in function `_sbrk_r':
+      D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/bin/ld.exe: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\\libg.a(libc_a-sbrkr.o): in function `_sbrk_r':
       /build/gnu-tools-for-stm32_13.3.rel1.20240926-1715/src/newlib/newlib/libc/reent/sbrkr.c:51:(.text._sbrk_r+0xc): undefined reference to `_sbrk'
       collect2.exe: error: ld returned 1 exit status
       
@@ -236,13 +236,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "D:/Clion/CLion 2025.2/bin/cmake/win/x64/share/cmake-4.0/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "D:/software/CubeCLT/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:32 (project)"
     message: |
       Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
-      Compiler: C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe 
+      Compiler: D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe 
       Build flags: -mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-mcpu=cortex-m4;-mfpu=fpv4-sp-d16;-mfloat-abi=hard;-Wall;-Wextra;-Wpedantic;-fdata-sections;-ffunction-sections;-O0;-g3;-fno-rtti;-fno-exceptions;-fno-threadsafe-statics
       Id flags: -c 
       
@@ -253,6 +253,6 @@ events:
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.o"
       
       The CXX compiler identification is GNU, found in:
-        D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug/CMakeFiles/4.0.2/CompilerIdCXX/CMakeCXXCompilerId.o
+        D:/software/expertise/RM/SYSU_Infantry/SYSU_Infantry/build/Debug/CMakeFiles/3.28.1/CompilerIdCXX/CMakeCXXCompilerId.o
       
 ...

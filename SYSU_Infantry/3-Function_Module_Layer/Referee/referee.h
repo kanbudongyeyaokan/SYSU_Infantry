@@ -214,4 +214,8 @@ typedef struct {
 Referee_Data_t* Referee_Get_Data(UART_HandleTypeDef *huart);
 void Referee_Send_UI_Test(void);
 
+
+uint16_t ChassisPower_GetMaxLimit(void);
+uint16_t ChassisPower_GetBuffer(void);
+
 #endif

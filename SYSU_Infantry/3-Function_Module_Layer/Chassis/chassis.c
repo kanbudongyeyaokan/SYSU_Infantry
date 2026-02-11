@@ -4,7 +4,6 @@
  * @author  SYSU电控组
  * @date    2025-09-19
  * @version 1.0
- * 
  * @note    实现底盘运动学解算功能，支持多种底盘类型
  */
 
@@ -19,6 +18,9 @@
 #include "arm_math.h"
 #include "bsp_usart.h"
 #include "robot_task.h"
+#include "chassis_power_control.h"
+#include "supercap_comm.h"
+
 
 #define CHASSIS_FOLLOW_YAW_GAIN 0.5f
 #define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
@@ -51,6 +53,12 @@ void Chassis_task_init(void) {
     Chassis_init();
     // 先完成消息中心注册，避免后续大量内存分配导致订阅失败
     chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
+
+    //超电初始化
+    SuperCap_Comm_Init(&hcan2);
+
+    //底盘功率控制初始化
+    Chassis_Power_Control_Init();
 }
 
 /**
@@ -195,6 +203,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             }
 
             Chassis_kinematics_solve(cmd, &chassis_output);
+            Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
@@ -218,6 +227,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             cmd_solved.vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
 
             Chassis_kinematics_solve(&cmd_solved, &chassis_output);
+            Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
@@ -248,6 +258,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
             // 传入副本的地址
             Chassis_kinematics_solve(&rotate_cmd, &chassis_output);
+            Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);

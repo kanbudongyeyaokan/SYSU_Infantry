@@ -1,4 +1,4 @@
-set(CMAKE_C_COMPILER "C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe")
+set(CMAKE_C_COMPILER "D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc.exe")
 set(CMAKE_C_COMPILER_ARG1 "")
 set(CMAKE_C_COMPILER_ID "GNU")
 set(CMAKE_C_COMPILER_VERSION "13.3.1")
@@ -23,11 +23,11 @@ set(CMAKE_C_SIMULATE_VERSION "")
 
 
 
-set(CMAKE_AR "C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-ar.exe")
-set(CMAKE_C_COMPILER_AR "C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc-ar.exe")
-set(CMAKE_RANLIB "C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-ranlib.exe")
-set(CMAKE_C_COMPILER_RANLIB "C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc-ranlib.exe")
-set(CMAKE_LINKER "C:/ST/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe")
+set(CMAKE_AR "D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-ar.exe")
+set(CMAKE_C_COMPILER_AR "D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc-ar.exe")
+set(CMAKE_RANLIB "D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-ranlib.exe")
+set(CMAKE_C_COMPILER_RANLIB "D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-gcc-ranlib.exe")
+set(CMAKE_LINKER "D:/software/CubeCLT/STM32CubeCLT_1.18.0/GNU-tools-for-STM32/bin/arm-none-eabi-g++.exe")
 set(CMAKE_LINKER_LINK "")
 set(CMAKE_LINKER_LLD "")
 set(CMAKE_C_COMPILER_LINKER "")
