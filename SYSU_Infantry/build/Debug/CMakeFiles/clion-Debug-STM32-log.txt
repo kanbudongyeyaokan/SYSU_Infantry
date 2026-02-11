@@ -1,9 +1,0 @@
-"D:\Clion\CLion 2025.2\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug --preset Debug -G Ninja -S D:\SYSU_Infantry\SYSU_Infantry\SYSU_Infantry -B D:\SYSU_Infantry\SYSU_Infantry\SYSU_Infantry\build\Debug
-CMake Warning (dev) at CMakeLists.txt:29 (enable_language):
-  project() should be called prior to this enable_language() call.
-This warning is for project developers.  Use -Wno-dev to suppress it.
-
-Build type: Debug
--- Configuring done (0.2s)
--- Generating done (0.1s)
--- Build files have been written to: D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug

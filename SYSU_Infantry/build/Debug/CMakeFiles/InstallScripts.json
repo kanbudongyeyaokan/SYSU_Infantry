@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug/cmake_install.cmake",
-		"D:/SYSU_Infantry/SYSU_Infantry/SYSU_Infantry/build/Debug/cmake/stm32cubemx/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
