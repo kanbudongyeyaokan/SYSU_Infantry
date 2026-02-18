@@ -20,6 +20,7 @@
 #include "Gimbal_task.h"
 #include "Ins_task.h"
 #include "shoot_task.h"
+#include "Referee_task.h"
 
 
 /**任务句柄声明**/
@@ -95,6 +96,10 @@ void Robot_task_init(void)
 
     osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
     shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+
+    //裁判系统任务
+    osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
+    referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
     // 添加短暂延时
     //  osDelay(100);
 

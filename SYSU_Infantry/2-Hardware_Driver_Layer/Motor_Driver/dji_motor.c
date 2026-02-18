@@ -271,9 +271,17 @@ static void Calculate_Motor_Output(Djimotor_device_t *motor) {
             case ANGLE_AND_SPEED_LOOP: {
                 float speed_target = Pid_calculate(&motor->motor_pid.angle_pid, angle_feedback, motor->motor_pid.pid_target)
                                      + motor->motor_pid.speed_feedforward; // 速度前馈补偿
-                
+
                 output = Pid_calculate(&motor->motor_pid.speed_pid, speed_feedback, speed_target);
                                     // 力矩前馈可以在这里添加
+                break;
+            }
+            case ANGLE_AND_CURRENT_LOOP: {
+                // 力位混控：角度环输出直接作为电流环输入
+                float current_target = Pid_calculate(&motor->motor_pid.angle_pid, 
+                    angle_feedback, 
+                    motor->motor_pid.pid_target);
+                output = Pid_calculate(&motor->motor_pid.current_pid, current_feedback, current_target);
                 break;
             }
             default:

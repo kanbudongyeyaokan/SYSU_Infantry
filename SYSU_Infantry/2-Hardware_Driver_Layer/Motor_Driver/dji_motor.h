@@ -42,6 +42,7 @@ typedef enum
     ANGLE_LOOP = 0b0100,            //角度环
     SPEED_AND_CURRENT_LOOP = 0b0011,
     ANGLE_AND_SPEED_LOOP = 0b0110,
+    ANGLE_AND_CURRENT_LOOP = 0b0101, //力位混控：角度环+电流环
 } Djimotor_closeloop_e;
 
 typedef enum

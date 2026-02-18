@@ -8,7 +8,7 @@
  * @note    调用来自方法层中的云台接口进行云台控制
  */
 
-#include "Shoot_task.h"
+#include "shoot_task.h"
 #include "shoot.h"
 #include "cmsis_os.h"
 

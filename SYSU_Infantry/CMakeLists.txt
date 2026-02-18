@@ -103,10 +103,11 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Ins/ins.h
         3-Function_Module_Layer/Referee/referee.c
         3-Function_Module_Layer/Referee/referee.h
+        3-Function_Module_Layer/Referee/protocol.h
+        3-Function_Module_Layer/Referee/CRC8_CRC16.h
+        3-Function_Module_Layer/Referee/CRC8_CRC16.c
         3-Function_Module_Layer/Shoot/shoot.c
         3-Function_Module_Layer/Shoot/shoot.h
-        3-Function_Module_Layer/Ins/ins.c
-        3-Function_Module_Layer/Ins/ins.h
 
         3-Function_Module_Layer/Decision_making/decision_making.c
         3-Function_Module_Layer/Decision_making/decision_making.h

@@ -101,13 +101,13 @@ void Shoot_motors_init(void)
 				.angle_source = MOTOR_FEEDBACK,
 				.speed_source = MOTOR_FEEDBACK,
 				 .angle_pid = {
-                // 如果启用位置环来控制发弹,需要较大的I值保证输出力矩的线性度否则出现接近拨出的力矩大幅下降
-                .kp = 10, // 10
-                .ki = 0.5,
-                .kd = 5,
-              .max_iout = 1000,
+                // 力位混控角度环：输出为电流目标值(mA)
+                .kp = 8, // 降低kp避免超调
+                .ki = 0.2, // 降低ki避免积分饱和
+                .kd = 3,
+              .max_iout = 500,
               .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                .max_out = 2000,
+                .max_out = 3000, // 角度环输出作为电流目标，单位mA
             },
             .speed_pid = {
                 .kp = 10, // 10
@@ -116,6 +116,15 @@ void Shoot_motors_init(void)
                .max_iout = 1500,
                 .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
                 .max_out = 2000,
+            },
+            .current_pid = {
+                // 力位混控电流环：跟踪角度环输出的电流目标
+                .kp = 0.8,
+                .ki = 0.05,
+                .kd = 0,
+                .max_iout = 1000,
+                .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
+                .max_out = 8000, // M2006最大电流约10000mA
             },
 			},
 			.can_init = {.can_handle = &hcan2, .can_id = 0x200, .tx_id = 3, .rx_id = 0x203}
@@ -180,11 +189,11 @@ void Shoot_handle_command(void) {
 				}
 
 				else{
-					shoot_motors[2]->motor_pid.close_loop =  ANGLE_LOOP;                                             // 切换到角度环
+					shoot_motors[2]->motor_pid.close_loop =  ANGLE_AND_CURRENT_LOOP;  // 切换到力位混控
 				   Djimotor_set_status(shoot_motors[2], MOTOR_ENABLED);
 
                    Djimotor_set_target(shoot_motors[2], shoot_motors[2]->motor_measure.current_angle - ONE_BULLET_DELTA_ANGLE); // 控制量增加一发弹丸的角度
-                
+
 					break;
 					} 
 				// 连发模式,对速度闭环,射频后续修改为可变,目前固定为80发/min
