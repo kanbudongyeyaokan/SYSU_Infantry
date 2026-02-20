@@ -21,20 +21,20 @@ typedef enum {
     GAME_RESULT_CMD_ID               = 0x0002, // 比赛结果
     GAME_ROBOT_HP_CMD_ID             = 0x0003, // 全场血量
     FIELD_EVENTS_CMD_ID              = 0x0101, // 场地事件
-    SUPPLY_PROJECTILE_ACTION_CMD_ID  = 0x0102, // 补给站动作
-    SUPPLY_PROJECTILE_BOOKING_CMD_ID = 0x0103, // 补给站预约
     REFEREE_WARNING_CMD_ID           = 0x0104, // 裁判警告
+    DART_LAUNCH_CMD_ID               = 0x0105, // 飞镖发射
     ROBOT_STATE_CMD_ID               = 0x0201, // 机器人状态
     POWER_HEAT_DATA_CMD_ID           = 0x0202, // 功率热量
     ROBOT_POS_CMD_ID                 = 0x0203, // 机器人位置
     BUFF_MUSK_CMD_ID                 = 0x0204, // 增益状态
-    AERIAL_ROBOT_ENERGY_CMD_ID       = 0x0205, // 空中支援
     ROBOT_HURT_CMD_ID                = 0x0206, // 受击信息
     SHOOT_DATA_CMD_ID                = 0x0207, // 实时射击
     BULLET_REMAINING_CMD_ID          = 0x0208, // 剩余弹量
+    RFID_STATUS_CMD_ID               = 0x0209, // RFID 状态
     STUDENT_INTERACTIVE_DATA_CMD_ID  = 0x0301, // 机器人交互
     CUSTOM_CONTROLLER_CMD_ID         = 0x0302, // 自定义控制器
-    ROBOT_COMMAND_CMD_ID             = 0x0304, // 键鼠指令
+    RADAR_DATA_CMD_ID                = 0x0305, // 雷达数据
+    PATH_PLANNING_CMD_ID             = 0x0307, // 路径规划
 } referee_cmd_id_t;
 
 /* 帧头结构：SOF(1) + 数据长度(2) + 序号(1) + CRC8(1) */

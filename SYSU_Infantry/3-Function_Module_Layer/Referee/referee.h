@@ -36,12 +36,10 @@ typedef struct {
 } game_robot_HP_t;
 /* 0x0101 场地事件 */
 typedef struct { uint32_t event_data; } event_data_t;
-/* 0x0102 补给站动作 */
-typedef struct { uint8_t supply_projectile_id, supply_robot_id, supply_projectile_step, supply_projectile_num; } ext_supply_projectile_action_t;
-/* 0x0103 补给站预约 */
-typedef struct { uint8_t reserved, supply_robot_id, supply_projectile_step, supply_projectile_num; } ext_supply_projectile_booking_t;
 /* 0x0104 裁判警告 */
 typedef struct { uint8_t level, offending_robot_id, count; } referee_warning_t;
+/* 0x0105 飞镖发射数据 */
+typedef struct { uint8_t dart_launch_opening_status, dart_attack_target, target_change_time; } dart_launch_t;
 /* 0x0201 机器人状态：ID、等级、血量、热量限制、功率限制、输出使能 */
 typedef struct {
     uint8_t robot_id, robot_level; uint16_t current_HP, maximum_HP;
@@ -54,23 +52,25 @@ typedef struct {
     uint16_t shooter_17mm_1_barrel_heat, shooter_17mm_2_barrel_heat, shooter_42mm_barrel_heat;
 } power_heat_data_t;
 /* 0x0203 机器人位置 */
-typedef struct { float x, y, angle; } robot_pos_t;
+typedef struct { float x, y, z, angle; } robot_pos_t;
 /* 0x0204 增益状态 */
 typedef struct { uint8_t recovery_buff, cooling_buff, defence_buff, vulnerability_buff; uint16_t attack_buff; } buff_t;
-/* 0x0205 空中支援状态 */
-typedef struct { uint8_t airforce_status, time_remain; } air_support_data_t;
 /* 0x0206 受击信息：装甲板 ID 与扣血原因 */
 typedef struct { uint8_t armor_id:4, HP_deduction_reason:4; } hurt_data_t;
 /* 0x0207 实时射击数据：弹丸类型、发射频率、初速度 */
 typedef struct { uint8_t bullet_type, shooter_number, launching_frequency; float initial_speed; } shoot_data_t;
 /* 0x0208 剩余弹量与金币 */
 typedef struct { uint16_t projectile_allowance_17mm, projectile_allowance_42mm, remaining_gold_coin; } projectile_allowance_t;
+/* 0x0209 RFID 状态 */
+typedef struct { uint32_t rfid_status; uint8_t reserved; } rfid_status_t;
 /* 0x0301 机器人间交互数据 */
 typedef struct { uint16_t data_cmd_id, sender_id, receiver_id; uint8_t user_data[113]; } robot_interaction_data_t;
 /* 0x0302 自定义控制器数据（30字节原始数据） */
 typedef struct { uint8_t data[30]; } CustomControllerData_t;
-/* 0x0304 键鼠指令 */
-typedef struct { uint16_t mouse_x, mouse_y, mouse_z; uint8_t left_button_down, right_button_down; uint16_t keyboard_value, reserved; } ext_robot_command_t;
+/* 0x0305 雷达数据 */
+typedef struct { uint8_t data[24]; } radar_data_t;
+/* 0x0307 路径规划数据 */
+typedef struct { uint8_t data[103]; } path_planning_t;
 
 #pragma pack(pop)
 

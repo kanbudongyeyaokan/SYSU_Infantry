@@ -15,22 +15,22 @@ game_status_t   game_status;
 game_result_t   game_result;
 game_robot_HP_t game_robot_HP;
 
-static event_data_t                   field_event;
-static ext_supply_projectile_action_t supply_projectile_action;
-static ext_supply_projectile_booking_t supply_projectile_booking;
-static referee_warning_t              referee_warning;
+static event_data_t      field_event;
+static referee_warning_t referee_warning;
+static dart_launch_t     dart_launch;
 
 robot_status_t    robot_status;
 power_heat_data_t power_heat_data;
-static robot_pos_t         game_robot_pos;
-static buff_t              buff_musk;
-static air_support_data_t  robot_energy;
-static hurt_data_t         robot_hurt;
-static shoot_data_t        shoot_data;
+static robot_pos_t              game_robot_pos;
+static buff_t                   buff_musk;
+static hurt_data_t              robot_hurt;
+static shoot_data_t             shoot_data;
 static projectile_allowance_t   projectile_allowance;
+static rfid_status_t            rfid_status;
 static robot_interaction_data_t student_interactive_data;
 static CustomControllerData_t   CUSTOM_CONTROLLER_DATA;
-static ext_robot_command_t      robot_command;
+static radar_data_t             radar_data;
+static path_planning_t          path_planning;
 
 /* 清零所有裁判系统数据结构，上电或重连时调用 */
 void init_referee_struct_data(void)
@@ -38,20 +38,21 @@ void init_referee_struct_data(void)
     memset(&game_status,   0, sizeof(game_status_t));
     memset(&game_result,   0, sizeof(game_result_t));
     memset(&game_robot_HP, 0, sizeof(game_robot_HP_t));
-    memset(&field_event,   0, sizeof(event_data_t));
-    memset(&supply_projectile_action,  0, sizeof(ext_supply_projectile_action_t));
-    memset(&supply_projectile_booking, 0, sizeof(ext_supply_projectile_booking_t));
-    memset(&referee_warning, 0, sizeof(referee_warning_t));
-    memset(&robot_status,    0, sizeof(robot_status_t));
-    memset(&power_heat_data, 0, sizeof(power_heat_data_t));
-    memset(&game_robot_pos,  0, sizeof(robot_pos_t));
-    memset(&buff_musk,       0, sizeof(buff_t));
-    memset(&robot_energy,    0, sizeof(air_support_data_t));
-    memset(&robot_hurt,      0, sizeof(hurt_data_t));
-    memset(&shoot_data,      0, sizeof(shoot_data_t));
+    memset(&field_event,      0, sizeof(event_data_t));
+    memset(&referee_warning,  0, sizeof(referee_warning_t));
+    memset(&dart_launch,      0, sizeof(dart_launch_t));
+    memset(&robot_status,     0, sizeof(robot_status_t));
+    memset(&power_heat_data,  0, sizeof(power_heat_data_t));
+    memset(&game_robot_pos,   0, sizeof(robot_pos_t));
+    memset(&buff_musk,        0, sizeof(buff_t));
+    memset(&robot_hurt,       0, sizeof(hurt_data_t));
+    memset(&shoot_data,       0, sizeof(shoot_data_t));
+    memset(&projectile_allowance, 0, sizeof(projectile_allowance_t));
+    memset(&rfid_status,      0, sizeof(rfid_status_t));
     memset(&student_interactive_data, 0, sizeof(robot_interaction_data_t));
     memset(&CUSTOM_CONTROLLER_DATA,   0, sizeof(CustomControllerData_t));
-    memset(&robot_command,   0, sizeof(ext_robot_command_t));
+    memset(&radar_data,       0, sizeof(radar_data_t));
+    memset(&path_planning,    0, sizeof(path_planning_t));
 }
 
 /*
@@ -77,21 +78,21 @@ void referee_data_solve(uint8_t *frame)
         SOLVE(GAME_STATE_CMD_ID,                game_status,              game_status_t);
         SOLVE(GAME_RESULT_CMD_ID,               game_result,              game_result_t);
         SOLVE(GAME_ROBOT_HP_CMD_ID,             game_robot_HP,            game_robot_HP_t);
-        SOLVE(FIELD_EVENTS_CMD_ID,              field_event,              event_data_t);
-        SOLVE(SUPPLY_PROJECTILE_ACTION_CMD_ID,  supply_projectile_action, ext_supply_projectile_action_t);
-        SOLVE(SUPPLY_PROJECTILE_BOOKING_CMD_ID, supply_projectile_booking,ext_supply_projectile_booking_t);
-        SOLVE(REFEREE_WARNING_CMD_ID,           referee_warning,          referee_warning_t);
-        SOLVE(ROBOT_STATE_CMD_ID,               robot_status,             robot_status_t);
-        SOLVE(POWER_HEAT_DATA_CMD_ID,           power_heat_data,          power_heat_data_t);
-        SOLVE(ROBOT_POS_CMD_ID,                 game_robot_pos,           robot_pos_t);
-        SOLVE(BUFF_MUSK_CMD_ID,                 buff_musk,                buff_t);
-        SOLVE(AERIAL_ROBOT_ENERGY_CMD_ID,       robot_energy,             air_support_data_t);
-        SOLVE(ROBOT_HURT_CMD_ID,                robot_hurt,               hurt_data_t);
-        SOLVE(SHOOT_DATA_CMD_ID,                shoot_data,               shoot_data_t);
-        SOLVE(BULLET_REMAINING_CMD_ID,          projectile_allowance,     projectile_allowance_t);
-        SOLVE(STUDENT_INTERACTIVE_DATA_CMD_ID,  student_interactive_data, robot_interaction_data_t);
-        SOLVE(CUSTOM_CONTROLLER_CMD_ID,         CUSTOM_CONTROLLER_DATA,   CustomControllerData_t);
-        SOLVE(ROBOT_COMMAND_CMD_ID,             robot_command,            ext_robot_command_t);
+        SOLVE(FIELD_EVENTS_CMD_ID,             field_event,              event_data_t);
+        SOLVE(REFEREE_WARNING_CMD_ID,          referee_warning,          referee_warning_t);
+        SOLVE(DART_LAUNCH_CMD_ID,              dart_launch,              dart_launch_t);
+        SOLVE(ROBOT_STATE_CMD_ID,              robot_status,             robot_status_t);
+        SOLVE(POWER_HEAT_DATA_CMD_ID,          power_heat_data,          power_heat_data_t);
+        SOLVE(ROBOT_POS_CMD_ID,                game_robot_pos,           robot_pos_t);
+        SOLVE(BUFF_MUSK_CMD_ID,                buff_musk,                buff_t);
+        SOLVE(ROBOT_HURT_CMD_ID,               robot_hurt,               hurt_data_t);
+        SOLVE(SHOOT_DATA_CMD_ID,               shoot_data,               shoot_data_t);
+        SOLVE(BULLET_REMAINING_CMD_ID,         projectile_allowance,     projectile_allowance_t);
+        SOLVE(RFID_STATUS_CMD_ID,              rfid_status,              rfid_status_t);
+        SOLVE(STUDENT_INTERACTIVE_DATA_CMD_ID, student_interactive_data, robot_interaction_data_t);
+        SOLVE(CUSTOM_CONTROLLER_CMD_ID,        CUSTOM_CONTROLLER_DATA,   CustomControllerData_t);
+        SOLVE(RADAR_DATA_CMD_ID,               radar_data,               radar_data_t);
+        SOLVE(PATH_PLANNING_CMD_ID,            path_planning,            path_planning_t);
         default: referee_receive_count--; break; // 未知 cmd_id，撤销本次计数
     }
 #undef SOLVE
