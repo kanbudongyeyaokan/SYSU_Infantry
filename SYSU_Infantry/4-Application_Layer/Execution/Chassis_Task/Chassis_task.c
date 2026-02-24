@@ -17,9 +17,6 @@
 #include "robot_task.h"
 #include "supercap_comm.h"
 
-
-
-
 /**
  * @brief 底盘控制任务函数
  * @param argument 任务参数（未使用）
@@ -35,7 +32,7 @@ void Chassis_control_task(void const *argument)
     for (;;)
     {
         //超电发送
-        Send2SuperCap();
+       // Send2SuperCap();
 
         if (xQueueReceive(Chassis_cmd_queue_handle, &cmd_recv, 100) == pdTRUE)
         {

@@ -9,6 +9,8 @@
 static Uart_instance_t* uart_instances[UART_MAX_COUNT] = {NULL};
 static uint8_t uart_cnt = 0;
 
+static Uart_instance_t uart_instances_pool[UART_MAX_COUNT];
+
 // ============================================================
 // 核心内部函数：尝试启动 DMA 发送
 // ============================================================
@@ -75,7 +77,8 @@ Uart_instance_t* Uart_register(UART_HandleTypeDef *huart, uart_receive_callback 
         if (uart_instances[i]->uart_handle == huart) return uart_instances[i];
     }
 
-    Uart_instance_t *inst = malloc(sizeof(Uart_instance_t));
+    Uart_instance_t *inst = &uart_instances_pool[uart_cnt];
+    
     if (inst == NULL) return NULL;
 
     Uart_init(inst, huart);

@@ -55,7 +55,7 @@ void Chassis_task_init(void) {
     chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
 
     //超电初始化
-    SuperCap_Comm_Init(&hcan2);
+    // SuperCap_Comm_Init(&hcan2);
 
     //底盘功率控制初始化
     Chassis_Power_Control_Init();
@@ -98,7 +98,6 @@ void Chassis_init() {
                 }
             },
             .can_init = {.can_handle = &hcan1, .can_id = 0x200, .tx_id = 1, .rx_id = 0x201}
-            // .can_init = {.can_handle = &hcan1, .can_id = 0x1FF, .tx_id = 2, .rx_id = 0x206}
         },
         {
             .motor_name = "CHASSIS_FL",
@@ -171,6 +170,8 @@ void Chassis_init() {
     for (int i = 0; i < 4; i++) {
         chassis_motors[i] = DJI_Motor_Init(&cfg[i]);
     }
+    // chassis_motors[2] = DJI_Motor_Init(&cfg[2]);
+    // chassis_motors[3] = DJI_Motor_Init(&cfg[3]);
 }
 
 /**
@@ -182,7 +183,8 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
     //testing
     //printf("vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
     //Uart_printf(test_uart,"vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
-    //printf("chassis_mode: %d\r\n", cmd->chassis_mode);
+    printf("chassis_mode: %d\r\n", cmd->chassis_mode);
+   // Chassis_cmd_send_t test_cmd = *cmd;
 
     // 1. 使用传入的 'cmd' 指针代替原来的全局变量
     switch (cmd->chassis_mode) // [注意] 这里把 . 改成了 ->
@@ -202,7 +204,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             }
 
             Chassis_kinematics_solve(cmd, &chassis_output);
-            Chassis_Power_Control(&chassis_output, chassis_motors);
+            // Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
