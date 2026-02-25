@@ -65,7 +65,7 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 // 定义灵敏度系数
 // 之前是 0.0018 (200Hz)，现在是 1000Hz，理论上应该除以 5
 // 建议改小到 0.0003 ~ 0.0005 之间，手感会比较细腻
-#define GIMBAL_RC_MOVE_RATIO_YAW   0.0004f
+#define GIMBAL_RC_MOVE_RATIO_YAW   0.0002f
 #define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
 #define RC_DEADBAND 10

@@ -52,34 +52,38 @@ static void Gimbal_motor_init(void) {
             .close_loop = ANGLE_AND_SPEED_LOOP,
             .angle_source = MOTOR_FEEDBACK,
             .speed_source = MOTOR_FEEDBACK,
+            
             //使用ins模块姿态数据作为反馈
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
-                .kp = 12,
+                .kp = 40,
                 .ki = 0,
                 .kd = 0,
                 .deadband = 0.1f,
                 .max_out = 500,
                 .max_iout = 100,
-
+                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL, // 角度环输出限幅 + 梯形积分
             },
             .speed_pid = {
-                .kp = 40,
-                .ki = 2.0,
+                .kp = 80,
+                .ki = 6.0,
                 .kd = 0,
                 .deadband = 0.1f,
                 .max_out = 30000,
-                .max_iout = 15000,
+                .max_iout = 8000,
+                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL,
+
             },
+            
 
         },
 
         .can_init = {
             .can_handle = &hcan1,
             .can_id = 0x1FF,
-            .tx_id = 1,
-            .rx_id = 0x205,
+            .tx_id = 2,
+            .rx_id = 0x206, 
         },
     };
 
@@ -180,6 +184,9 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 break;
         }
 
+
+        Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f,%.2f,%.2f\r\n",cmd->yaw,yaw_motor->motor_measure.total_angle
+            ,yaw_motor->motor_pid.speed_pid.Output,yaw_motor->motor_pid.speed_pid.Iout);
     /***************************************测试SHELL改云台电机参数********************/
     // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f,%d,%f\r\n",cmd->yaw,yaw_motor->motor_measure.total_angle
     //     ,yaw_motor->out_current,yaw_motor->motor_pid.speed_pid.kp);
