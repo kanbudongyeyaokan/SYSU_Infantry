@@ -28,6 +28,7 @@ void Pid_init(Pid_instance_t *pid, Pid_init_t *config)
     pid->optimization = config->optimization;
     pid->feedfoward_coefficient = config->feedfoward_coefficient;
     pid->LPF_coefficient = config->LPF_coefficient;
+    pid->integral_separation_threshold = config->integral_separation_threshold;
 
     // 初始化时间戳，避免第一次计算dt过大
     DWT_GetDeltaT(&pid->dwt_counter);
@@ -107,6 +108,14 @@ float Pid_calculate(Pid_instance_t *pid, float measure, float target)
     }
 
     // 7. 计算 Iout (积分累加) 并进行抗饱和处理
+        // 积分分离: 误差过大时关闭积分，防止超调
+    if ((pid->optimization & PID_INTEGRAL_SEPARATION) &&
+        (pid->integral_separation_threshold > 0.0f) &&
+        (fabsf(pid->error) > pid->integral_separation_threshold))
+    {
+        pid->ITerm = 0.0f; // 误差超出阈值，暂停积分累加
+    }
+
     // 智能积分抗饱和: 如果输出已经饱和，且积分项试图让饱和更严重，则停止积分
     float temp_output_prediction = pid->Pout + pid->Iout + pid->ITerm + pid->Dout;
 

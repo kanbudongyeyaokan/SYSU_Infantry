@@ -13,7 +13,8 @@ typedef enum
     PID_TRAPEZOID_INTERGRAL     = 0x04, // 梯形积分 (提高积分精度)
     PID_OUTPUT_FILTER           = 0x08, // 输出滤波 (低通)
     PID_FEEDFOWARD              = 0x10, // 前馈控制
-    PID_INTEGRAL_ANTI_WINDUP    = 0x20, // 积分抗饱和 (变速积分等策略)
+    PID_INTEGRAL_ANTI_WINDUP = 0x20, // 积分抗饱和 (变速积分等策略)
+    PID_INTEGRAL_SEPARATION = 0x40, // 积分分离 (误差大时关闭积分，防止超调)
 } Pid_optimization_e;
 
 /* PID结构体 */
@@ -47,6 +48,7 @@ typedef struct
     uint32_t optimization;          // 优化选项位掩码
     float feedfoward_coefficient;   // 前馈系数
     float LPF_coefficient;          // 低通滤波器系数 (0~1, 越小滤波越强)
+    float integral_separation_threshold;    // 积分分离阈值 (|error| > 此值时关闭积分)
 
     // --- 计时相关 ---
     uint32_t dwt_counter;   // DWT 计数器快照
@@ -67,6 +69,7 @@ typedef struct
     uint32_t optimization;          // 优化选项
     float feedfoward_coefficient;
     float LPF_coefficient;
+    float integral_separation_threshold; // 积分分离阈值
 } Pid_init_t;
 
 /**
