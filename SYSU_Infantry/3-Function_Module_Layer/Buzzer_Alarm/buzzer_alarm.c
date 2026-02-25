@@ -89,8 +89,11 @@ void Alarm_handle_command(uint8_t *cmd) {
         else if (*cmd >= 1 && *cmd <= 9) {
             for (uint8_t i = 0; i < *cmd; i++) {
                 Buzzer_start(&buzzer);
+                Buzzer_set_volume(&buzzer, HIGH);
+                Buzzer_set_frequency(&buzzer,1000);
                 vTaskDelay(pdMS_TO_TICKS(BUZZER_SINGLE_MS));
-                Buzzer_stop(&buzzer);
+                //Buzzer_stop(&buzzer);
+                Buzzer_set_frequency(&buzzer,0);
                 // 最后一次蜂鸣后，不添加间隔
                 if (i != *cmd - 1) {
                     vTaskDelay(pdMS_TO_TICKS(BUZZER_INTERVAL_MS));
