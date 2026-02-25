@@ -24,7 +24,7 @@
 
 #define CHASSIS_FOLLOW_YAW_GAIN 0.5f
 #define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
-#define CHASSIS_ROTATE_WZ 400.0f
+#define CHASSIS_ROTATE_WZ 500.0f
 #define CHASSIS_MOTOR_PID_MAX_OUT 15000.0f
 
 /****************发送给决策层的底盘反馈信息******************/
@@ -215,6 +215,11 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
         case CHASSIS_FOLLOW_GIMBAL:
         {
+            for (uint8_t i = 0; i < 4; i++)
+            {
+                Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
+            }
+
             Chassis_cmd_send_t cmd_solved = *cmd; // 复制一份用于计算（因为要改值）
 
             cmd_solved.wz = 0.5f * cmd->offset_angle * abs(cmd->offset_angle);
@@ -228,7 +233,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             cmd_solved.vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
 
             Chassis_kinematics_solve(&cmd_solved, &chassis_output);
-            Chassis_Power_Control(&chassis_output, chassis_motors);
+            //Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
@@ -259,7 +264,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
             // 传入副本的地址
             Chassis_kinematics_solve(&rotate_cmd, &chassis_output);
-            Chassis_Power_Control(&chassis_output, chassis_motors);
+            //Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);

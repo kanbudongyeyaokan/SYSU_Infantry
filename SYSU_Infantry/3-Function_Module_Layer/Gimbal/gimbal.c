@@ -52,7 +52,7 @@ static void Gimbal_motor_init(void) {
     LPF_Init(&yaw_target_lpf,0.001f,10.0f,0.0f); // 1000Hz控制频率，10Hz截止频率，初始值0
 
     //YAW电机
-    Djimotor_init_config_t yaw_config = {
+    Djimotor_init_config_t yaw_config = {   
         .motor_name = "yaw_motor",
         .motor_type = GM6020,
         .motor_status = MOTOR_ENABLED,
@@ -93,8 +93,8 @@ static void Gimbal_motor_init(void) {
         .can_init = {
             .can_handle = &hcan1,
             .can_id = 0x1FF,
-            .tx_id = 2,
-            .rx_id = 0x206, 
+            .tx_id = 1,
+            .rx_id = 0x205, 
         },
     };
 
@@ -120,8 +120,8 @@ static void Gimbal_motor_init(void) {
                 //可补充
             },
             .speed_pid = {
-                .kp = 5,
-                .ki = 0,
+                .kp = 10,
+                .ki = 5,
                 .kd = 0,
                 .deadband = 0.1f,
                 .max_out = 2500,
@@ -194,7 +194,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_Calc_Output(pitch_motor);
 
                 break;
-            //云台视觉模式
+                //云台视觉模式
             case GIMBAL_VISION_MODE:
                 //根据视觉补充
 
@@ -205,8 +205,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         }
 
 
-        Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f,%.2f,%.2f\r\n",cmd->yaw,yaw_motor->motor_measure.total_angle
-            ,yaw_motor->motor_pid.speed_pid.Output,yaw_motor->motor_pid.speed_pid.Iout);
+        //Uart_printf(test_uart, "pitch:%.2f,%.2f,%.2f\r\n", pitch_motor->motor_pid.pid_target, *(pitch_motor->motor_pid.other_angle_feedback_ptr),pitch_motor->motor_pid.speed_pid.Output);
     /***************************************测试SHELL改云台电机参数********************/
     // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f,%d,%f\r\n",cmd->yaw,yaw_motor->motor_measure.total_angle
     //     ,yaw_motor->out_current,yaw_motor->motor_pid.speed_pid.kp);
