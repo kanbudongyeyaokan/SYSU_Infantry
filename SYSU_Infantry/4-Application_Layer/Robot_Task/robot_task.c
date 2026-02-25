@@ -91,7 +91,8 @@ void Robot_task_init(void)
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
     // message_test_task_handle = osThreadCreate(osThread(message_test_task), NULL);
 
-
+    osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 4096);
+    ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
     //看门狗任务
   osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityHigh, 0, 512);
   watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
@@ -119,9 +120,9 @@ void Robot_task_init(void)
   osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
   chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
   //
-  // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 1024);
-  // shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
-  //
+  osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 1024);
+  shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+  
   //   // osThreadDef(shell_task, Shell_task, osPriorityNormal, 0, 512);
   //   // shell_task_handle = osThreadCreate(osThread(shell_task), NULL);
 

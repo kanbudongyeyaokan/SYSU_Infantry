@@ -68,7 +68,8 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 #define GIMBAL_RC_MOVE_RATIO_YAW   0.0002f
 #define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
-#define RC_DEADBAND 10
+#define RC_DEADBAND 30
+#define PITCH_RC_CENTER_OFFSET (-266.0f)  // 摇杆中位实测偏移量
 
 /**
  * @brief 任务初始化函数，初始化决策层的发布者和订阅者,获取遥控器数据
@@ -323,7 +324,7 @@ void RC_ctrl_set()
     // //云台控制量
     // 1. 获取原始数据
     float yaw_input = (float)rc_data[CURRENT].rc.Rrocker_x;
-    float pitch_input = (float)rc_data[CURRENT].rc.Rrocker_y;
+    float pitch_input = (float)rc_data[CURRENT].rc.Rrocker_y - PITCH_RC_CENTER_OFFSET;
 
     // 2. YAW 轴处理 (死区 + 降速)
     if (fabsf(yaw_input) > RC_DEADBAND)
@@ -332,17 +333,17 @@ void RC_ctrl_set()
         gimbal_cmd_send.yaw -= GIMBAL_RC_MOVE_RATIO_YAW * yaw_input;
     }
 
-    // 3. PITCH 轴处理 (死区 + 降速)
+    // 3. PITCH 轴处理 (死区 + 累加: 初始0, 上拨+, 回中保持)
     if (fabsf(pitch_input) > RC_DEADBAND)
     {
         gimbal_cmd_send.pitch += GIMBAL_RC_MOVE_RATIO_PITCH * pitch_input;
     }
-
+    //Uart_printf(test_uart, "pitch_input:%.2f,gimbal_cmd_send.pitch:%.2f\r\n", pitch_input, gimbal_cmd_send.pitch);
     // 4. 限幅保持不变
-    if (gimbal_cmd_send.pitch > 40)
-        gimbal_cmd_send.pitch = 40;
-    else if (gimbal_cmd_send.pitch < -30)
-        gimbal_cmd_send.pitch = -30;
+    if (gimbal_cmd_send.pitch > 10)
+        gimbal_cmd_send.pitch = 10;
+    else if (gimbal_cmd_send.pitch < -40)
+        gimbal_cmd_send.pitch = -40;
 
 #endif
 }

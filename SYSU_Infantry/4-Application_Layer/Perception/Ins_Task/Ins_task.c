@@ -20,7 +20,7 @@ void Ins_task(void const *argument)
         data = Ins_get_data();
         // 如果需要数据，直接 Ins_get_data()
 
-         Uart_printf(test_uart,"yaw:%.2f,pitch:%.2f,state:%d\r\n",data->euler.yaw,data->euler.pitch,data->state);
+         //Uart_printf(test_uart,"yaw:%.2f,pitch:%.2f,state:%d\r\n",data->euler.yaw,data->euler.pitch,data->state);
         // 打印 欧拉角 + Z轴加速度 + 采样时间dt
         // Uart_printf(test_uart, "Yaw:%.2f, AccZ:%.2f, dt:%.4f\r\n", 
         //             data->euler.yaw, 
