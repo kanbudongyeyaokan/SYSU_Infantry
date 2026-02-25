@@ -26,6 +26,7 @@
 #include "shell_port.h"
 #include <stdlib.h> 
 #include <string.h> 
+#include "lowpass_filter.h"
 
 
 //云台电机
@@ -39,10 +40,17 @@ static Publisher_t*gimbal_pub;
 // 存储发送给决策层的反馈信息
 static Gimbal_feedback_info_t gimbal_feedback;
 
+static Lpf_t yaw_target_lpf; // Yaw 目标值的低通滤波器实例
+
+
 /**
  * @brief 云台初始化
  */
 static void Gimbal_motor_init(void) {
+
+    //初始化YAW低通滤波器
+    LPF_Init(&yaw_target_lpf,0.001f,10.0f,0.0f); // 1000Hz控制频率，10Hz截止频率，初始值0
+
     //YAW电机
     Djimotor_init_config_t yaw_config = {
         .motor_name = "yaw_motor",
@@ -57,22 +65,25 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
-                .kp = 40,
-                .ki = 0,
+                .kp = 60,
+                .ki = 5,
                 .kd = 0,
-                .deadband = 0.1f,
-                .max_out = 500,
+                .deadband = 0.0f,
+                .max_out = 300,
                 .max_iout = 100,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL, // 角度环输出限幅 + 梯形积分
             },
             .speed_pid = {
-                .kp = 80,
-                .ki = 6.0,
-                .kd = 0,
-                .deadband = 0.1f,
-                .max_out = 30000,
+                .kp = 90,
+                .ki = 7.0,
+                .kd = 0.6,
+                .deadband = 0.0f,
+                .max_out = 20000,
                 .max_iout = 8000,
-                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL,
+                .feedfoward_coefficient = 0.3f,
+                .LPF_coefficient = 0.0f,
+                .integral_separation_threshold = 5.0f,
+                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD|PID_OUTPUT_FILTER|PID_INTEGRAL_SEPARATION,
 
             },
             
@@ -168,7 +179,16 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
 
                 //设置电机目标值
+
+                //低通平滑
+                // // 1. 获取阶跃的遥控器目标
+                // float raw_yaw_target = cmd->yaw;
+                // // 2. 使用低通滤波器将阶梯变成平滑斜坡
+                // float smooth_yaw_target = LPF_Calc(&yaw_target_lpf, raw_yaw_target);
+
                 Djimotor_set_target(yaw_motor, cmd->yaw);
+
+                // Djimotor_set_target(yaw_motor, smooth_yaw_target);  
                 Djimotor_set_target(pitch_motor, cmd->pitch);
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);

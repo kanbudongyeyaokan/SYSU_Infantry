@@ -161,6 +161,9 @@ add_executable(${CMAKE_PROJECT_NAME}
 
         0-Middleware_Layer/Ramp_Controller/ramp_controller.c
         0-Middleware_Layer/Ramp_Controller/ramp_controller.h
+        0-Middleware_Layer/Filter/lowpass_filter.c
+        0-Middleware_Layer/Filter/lowpass_filter.h
+        
 
         1-Hardware_Layer/bsp_usb/bsp_usb.c
         1-Hardware_Layer/bsp_usb/bsp_usb.h
@@ -220,6 +223,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/RTT-main/RTT
 
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Ramp_Controller
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Filter
+        
 
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task

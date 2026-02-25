@@ -6,7 +6,7 @@
 #include "queue.h"
 
 
-// 云台控制频率 1000Hz (1ms)
+// 云台控制频率 200Hz (5ms)
 #define GIMBAL_TASK_PERIOD 5
 
 void Gimbal_control_task(void const *argument) {
@@ -34,7 +34,7 @@ void Gimbal_control_task(void const *argument) {
         // 这一步包含了 状态机逻辑 + PID计算 (算发分离)
         Gimbal_handle_command(&cmd_recv);
 
-        // 绝对延时，保证严格的 1kHz 计算频率
+        // 绝对延时，保证严格的计算频率
         vTaskDelayUntil(&PreviousWakeTime, GIMBAL_TASK_PERIOD);
     }
 }
