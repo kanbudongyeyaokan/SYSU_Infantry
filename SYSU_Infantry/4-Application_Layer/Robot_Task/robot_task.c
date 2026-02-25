@@ -97,7 +97,7 @@ void Robot_task_init(void)
   osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityHigh, 0, 512);
   watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
   //   // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
-  osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 256);
+  osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 512);
   motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
   //
   //   // 添加短暂延时，让任务有时间初始化
@@ -109,8 +109,8 @@ void Robot_task_init(void)
 
   //
   // // 云台控制任务 (Priority: Normal)
-  osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0,512);
-  gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
+  // osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0,512);
+  // gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
   //
   //   // osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
   //   // referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
@@ -120,7 +120,7 @@ void Robot_task_init(void)
   osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
   chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
   //
-  osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 1024);
+  osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
   shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
   
   //   // osThreadDef(shell_task, Shell_task, osPriorityNormal, 0, 512);

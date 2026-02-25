@@ -38,9 +38,9 @@ void Referee_task(void const * argument)
     for(;;)
     {
 
-        Uart_printf(test_uart, "Online:%d, HP:%d\r\n",
-                    referee_data->is_online,
-                    referee_data->robot_status.current_hp);
+        // Uart_printf(test_uart, "Online:%d, HP:%d\r\n",
+        //             referee_data->is_online,
+        //             referee_data->robot_status.current_hp);
 
         // Referee_Send_UI_Test();
 

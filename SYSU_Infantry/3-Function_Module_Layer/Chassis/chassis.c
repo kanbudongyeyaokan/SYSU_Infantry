@@ -220,7 +220,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
                 Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
             }
 
-            Chassis_cmd_send_t cmd_solved = *cmd; // 复制一份用于计算（因为要改值）
+            Chassis_cmd_send_t cmd_solved = *cmd; 
 
             cmd_solved.wz = 0.5f * cmd->offset_angle * abs(cmd->offset_angle);
 

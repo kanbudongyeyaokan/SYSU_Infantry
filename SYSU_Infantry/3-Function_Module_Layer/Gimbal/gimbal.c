@@ -27,7 +27,7 @@
 #include <stdlib.h> 
 #include <string.h> 
 #include "lowpass_filter.h"
-
+#include "bmi088.h" // 引用驱动头文件
 
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
@@ -40,7 +40,8 @@ static Publisher_t*gimbal_pub;
 // 存储发送给决策层的反馈信息
 static Gimbal_feedback_info_t gimbal_feedback;
 
-static Lpf_t yaw_target_lpf; // Yaw 目标值的低通滤波器实例
+ Gimbal_cmd_send_t gimbal_cmd;
+// static Lpf_t yaw_target_lpf; // Yaw 目标值的低通滤波器实例
 
 
 /**
@@ -49,7 +50,9 @@ static Lpf_t yaw_target_lpf; // Yaw 目标值的低通滤波器实例
 static void Gimbal_motor_init(void) {
 
     //初始化YAW低通滤波器
-    LPF_Init(&yaw_target_lpf,0.001f,10.0f,0.0f); // 1000Hz控制频率，10Hz截止频率，初始值0
+    // LPF_Init(&yaw_target_lpf,0.001f,10.0f,0.0f); // 1000Hz控制频率，10Hz截止频率，初始值0
+
+
 
     //YAW电机
     Djimotor_init_config_t yaw_config = {   
@@ -58,15 +61,15 @@ static void Gimbal_motor_init(void) {
         .motor_status = MOTOR_ENABLED,
         .motor_controller_init = {
             .close_loop = ANGLE_AND_SPEED_LOOP,
-            .angle_source = MOTOR_FEEDBACK,
-            .speed_source = MOTOR_FEEDBACK,
+            .angle_source = OTHER_FEEDBACK,
+            .speed_source = OTHER_FEEDBACK,
             
             //使用ins模块姿态数据作为反馈
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
-                .kp = 60,
-                .ki = 5,
+                .kp = 40,
+                .ki = 0,
                 .kd = 0,
                 .deadband = 0.0f,
                 .max_out = 300,
@@ -74,16 +77,16 @@ static void Gimbal_motor_init(void) {
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL, // 角度环输出限幅 + 梯形积分
             },
             .speed_pid = {
-                .kp = 90,
-                .ki = 7.0,
-                .kd = 0.6,
+                .kp = 60,
+                .ki = 8.0,
+                .kd = 0.0,
                 .deadband = 0.0f,
-                .max_out = 20000,
+                .max_out = 25000,
                 .max_iout = 8000,
-                .feedfoward_coefficient = 0.3f,
+                .feedfoward_coefficient = 0.05f,
                 .LPF_coefficient = 0.0f,
-                .integral_separation_threshold = 5.0f,
-                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD|PID_OUTPUT_FILTER|PID_INTEGRAL_SEPARATION,
+                .integral_separation_threshold = 0.0f,
+                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
 
             },
             
@@ -150,6 +153,10 @@ void Gimbal_task_init(void) {
     // 获取ins模块的姿态数据指针
     gimbal_imu_data = Ins_get_data();
 
+    if (gimbal_imu_data == NULL) {
+    while(1); 
+}
+
     //初始化云台电机
     Gimbal_motor_init();
 
@@ -165,7 +172,8 @@ void Gimbal_task_init(void) {
 void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
     // 从消息中心获取最新的控制指令
         // 根据控制模式进行处理
-        switch (cmd->gimbal_mode) {
+        gimbal_cmd  = *cmd; // 复制一份本地变量，避免直接修改指针数据
+        switch (cmd->gimbal_mode) { 
             // 电流零输入,失能云台电机
             case GIMBAL_ZERO_FORCE:
                 Djimotor_set_status(yaw_motor, MOTOR_STOP);

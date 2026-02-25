@@ -72,6 +72,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088_reg_def.h
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_uart.c
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_uart.h
+        2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c
+        2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h
+        
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
         0-Middleware_Layer/Pid_Controller/algorithm_pid.c
         0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h

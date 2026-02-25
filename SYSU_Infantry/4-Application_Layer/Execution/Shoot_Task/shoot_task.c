@@ -14,8 +14,8 @@
 #include "shoot.h"
 #include "task.h"
 
-// 发射任务运行周期 (ms) -> 1000Hz
-#define SHOOT_TASK_PERIOD 1
+// 发射任务运行周期 (ms) -> 200Hz
+#define SHOOT_TASK_PERIOD 5
 
 /**
  * @brief   发射机构控制任务主体

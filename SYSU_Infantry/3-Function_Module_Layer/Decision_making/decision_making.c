@@ -68,8 +68,8 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 #define GIMBAL_RC_MOVE_RATIO_YAW   0.0002f
 #define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
-#define RC_DEADBAND 30
-#define PITCH_RC_CENTER_OFFSET (-266.0f)  // 摇杆中位实测偏移量
+#define RC_DEADBAND 5
+#define PITCH_RC_CENTER_OFFSET (70.0f)  // 摇杆中位实测偏移量
 
 /**
  * @brief 任务初始化函数，初始化决策层的发布者和订阅者,获取遥控器数据
@@ -324,7 +324,7 @@ void RC_ctrl_set()
     // //云台控制量
     // 1. 获取原始数据
     float yaw_input = (float)rc_data[CURRENT].rc.Rrocker_x;
-    float pitch_input = (float)rc_data[CURRENT].rc.Rrocker_y - PITCH_RC_CENTER_OFFSET;
+    float pitch_input = (float)rc_data[CURRENT].rc.Rrocker_y - PITCH_RC_CENTER_OFFSET; // 减去实测的中心偏移量;
 
     // 2. YAW 轴处理 (死区 + 降速)
     if (fabsf(yaw_input) > RC_DEADBAND)
@@ -338,10 +338,10 @@ void RC_ctrl_set()
     {
         gimbal_cmd_send.pitch += GIMBAL_RC_MOVE_RATIO_PITCH * pitch_input;
     }
-    //Uart_printf(test_uart, "pitch_input:%.2f,gimbal_cmd_send.pitch:%.2f\r\n", pitch_input, gimbal_cmd_send.pitch);
+    // Uart_printf(test_uart, "yaw_input:%.2f,pitch_input:%.2f\r\n", yaw_input, pitch_input); 
     // 4. 限幅保持不变
-    if (gimbal_cmd_send.pitch > 10)
-        gimbal_cmd_send.pitch = 10;
+    if (gimbal_cmd_send.pitch > 20)
+        gimbal_cmd_send.pitch = 20;
     else if (gimbal_cmd_send.pitch < -40)
         gimbal_cmd_send.pitch = -40;
 
@@ -469,7 +469,7 @@ void Emergency_stop()
         shoot_cmd_send.loader_mode = LOAD_STOP;
     }
     // 遥控器右侧开关为[中],恢复正常运行
-    if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_MID)
+    if (rc_data[CURRENT].rc.Rswitch == SWITCH_IS_UP)
     {
         robot_state = ROBOT_ON;
     }
