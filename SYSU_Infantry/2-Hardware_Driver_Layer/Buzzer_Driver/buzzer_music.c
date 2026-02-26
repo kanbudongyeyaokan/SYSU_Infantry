@@ -2,33 +2,34 @@
 #include "main.h"
 #include "buzzer_music.h"
 #include "tim.h"
-
+#include "FreeRTOS.h"
+#include "task.h"
 // 《小星星》乐谱
 static const Note_t twinkle_twinkle[] = {
     // 第一句：一闪一闪亮晶晶
     {DoFreq, 500}, {DoFreq, 500}, {SoFreq, 500}, {SoFreq, 500},
     {LaFreq, 500}, {LaFreq, 500}, {SoFreq, 1000},
-    
+
     // 第二句：满天都是小星星
     {FaFreq, 500}, {FaFreq, 500}, {MiFreq, 500}, {MiFreq, 500},
     {ReFreq, 500}, {ReFreq, 500}, {DoFreq, 1000},
-    
+
     // 第三句：挂在天空放光明
     {SoFreq, 500}, {SoFreq, 500}, {FaFreq, 500}, {FaFreq, 500},
     {MiFreq, 500}, {MiFreq, 500}, {ReFreq, 1000},
-    
+
     // 第四句：好像许多小眼睛
     {SoFreq, 500}, {SoFreq, 500}, {FaFreq, 500}, {FaFreq, 500},
     {MiFreq, 500}, {MiFreq, 500}, {ReFreq, 1000},
-    
+
     // 重复第一句：一闪一闪亮晶晶
     {DoFreq, 500}, {DoFreq, 500}, {SoFreq, 500}, {SoFreq, 500},
     {LaFreq, 500}, {LaFreq, 500}, {SoFreq, 1000},
-    
+
     // 重复第二句：满天都是小星星
     {FaFreq, 500}, {FaFreq, 500}, {MiFreq, 500}, {MiFreq, 500},
     {ReFreq, 500}, {ReFreq, 500}, {DoFreq, 1000},
-    
+
     // 结束
     {0, 0} // 结束标志
 };
@@ -45,19 +46,22 @@ static const Note_t super_mario[] = {
 };
 
 /*播放小星星*/
-void Play_Twinkle_Twinkle(Buzzer_device_t* buzzer)
+void Play_Twinkle_Twinkle(Buzzer_device_t *buzzer)
 {
+    Buzzer_start(buzzer); // 
+
     // 设置中高音量
     Buzzer_set_volume(buzzer, MEDIUM);
 
     // 播放整首曲子
     int i = 0;
-    while (twinkle_twinkle[i].duration != 0) {
+    while (twinkle_twinkle[i].duration != 0)
+    {
         // 播放当前音符
         Buzzer_set_frequency(buzzer, twinkle_twinkle[i].freq);
 
         // 持续指定时间
-        HAL_Delay(twinkle_twinkle[i].duration);
+        vTaskDelay(twinkle_twinkle[i].duration);
 
         i++;
     }
@@ -66,18 +70,22 @@ void Play_Twinkle_Twinkle(Buzzer_device_t* buzzer)
     Buzzer_set_frequency(buzzer, 0);
 }
 /*播放马里奥*/
-void Play_Super_Mario(Buzzer_device_t* buzzer) {
+void Play_Super_Mario(Buzzer_device_t *buzzer)
+{
+    Buzzer_start(buzzer); // 
+
     // 设置中高音量
     Buzzer_set_volume(buzzer, MEDIUM);
 
     // 播放整首曲子
     int i = 0;
-    while (super_mario[i].duration != 0) {
+    while (super_mario[i].duration != 0)
+    {
         // 播放当前音符
         Buzzer_set_frequency(buzzer, super_mario[i].freq);
 
         // 持续指定时间
-        HAL_Delay(super_mario[i].duration);
+        vTaskDelay(super_mario[i].duration);
         i++;
     }
 
@@ -93,17 +101,20 @@ static const Note_t system_start_notes[] = {
     {0, 0}
 };
 
-void Play_System_Start(Buzzer_device_t* buzzer)
+void Play_System_Start(Buzzer_device_t *buzzer)
 {
+    Buzzer_start(buzzer); // 
+
     // 开机通常环境嘈杂，设置高音量
     Buzzer_set_volume(buzzer, HIGH);
 
     int i = 0;
-    while (system_start_notes[i].duration != 0) {
+    while (system_start_notes[i].duration != 0)
+    {
         Buzzer_set_frequency(buzzer, system_start_notes[i].freq);
         // 注意：这里是阻塞延时，开机初始化时使用无妨，
         // 但如果在控制循环中调用，建议改为非阻塞实现
-        HAL_Delay(system_start_notes[i].duration);
+        vTaskDelay(system_start_notes[i].duration);
         i++;
     }
 
@@ -136,13 +147,16 @@ static const Note_t eva_chorus[] = {
     {0, 0}
 };
 
-void Play_EVA_Start(Buzzer_device_t* buzzer)
+void Play_EVA_Start(Buzzer_device_t *buzzer)
 {
+    Buzzer_start(buzzer); // 
+
     Buzzer_set_volume(buzzer, HIGH); // 开机要响亮
     int i = 0;
-    while (eva_chorus[i].duration != 0) {
+    while (eva_chorus[i].duration != 0)
+    {
         Buzzer_set_frequency(buzzer, eva_chorus[i].freq);
-        HAL_Delay(eva_chorus[i].duration); // 阻塞式播放
+        vTaskDelay(eva_chorus[i].duration); // 阻塞式播放
         i++;
     }
     Buzzer_stop(buzzer);
@@ -154,7 +168,7 @@ static const Note_t cyber_boot[] = {
     {DoFreq, 50}, {ReFreq, 50}, {MiFreq, 50}, {FaFreq, 50}, {SoFreq, 50}, {LaFreq, 50}, {SiFreq, 50},
 
     // 阶段2：核心模块上线 (高音快速爬升)
-    {DoHighFreq, 40}, {ReHighFreq, 40}, {MiHighFreq, 40}, {FaFreq*2, 40}, {SoFreq*2, 40}, // 简单的倍频模拟更高音
+    {DoHighFreq, 40}, {ReHighFreq, 40}, {MiHighFreq, 40}, {FaFreq * 2, 40}, {SoFreq * 2, 40}, // 简单的倍频模拟更高音
 
     // 阶段3：系统就绪 (三次短促的高频确认音)
     {0, 100}, // 停顿一下
@@ -165,13 +179,16 @@ static const Note_t cyber_boot[] = {
     {0, 0}
 };
 
-void Play_Cyber_Boot(Buzzer_device_t* buzzer)
+void Play_Cyber_Boot(Buzzer_device_t *buzzer)
 {
+    Buzzer_start(buzzer); // 
+
     Buzzer_set_volume(buzzer, MEDIUM); // 这种高频音效不用太大声就很刺耳
     int i = 0;
-    while (cyber_boot[i].duration != 0) {
+    while (cyber_boot[i].duration != 0)
+    {
         Buzzer_set_frequency(buzzer, cyber_boot[i].freq);
-        HAL_Delay(cyber_boot[i].duration);
+        vTaskDelay(cyber_boot[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -219,13 +236,17 @@ static const Note_t railgun_notes[] = {
     {0, 0}
 };
 
-void Play_Railgun(Buzzer_device_t* buzzer) {
+void Play_Railgun(Buzzer_device_t *buzzer)
+{
+    Buzzer_start(buzzer); // 
+
     Buzzer_set_volume(buzzer, MEDIUM); // 节奏快，中音量更清晰
     int i = 0;
-    while (railgun_notes[i].duration != 0) {
+    while (railgun_notes[i].duration != 0)
+    {
         Buzzer_set_frequency(buzzer, railgun_notes[i].freq);
         // 这首歌节奏很快，为了听感连续，可以把Delay稍微减少一点点(比如乘0.9)，或者直接用
-        HAL_Delay(railgun_notes[i].duration);
+        vTaskDelay(railgun_notes[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -250,17 +271,24 @@ static const Note_t jojo_notes[] = {
     {0, 0}
 };
 
-void Play_JoJo(Buzzer_device_t* buzzer) {
+void Play_JoJo(Buzzer_device_t *buzzer)
+{
+    Buzzer_start(buzzer); // 
+
     Buzzer_set_volume(buzzer, HIGH); // JoJo必须大声！
     int i = 0;
-    while (jojo_notes[i].duration != 0) {
+    while (jojo_notes[i].duration != 0)
+    {
         // 对于0频率（休止符），需要停止输出但保持延时
-        if(jojo_notes[i].freq == 0) {
-             Buzzer_set_frequency(buzzer, 0);
-        } else {
-             Buzzer_set_frequency(buzzer, jojo_notes[i].freq);
+        if (jojo_notes[i].freq == 0)
+        {
+            Buzzer_set_frequency(buzzer, 0);
         }
-        HAL_Delay(jojo_notes[i].duration);
+        else
+        {
+            Buzzer_set_frequency(buzzer, jojo_notes[i].freq);
+        }
+        vTaskDelay(jojo_notes[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -279,12 +307,16 @@ static const Note_t sans_intro[] = {
     {0, 0}
 };
 
-void Play_Sans(Buzzer_device_t* buzzer) {
+void Play_Sans(Buzzer_device_t *buzzer)
+{
+    Buzzer_start(buzzer); // 
+
     Buzzer_set_volume(buzzer, MEDIUM);
     int i = 0;
-    while (sans_intro[i].duration != 0) {
+    while (sans_intro[i].duration != 0)
+    {
         Buzzer_set_frequency(buzzer, sans_intro[i].freq);
-        HAL_Delay(sans_intro[i].duration);
+        vTaskDelay(sans_intro[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -300,12 +332,16 @@ static const Note_t intel_jingle[] = {
     {0, 0}
 };
 
-void Play_Intel(Buzzer_device_t* buzzer) {
+void Play_Intel(Buzzer_device_t *buzzer)
+{
+    Buzzer_start(buzzer); // 
+
     Buzzer_set_volume(buzzer, HIGH); // 广告音就是要清脆响亮
     int i = 0;
-    while (intel_jingle[i].duration != 0) {
+    while (intel_jingle[i].duration != 0)
+    {
         Buzzer_set_frequency(buzzer, intel_jingle[i].freq);
-        HAL_Delay(intel_jingle[i].duration);
+        vTaskDelay(intel_jingle[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -335,12 +371,16 @@ static const Note_t coffin_dance[] = {
     {0, 0}
 };
 
-void Play_Coffin_Dance(Buzzer_device_t* buzzer) {
+void Play_Coffin_Dance(Buzzer_device_t *buzzer)
+{
+    Buzzer_start(buzzer); // 
+
     Buzzer_set_volume(buzzer, HIGH); // 必须大声，气势要足
     int i = 0;
-    while (coffin_dance[i].duration != 0) {
+    while (coffin_dance[i].duration != 0)
+    {
         Buzzer_set_frequency(buzzer, coffin_dance[i].freq);
-        HAL_Delay(coffin_dance[i].duration);
+        vTaskDelay(coffin_dance[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -357,12 +397,16 @@ static const Note_t win_shutdown[] = {
     {0, 0}
 };
 
-void Play_Windows_Shutdown(Buzzer_device_t* buzzer) {
+void Play_Windows_Shutdown(Buzzer_device_t *buzzer)
+{
+    Buzzer_start(buzzer); // 
+
     Buzzer_set_volume(buzzer, MEDIUM);
     int i = 0;
-    while (win_shutdown[i].duration != 0) {
+    while (win_shutdown[i].duration != 0)
+    {
         Buzzer_set_frequency(buzzer, win_shutdown[i].freq);
-        HAL_Delay(win_shutdown[i].duration);
+        vTaskDelay(win_shutdown[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -383,16 +427,19 @@ static const Note_t mario_die[] = {
 };
 // 注：如果你懒得定义HighFa，可以直接把上面的FaHighFreq改成 FaFreq*2
 
-void Play_Mario_Die(Buzzer_device_t* buzzer) {
+void Play_Mario_Die(Buzzer_device_t *buzzer)
+{
+    Buzzer_start(buzzer); // 
     Buzzer_set_volume(buzzer, MEDIUM);
     int i = 0;
-    while (mario_die[i].duration != 0) {
-        if(mario_die[i].freq == 0)
+    while (mario_die[i].duration != 0)
+    {
+        if (mario_die[i].freq == 0)
             Buzzer_set_frequency(buzzer, 0);
         else
             Buzzer_set_frequency(buzzer, mario_die[i].freq);
 
-        HAL_Delay(mario_die[i].duration);
+        vTaskDelay(mario_die[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);

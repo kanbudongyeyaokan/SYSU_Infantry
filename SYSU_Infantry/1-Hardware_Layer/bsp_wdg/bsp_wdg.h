@@ -21,6 +21,7 @@ typedef struct
     wdg_callback_func online_callback;  // 上线回调
 
     void *owner_id;            // 被监控对象
+    char name[16];
 } Watchdog_device_t;
 
 /* watchdog初始化配置 */
@@ -30,6 +31,8 @@ typedef struct
     wdg_callback_func callback;         // 默认离线回调
     wdg_callback_func online_callback;  // 上线回调
     void *owner_id;
+
+    char name[16];
 } Watchdog_init_t;
 
 /**

@@ -65,7 +65,7 @@ static void Gimbal_motor_init(void) {
             .speed_source = OTHER_FEEDBACK,
             
             //使用ins模块姿态数据作为反馈
-            .other_angle_feedback_ptr = &(gimbal_imu_data->euler.yaw),
+            .other_angle_feedback_ptr = &(gimbal_imu_data->total_yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
                 .kp = 40,
@@ -154,8 +154,8 @@ void Gimbal_task_init(void) {
     gimbal_imu_data = Ins_get_data();
 
     if (gimbal_imu_data == NULL) {
-    while(1); 
-}
+        while(1); 
+    }
 
     //初始化云台电机
     Gimbal_motor_init();
@@ -178,6 +178,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             case GIMBAL_ZERO_FORCE:
                 Djimotor_set_status(yaw_motor, MOTOR_STOP);
                 Djimotor_set_status(pitch_motor, MOTOR_STOP);
+                Djimotor_set_target(yaw_motor, 0);
+                Djimotor_set_target(pitch_motor, 0);    
                 break;
 
             //云台陀螺仪反馈模式
@@ -195,6 +197,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 // float smooth_yaw_target = LPF_Calc(&yaw_target_lpf, raw_yaw_target);
 
                 Djimotor_set_target(yaw_motor, cmd->yaw);
+
+                // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
 
                 // Djimotor_set_target(yaw_motor, smooth_yaw_target);  
                 Djimotor_set_target(pitch_motor, cmd->pitch);

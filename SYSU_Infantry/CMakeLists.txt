@@ -76,6 +76,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_uart.h
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h
+        2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver/hwt101_iic.c
+        2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver/hwt101_iic.h
+
         
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
         0-Middleware_Layer/Pid_Controller/algorithm_pid.c
@@ -176,6 +179,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         1-Hardware_Layer/bsp_spi/bsp_spi.h
         1-Hardware_Layer/bsp_iic/bsp_iic.c
         1-Hardware_Layer/bsp_iic/bsp_iic.h
+        3-Function_Module_Layer/Buzzer_Alarm/buzzer_alarm.c
+        3-Function_Module_Layer/Buzzer_Alarm/buzzer_alarm.h
+        4-Application_Layer/Buzzer_Alarm_Task/buzzer_alarm_task.c
+        4-Application_Layer/Buzzer_Alarm_Task/buzzer_alarm_task.h
 
 )
 
@@ -229,7 +236,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Ramp_Controller
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Filter
-        
+                ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver
 
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
@@ -251,6 +258,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Watchdog_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver
+        ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver
+        
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Robot_Definitions
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Chassis
@@ -260,7 +269,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Vofa
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Buzzer_Alarm
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shell
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Buzzer_Alarm_Task
 
 )
 
