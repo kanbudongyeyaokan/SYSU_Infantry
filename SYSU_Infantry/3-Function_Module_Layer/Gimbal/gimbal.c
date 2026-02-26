@@ -178,6 +178,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             case GIMBAL_ZERO_FORCE:
                 Djimotor_set_status(yaw_motor, MOTOR_STOP);
                 Djimotor_set_status(pitch_motor, MOTOR_STOP);
+                Djimotor_set_target(yaw_motor, 0);
+                Djimotor_set_target(pitch_motor, 0);    
                 break;
 
             //云台陀螺仪反馈模式
@@ -196,7 +198,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
                 Djimotor_set_target(yaw_motor, cmd->yaw);
 
-                Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
+                // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
 
                 // Djimotor_set_target(yaw_motor, smooth_yaw_target);  
                 Djimotor_set_target(pitch_motor, cmd->pitch);

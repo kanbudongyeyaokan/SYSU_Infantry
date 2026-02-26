@@ -307,6 +307,7 @@ void RC_ctrl_set()
         {
             shoot_cmd_send.loader_mode = LOAD_STOP;     //
         }
+        
     //急停模式
     Emergency_stop();
 
