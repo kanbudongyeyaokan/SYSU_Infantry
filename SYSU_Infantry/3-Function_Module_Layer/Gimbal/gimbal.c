@@ -196,6 +196,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
                 Djimotor_set_target(yaw_motor, cmd->yaw);
 
+                Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
+
                 // Djimotor_set_target(yaw_motor, smooth_yaw_target);  
                 Djimotor_set_target(pitch_motor, cmd->pitch);
                 Djimotor_Calc_Output(yaw_motor);

@@ -47,7 +47,8 @@ typedef struct
 
     // 计算出的零漂值
     float offset_roll, offset_pitch, offset_yaw;
-
+    //多圈 Yaw 计算所需的历史状态记录 
+    float last_yaw;
 } HWT606_Driver_t;
 
 static HWT606_Driver_t hwt606_dev;
@@ -84,7 +85,7 @@ static bool HWT606_Init(void)
     hwt606_dev.offset_roll = 0.0f;
     hwt606_dev.offset_pitch = 0.0f;
     hwt606_dev.offset_yaw = 0.0f;
-
+    hwt606_dev.last_yaw = 0.0f;
     // 复位总线防死锁
     if (HAL_I2C_GetState(hwt606_dev.hi2c) != HAL_I2C_STATE_READY)
     {
@@ -226,6 +227,29 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     NORMALIZE_ANGLE(final_pitch);
     NORMALIZE_ANGLE(final_yaw);
 
+// 如果是校准完成后的“第一帧”正常数据，先初始化 last_yaw，防止起步误判跳变
+    if (hwt606_dev.calib_cnt == CALIB_SAMPLES) {
+        hwt606_dev.last_yaw = final_yaw;
+        hwt606_dev.calib_cnt++;    // 计数器加1，以后就不会再进这个初始化分支了
+        out_data->round_count = 0; // 圈数清零
+    }
+
+    // 计算当前帧与上一帧的差值
+    float yaw_diff = final_yaw - hwt606_dev.last_yaw;
+
+    // 过零检测 (假设正转是角度增加)
+    if (yaw_diff < -180.0f) {
+        // 从 179 度跳变到 -179 度，差值为负大数，说明正向转过了一圈
+        out_data->round_count++;
+    } 
+    else if (yaw_diff > 180.0f) {
+        // 从 -179 度跳变到 179 度，差值为正大数，说明反向转过了一圈
+        out_data->round_count--;
+    }
+
+    // 记录本次的 Yaw 供下一帧对比
+    hwt606_dev.last_yaw = final_yaw;
+
     // 填充角度
     out_data->euler.roll = final_roll;
     out_data->euler.pitch = final_pitch;
@@ -241,7 +265,7 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     out_data->acc_body.y = 0;
     out_data->acc_body.z = 0;
 
-    out_data->total_yaw = out_data->euler.yaw;
+    out_data->total_yaw = (out_data->round_count * 360.0f) + final_yaw;
     out_data->state = INS_STATE_READY;
 }
 
