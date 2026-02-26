@@ -54,11 +54,12 @@ static Robot_status_e robot_state = ROBOT_OFF;
 
 /**********************接收反馈信息***************************/
 //底盘反馈数据读取
-static Subscriber_t *chassis_feedback_sub;               //底盘反馈信息订阅者
+// static Subscriber_t *chassis_feedback_sub;               //底盘反馈信息订阅者
 static Chassis_feedback_info_t chassis_feedback_recv;   //存储底盘应用层发给决策层的信息
 
 //云台反馈数据读取
-static Subscriber_t *gimbal_feedback_sub;                //云台反馈信息订阅者
+// static Subscriber_t *gimbal_feedback_sub;                //云台反馈信息订阅者
+extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队列句柄
 static Gimbal_feedback_info_t  gimbal_feedback_recv;    //存储云台应用层发给决策层的信息
 static bool gimbal_yaw_initialized = false;
 
@@ -96,11 +97,12 @@ void Decision_making_task_init()
 
     /***********************************初始化决策层的发布者和订阅者***************************************/
     //底盘
-    chassis_feedback_sub = Sub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));//底盘反馈数据订阅者
+    // chassis_feedback_sub = Sub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));//底盘反馈数据订阅者
     //云台
-    gimbal_feedback_sub = Sub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
+    // gimbal_feedback_sub = Sub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
+    
     //发射机构
-    shoot_feedback_sub = Sub_register("shoot_feedback", sizeof(Shoot_feedback_info_t));
+    // shoot_feedback_sub = Sub_register("shoot_feedback", sizeof(Shoot_feedback_info_t));
 
     //机器人开始工作 - 关键！缺少此初始化会导致控制无响应
     robot_state = ROBOT_ON;
@@ -115,11 +117,12 @@ void Receive_feedback_infomation()
 {
 
     //获取底盘反馈信息
-    Sub_get_message(chassis_feedback_sub,(void *)(&chassis_feedback_recv));
+    // Sub_get_message(chassis_feedback_sub,(void *)(&chassis_feedback_recv));
     //获取云台反馈信息
-    Sub_get_message(gimbal_feedback_sub,(void *)(&gimbal_feedback_recv));
+    // Sub_get_message(gimbal_feedback_sub,(void *)(&gimbal_feedback_recv));
+    xQueuePeek(Gimbal_feedback_queue_handle, &gimbal_feedback_recv, 0);
     //获取发射机构反馈信息
-    Sub_get_message(shoot_feedback_sub,(void *)(&shoot_feedback_recv));
+    // Sub_get_message(shoot_feedback_sub,(void *)(&shoot_feedback_recv));
 }
 
 void Send_command_to_all_task()

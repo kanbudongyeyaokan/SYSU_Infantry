@@ -29,7 +29,7 @@
 
 /****************发送给决策层的底盘反馈信息******************/
 // 发布给决策层的底盘反馈信息
-static Publisher_t *chassis_feedback_pub;
+// static Publisher_t *chassis_feedback_pub;
 // 存储发送给决策层的反馈信息
 static Chassis_feedback_info_t chassis_feedback;
 
@@ -54,7 +54,7 @@ void Chassis_task_init(void) {
     //底盘模块初始化
     Chassis_init();
     // 先完成消息中心注册，避免后续大量内存分配导致订阅失败
-    chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
+    // chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
 
     //超电初始化
     // SuperCap_Comm_Init(&hcan2);
@@ -184,7 +184,8 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 {
     //testing
     //printf("vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
-     Uart_printf(test_uart,"vx: %f,vy:%f,mode %d\r\n", cmd->vx,cmd->vy,cmd->chassis_mode);
+    //  Uart_printf(test_uart,"vx: %f,vy:%f,mode %d\r\n", cmd->vx,cmd->vy,cmd->chassis_mode);
+    Uart_printf(test_uart,"offset_angle: %.2f\r\n", cmd->offset_angle);
     // printf("chassis_mode: %d\r\n", cmd->chassis_mode);
    test_cmd = *cmd;
 
@@ -224,7 +225,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
             Chassis_cmd_send_t cmd_solved = *cmd; 
 
-            cmd_solved.wz = 0.5f * cmd->offset_angle * abs(cmd->offset_angle);
+            cmd_solved.wz = 0.1f * cmd->offset_angle * abs(cmd->offset_angle);
 
             // 矢量变换逻辑
             float theta = -cmd->offset_angle * (M_PI / 180.0f);
@@ -280,7 +281,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
     // 反馈底盘数据回决策层
     chassis_feedback.chassis_wz = cmd->wz;
-    Pub_push_message(chassis_feedback_pub, &chassis_feedback);
+    // Pub_push_message(chassis_feedback_pub, &chassis_feedback);
 }
 
 /**

@@ -36,9 +36,11 @@ static Djimotor_device_t *yaw_motor, *pitch_motor;
 static Ins_data_t *gimbal_imu_data;
 
 // 发布给决策层的云台反馈信息
-static Publisher_t*gimbal_pub;
+// static Publisher_t*gimbal_pub;
 // 存储发送给决策层的反馈信息
 static Gimbal_feedback_info_t gimbal_feedback;
+
+extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队列句柄
 
  Gimbal_cmd_send_t gimbal_cmd;
 // static Lpf_t yaw_target_lpf; // Yaw 目标值的低通滤波器实例
@@ -161,7 +163,7 @@ void Gimbal_task_init(void) {
     Gimbal_motor_init();
 
     // 注册底盘反馈信息发布者
-    gimbal_pub = Pub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
+    // gimbal_pub = Pub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
 
 }
 
@@ -228,7 +230,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
         //推送消息
         // 将当前的电机状态（编码器数据）发布给决策层，用于下一帧的闭环控制或逻辑判断
-        Pub_push_message(gimbal_pub, (void *) &gimbal_feedback);
+        // Pub_push_message(gimbal_pub, (void *) &gimbal_feedback);
+        xQueueOverwrite(Gimbal_feedback_queue_handle, &gimbal_feedback);
 }
 /**
  * @brief 在线修改 Yaw 电机 PID 及限幅
