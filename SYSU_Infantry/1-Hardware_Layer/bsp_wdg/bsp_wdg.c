@@ -33,7 +33,7 @@ Watchdog_device_t* Watchdog_register(Watchdog_init_t* config)
     instance->reload_count = config->reload_count == 0 ? 100 : config->reload_count;
     instance->offline_callback = config->callback;
     instance->online_callback = config->online_callback;
-
+    strcpy(instance->name, config->name);
     // 初始化状态
     instance->temp_count = instance->reload_count;
     instance->is_offline = 0;
@@ -90,11 +90,14 @@ void Watchdog_control_all(void)
             {
                 current_dog->is_offline = 1; // 标记为已离线
 
-                if (current_dog->offline_callback)
-                {
-                    current_dog->offline_callback(current_dog->owner_id);
-                }
             }
+            // 无论首次还是持续离线，都触发回调，实现持续报警
+            if (current_dog->offline_callback)
+            {
+                current_dog->offline_callback(current_dog->owner_id);
+            }
+            // 重置计数器，下个周期继续检测并重复报警
+            current_dog->temp_count = current_dog->reload_count;
         }
     }
 }

@@ -22,8 +22,9 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-
-// 电机实例数组，存储所有注册的电机对象
+#include "buzzer_music.h"
+#include "buzzer_alarm.h"
+ // 电机实例数组
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
 static uint8_t motor_count = 0;
 
@@ -55,8 +56,8 @@ static void Motor_Offline_Callback(void *device) {
   motor->motor_measure.angular_velocity = 0;
   motor->motor_measure.real_current = 0;
 
-  // 将状态设为 STOP，Calc_Output 函数会据此将输出设为 0
-  motor->motor_status = MOTOR_STOP;
+    // 将状态设为 STOP，停止计算输出
+    motor->motor_status = MOTOR_STOP;
 }
 
 /**
@@ -204,6 +205,8 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
   wdg_conf.reload_count = 50; // 50 * 5ms = 250ms 超时
   // [修正] 这里赋值正确的函数名
   wdg_conf.callback = Motor_Offline_Callback;
+  wdg_conf.online_callback = NULL;
+  strcpy(wdg_conf.name, motor->motor_name);
   motor->wdg = Watchdog_register(&wdg_conf);
 
   motor_instances[motor_count++] = motor;
