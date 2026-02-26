@@ -7,7 +7,7 @@
  * @note    负责接收发射指令，控制摩擦轮和拨弹盘
  */
 
-#include "Shoot_task.h"
+#include "shoot_task.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "robot_task.h"

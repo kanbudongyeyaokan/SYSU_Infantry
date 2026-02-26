@@ -182,7 +182,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 {
     //testing
     //printf("vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
-    //Uart_printf(test_uart,"vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
+    Uart_printf(test_uart,"vx: %f,vy:%f,mode %d\r\n", cmd->vx,cmd->vy,cmd->chassis_mode);
     // printf("chassis_mode: %d\r\n", cmd->chassis_mode);
    // Chassis_cmd_send_t test_cmd = *cmd;
 

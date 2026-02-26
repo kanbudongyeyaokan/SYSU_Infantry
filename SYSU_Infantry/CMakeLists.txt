@@ -40,6 +40,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Remote_Control/remote_control.c
         3-Function_Module_Layer/Remote_Control/SBUS.h
         3-Function_Module_Layer/Remote_Control/SBUS.c
+        3-Function_Module_Layer/Remote_Control/video_link.h
+        3-Function_Module_Layer/Remote_Control/video_link.c
         1-Hardware_Layer/bsp_usart/bsp_usart.c
         1-Hardware_Layer/bsp_usart/bsp_usart.h
         0-Middleware_Layer/Message_Center/message_center.c
