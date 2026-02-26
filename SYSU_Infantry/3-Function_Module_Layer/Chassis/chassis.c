@@ -42,6 +42,8 @@ static Djimotor_device_t *chassis_motors[4] = {0};
 // 底盘四个电机的输出
 static Chassis_output_t chassis_output;
 
+Chassis_cmd_send_t test_cmd;
+
 #define abs(x) ((x > 0) ? x : -x)
 
 /*********************************底盘方法接口**************************************/
@@ -184,7 +186,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
     //printf("vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
     //Uart_printf(test_uart,"vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
     // printf("chassis_mode: %d\r\n", cmd->chassis_mode);
-   // Chassis_cmd_send_t test_cmd = *cmd;
+   test_cmd = *cmd;
 
     // 1. 使用传入的 'cmd' 指针代替原来的全局变量
     switch (cmd->chassis_mode) // [注意] 这里把 . 改成了 ->

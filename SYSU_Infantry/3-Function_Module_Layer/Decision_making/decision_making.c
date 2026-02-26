@@ -44,6 +44,9 @@ static Shoot_cmd_send_t   shoot_cmd_send;   //存储决策层给发射机构应�
 //机器人整体工作状态（二元）：----ON：在线 OFF：离线
 static Robot_status_e robot_state = ROBOT_OFF;
 
+// static bool rc_cailibrated = true; // 遥控器校准标志位
+
+
 /************************************************************/
 
 /**********************接收反馈信息***************************/
@@ -70,6 +73,7 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
 #define RC_DEADBAND 5
 #define PITCH_RC_CENTER_OFFSET (70.0f)  // 摇杆中位实测偏移量
+
 
 /**
  * @brief 任务初始化函数，初始化决策层的发布者和订阅者,获取遥控器数据
@@ -335,10 +339,11 @@ void RC_ctrl_set()
     }
 
     // 3. PITCH 轴处理 (死区 + 累加: 初始0, 上拨+, 回中保持)
-    if (fabsf(pitch_input) > RC_DEADBAND)
+       if (fabsf(pitch_input) > RC_DEADBAND)
     {
         gimbal_cmd_send.pitch += GIMBAL_RC_MOVE_RATIO_PITCH * pitch_input;
     }
+    
     // Uart_printf(test_uart, "yaw_input:%.2f,pitch_input:%.2f\r\n", yaw_input, pitch_input); 
     // 4. 限幅保持不变
     if (gimbal_cmd_send.pitch > 20)
