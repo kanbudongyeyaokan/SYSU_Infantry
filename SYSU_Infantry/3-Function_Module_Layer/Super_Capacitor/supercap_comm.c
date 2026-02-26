@@ -19,11 +19,7 @@ static void SuperCap_RxCallback(Can_controller_t *can_dev, void *context)
     memcpy((void *) &supercap_rx_data, can_dev->rx_buffer, sizeof(supercap_rx_data));
 }
 
-void SuperCap_Comm_Init(CAN_HandleTypeDef *hcan)
-{
-    //使用默认 ID：TX = 0x061, RX = 0x051
-    SuperCap_Comm_Init_Ext(hcan, SUPER_CAP_TX_ID, SUPER_CAP_RX_ID);
-}
+
 
 void SuperCap_Comm_Init_Ext(CAN_HandleTypeDef *hcan, uint32_t tx_id, uint32_t rx_id)
 {
@@ -37,6 +33,13 @@ void SuperCap_Comm_Init_Ext(CAN_HandleTypeDef *hcan, uint32_t tx_id, uint32_t rx
     };
 
     supercap_can = Can_device_init(&can_cfg);
+}
+
+
+void SuperCap_Comm_Init(CAN_HandleTypeDef *hcan)
+{
+    //使用默认 ID：TX = 0x061, RX = 0x051
+    SuperCap_Comm_Init_Ext(hcan, SUPER_CAP_TX_ID, SUPER_CAP_RX_ID);
 }
 
 uint8_t SuperCap_Comm_Send(const SuperCap_TxData *data)
