@@ -74,6 +74,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_uart.h
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h
+        2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver/hwt101_iic.c
+        2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver/hwt101_iic.h
+
         
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
         0-Middleware_Layer/Pid_Controller/algorithm_pid.c
@@ -249,6 +252,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Watchdog_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver
+        ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver
+        
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Robot_Definitions
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Chassis

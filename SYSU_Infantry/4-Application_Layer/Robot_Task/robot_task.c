@@ -109,8 +109,8 @@ void Robot_task_init(void)
 
   //
   // // 云台控制任务 (Priority: Normal)
-  // osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0,512);
-  // gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
+  osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0,512);
+  gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
   //
   //   // osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
   //   // referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
@@ -120,10 +120,10 @@ void Robot_task_init(void)
   osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
   chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
   //
-  osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
-  shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+  // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
+  // shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
   
-  //   // osThreadDef(shell_task, Shell_task, osPriorityNormal, 0, 512);
+  //   // osThreadDef(shell_task, Shell_task, osPriorityNowrmal, 0, 512);
   //   // shell_task_handle = osThreadCreate(osThread(shell_task), NULL);
 
 }

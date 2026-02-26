@@ -182,7 +182,8 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s) {
     // --- 正常输出---
     
     float final_roll  = curr_roll - hwt606_dev.offset_roll;
-    float final_pitch = curr_pitch - hwt606_dev.offset_pitch;
+    // float final_pitch = curr_pitch - hwt606_dev.offset_pitch;
+    float final_pitch = curr_pitch; // Pitch 轴不做零漂校准，保持原始输出
     float final_yaw   = curr_yaw - hwt606_dev.offset_yaw;
 
     NORMALIZE_ANGLE(final_roll);

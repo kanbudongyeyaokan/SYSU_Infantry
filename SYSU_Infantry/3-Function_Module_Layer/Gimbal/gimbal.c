@@ -65,7 +65,7 @@ static void Gimbal_motor_init(void) {
             .speed_source = OTHER_FEEDBACK,
             
             //使用ins模块姿态数据作为反馈
-            .other_angle_feedback_ptr = &(gimbal_imu_data->euler.yaw),
+            .other_angle_feedback_ptr = &(gimbal_imu_data->total_yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
                 .kp = 40,
@@ -154,8 +154,8 @@ void Gimbal_task_init(void) {
     gimbal_imu_data = Ins_get_data();
 
     if (gimbal_imu_data == NULL) {
-    while(1); 
-}
+        while(1); 
+    }
 
     //初始化云台电机
     Gimbal_motor_init();
