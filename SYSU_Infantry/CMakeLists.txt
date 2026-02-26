@@ -174,6 +174,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         1-Hardware_Layer/bsp_spi/bsp_spi.h
         1-Hardware_Layer/bsp_iic/bsp_iic.c
         1-Hardware_Layer/bsp_iic/bsp_iic.h
+        3-Function_Module_Layer/Buzzer_Alarm/buzzer_alarm.c
+        3-Function_Module_Layer/Buzzer_Alarm/buzzer_alarm.h
+        4-Application_Layer/Buzzer_Alarm_Task/buzzer_alarm_task.c
+        4-Application_Layer/Buzzer_Alarm_Task/buzzer_alarm_task.h
 
 )
 
@@ -258,7 +262,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shoot
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Remote_Control
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Vofa
-        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shell
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Buzzer_Alarm
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Buzzer_Alarm_Task
 
 )
 

@@ -33,7 +33,6 @@ Watchdog_device_t* Watchdog_register(Watchdog_init_t* config)
     instance->reload_count = config->reload_count == 0 ? 100 : config->reload_count;
     instance->offline_callback = config->callback;
     instance->online_callback = config->online_callback;
-
     // 初始化状态
     instance->temp_count = instance->reload_count;
     instance->is_offline = 0;

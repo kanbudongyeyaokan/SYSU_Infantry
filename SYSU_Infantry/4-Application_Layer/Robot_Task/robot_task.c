@@ -25,10 +25,10 @@
 #include "Ins_task.h"
 #include "shoot_task.h"
 #include "Shell_task.h"
+#include "buzzer_alarm_task.h"
+#include "buzzer_alarm.h"#include "Referee_task.h"
 
-#include "Referee_task.h"
-
-/**任务句柄声明**/
+  /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
 osThreadId gimbal_task_handle; //云台任务
 osThreadId shoot_task_handle;  //发射任务
@@ -37,7 +37,7 @@ osThreadId decision_making_task_handle;     //决策任务
 osThreadId referee_task_handle;//裁判系统通信任务
 osThreadId others_task_handle; //处理其他任务，比如与视觉通信，电量读取等琐碎任务，后续根据实际进行修改
 osThreadId watchdog_task_handle; //看门狗任务
-
+osThreadId buzzer_alarm_task_handle;
 /*Shell任务句柄*/
 osThreadId shell_task_handle;
 
@@ -53,6 +53,8 @@ QueueHandle_t Chassis_cmd_queue_handle;
 QueueHandle_t Gimbal_cmd_queue_handle;
 
 QueueHandle_t Shoot_cmd_queue_handle;
+
+QueueHandle_t Buzzer_cmd_queue_handle;
 
 Uart_instance_t* test_uart = NULL;
 
@@ -70,6 +72,8 @@ void Robot_task_init(void)
     Gimbal_cmd_queue_handle = xQueueCreate(1, sizeof(Gimbal_cmd_send_t));
 
     Shoot_cmd_queue_handle = xQueueCreate(1,sizeof(Shoot_cmd_send_t));
+
+    Buzzer_cmd_queue_handle = xQueueCreate(5,sizeof(uint8_t));
     // 选择要运行的测试任务（取消注释需要的测试）
     
     // === 单元测试 ===
@@ -107,25 +111,23 @@ void Robot_task_init(void)
   osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
   decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
 
-  //
-  // // 云台控制任务 (Priority: Normal)
-  // osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0,512);
-  // gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
-  //
-  //   // osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
-  //   // referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
-  //
-  //   // === 启动底盘与电机任务（必需） ===
-  //   // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
-  osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
-  chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
-  //
-  osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
-  shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
-  
-  //   // osThreadDef(shell_task, Shell_task, osPriorityNormal, 0, 512);
-  //   // shell_task_handle = osThreadCreate(osThread(shell_task), NULL);
+    //ins任务
+    osThreadDef(ins_task,Ins_task,osPriorityAboveNormal,0,4096);
+    ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
 
+    // === 启动底盘与电机任务（必需） ===
+    // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
+    // osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
+    // chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
+
+    osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
+    gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
+
+    // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
+    // shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+
+    osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityBelowNormal, 0, 512);
+    buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
 }
 
 

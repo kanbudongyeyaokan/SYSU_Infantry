@@ -2,7 +2,8 @@
 #include "main.h"
 #include "buzzer_music.h"
 #include "tim.h"
-
+#include "FreeRTOS.h"
+#include "task.h"
 // 《小星星》乐谱
 static const Note_t twinkle_twinkle[] = {
     // 第一句：一闪一闪亮晶晶
@@ -57,7 +58,7 @@ void Play_Twinkle_Twinkle(Buzzer_device_t* buzzer)
         Buzzer_set_frequency(buzzer, twinkle_twinkle[i].freq);
 
         // 持续指定时间
-        HAL_Delay(twinkle_twinkle[i].duration);
+        vTaskDelay(twinkle_twinkle[i].duration);
 
         i++;
     }
@@ -77,7 +78,7 @@ void Play_Super_Mario(Buzzer_device_t* buzzer) {
         Buzzer_set_frequency(buzzer, super_mario[i].freq);
 
         // 持续指定时间
-        HAL_Delay(super_mario[i].duration);
+        vTaskDelay(super_mario[i].duration);
         i++;
     }
 
@@ -103,7 +104,7 @@ void Play_System_Start(Buzzer_device_t* buzzer)
         Buzzer_set_frequency(buzzer, system_start_notes[i].freq);
         // 注意：这里是阻塞延时，开机初始化时使用无妨，
         // 但如果在控制循环中调用，建议改为非阻塞实现
-        HAL_Delay(system_start_notes[i].duration);
+        vTaskDelay(system_start_notes[i].duration);
         i++;
     }
 
@@ -142,7 +143,7 @@ void Play_EVA_Start(Buzzer_device_t* buzzer)
     int i = 0;
     while (eva_chorus[i].duration != 0) {
         Buzzer_set_frequency(buzzer, eva_chorus[i].freq);
-        HAL_Delay(eva_chorus[i].duration); // 阻塞式播放
+        vTaskDelay(eva_chorus[i].duration); // 阻塞式播放
         i++;
     }
     Buzzer_stop(buzzer);
@@ -171,7 +172,7 @@ void Play_Cyber_Boot(Buzzer_device_t* buzzer)
     int i = 0;
     while (cyber_boot[i].duration != 0) {
         Buzzer_set_frequency(buzzer, cyber_boot[i].freq);
-        HAL_Delay(cyber_boot[i].duration);
+        vTaskDelay(cyber_boot[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -225,7 +226,7 @@ void Play_Railgun(Buzzer_device_t* buzzer) {
     while (railgun_notes[i].duration != 0) {
         Buzzer_set_frequency(buzzer, railgun_notes[i].freq);
         // 这首歌节奏很快，为了听感连续，可以把Delay稍微减少一点点(比如乘0.9)，或者直接用
-        HAL_Delay(railgun_notes[i].duration);
+        vTaskDelay(railgun_notes[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -260,7 +261,7 @@ void Play_JoJo(Buzzer_device_t* buzzer) {
         } else {
              Buzzer_set_frequency(buzzer, jojo_notes[i].freq);
         }
-        HAL_Delay(jojo_notes[i].duration);
+        vTaskDelay(jojo_notes[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -284,7 +285,7 @@ void Play_Sans(Buzzer_device_t* buzzer) {
     int i = 0;
     while (sans_intro[i].duration != 0) {
         Buzzer_set_frequency(buzzer, sans_intro[i].freq);
-        HAL_Delay(sans_intro[i].duration);
+        vTaskDelay(sans_intro[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -305,7 +306,7 @@ void Play_Intel(Buzzer_device_t* buzzer) {
     int i = 0;
     while (intel_jingle[i].duration != 0) {
         Buzzer_set_frequency(buzzer, intel_jingle[i].freq);
-        HAL_Delay(intel_jingle[i].duration);
+        vTaskDelay(intel_jingle[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -340,7 +341,7 @@ void Play_Coffin_Dance(Buzzer_device_t* buzzer) {
     int i = 0;
     while (coffin_dance[i].duration != 0) {
         Buzzer_set_frequency(buzzer, coffin_dance[i].freq);
-        HAL_Delay(coffin_dance[i].duration);
+        vTaskDelay(coffin_dance[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -362,7 +363,7 @@ void Play_Windows_Shutdown(Buzzer_device_t* buzzer) {
     int i = 0;
     while (win_shutdown[i].duration != 0) {
         Buzzer_set_frequency(buzzer, win_shutdown[i].freq);
-        HAL_Delay(win_shutdown[i].duration);
+        vTaskDelay(win_shutdown[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);
@@ -392,7 +393,7 @@ void Play_Mario_Die(Buzzer_device_t* buzzer) {
         else
             Buzzer_set_frequency(buzzer, mario_die[i].freq);
 
-        HAL_Delay(mario_die[i].duration);
+        vTaskDelay(mario_die[i].duration);
         i++;
     }
     Buzzer_stop(buzzer);

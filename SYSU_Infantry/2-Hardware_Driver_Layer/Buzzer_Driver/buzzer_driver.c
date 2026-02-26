@@ -50,7 +50,11 @@ void Buzzer_set_frequency(Buzzer_device_t *buzzer, uint32_t freq)
    //     HAL_TIM_PWM_Stop(buzzer->htim, buzzer->tim_channel);
    //     return;
   //  }
-
+    //不停止PWM输出，而是设置占空比为0实现静音，防止状态管理混乱
+    if (freq == 0) {
+        __HAL_TIM_SET_COMPARE(buzzer->htim, buzzer->tim_channel, 0);
+        return;
+    }
     // 计算自动重载值 (ARR)
     uint32_t period = (TIMER_CLOCK_FREQ / freq) - 1;
 
@@ -81,8 +85,8 @@ void Buzzer_set_volume(Buzzer_device_t *buzzer, Buzzer_volume_e volume)
 void Buzzer_start(Buzzer_device_t *buzzer) {
     buzzer->buzzer_state = BUZZER_ON;
 }
-//停止
+//停止蜂鸣器（静音，频率设为 0，但 PWM 保持运行）
 void Buzzer_stop(Buzzer_device_t *buzzer) {
     buzzer->buzzer_state = BUZZER_OFF;
-    HAL_TIM_PWM_Stop(buzzer->htim, buzzer->tim_channel);
+    Buzzer_set_frequency(buzzer, 0);  // 静音，但不停止 PWM
 }
