@@ -16,4 +16,5 @@ void Buzzer_alarm_control_task(void const *argument) {
             Alarm_handle_command(&recv_alarm_times);
         }
     }
+    osDelay(10);
 }
