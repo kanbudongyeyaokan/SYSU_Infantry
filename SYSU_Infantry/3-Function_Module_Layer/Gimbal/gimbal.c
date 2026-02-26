@@ -180,6 +180,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_status(pitch_motor, MOTOR_STOP);
                 Djimotor_set_target(yaw_motor, 0);
                 Djimotor_set_target(pitch_motor, 0);    
+                Djimotor_Calc_Output(yaw_motor);
+                Djimotor_Calc_Output(pitch_motor);
                 break;
 
             //云台陀螺仪反馈模式

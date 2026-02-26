@@ -46,8 +46,10 @@ static Shoot_cmd_send_t   shoot_cmd_send;   //存储决策层给发射机构应�
 static Robot_status_e robot_state = ROBOT_OFF;
 
 // static bool rc_cailibrated = true; // 遥控器校准标志位
-
-
+#define PITCH_UP_MAX 20.0f
+#define PITCH_DOWN_MAX -40.0f
+#define KEY_SENSITIVITY 0.5f // 键盘控制灵敏度，数值越大响应越快，但可能不够平滑，建议从0.1开始调试
+#define KEYCTL__SPEED 3000.0f // 键盘控制的最大速度，单位可以根据实际情况调整
 /************************************************************/
 
 /**********************接收反馈信息***************************/
@@ -74,6 +76,7 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
 #define RC_DEADBAND 5
 #define PITCH_RC_CENTER_OFFSET (70.0f)  // 摇杆中位实测偏移量
+
 
 
 /**
