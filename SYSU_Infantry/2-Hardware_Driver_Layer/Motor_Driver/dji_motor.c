@@ -205,6 +205,8 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
   wdg_conf.reload_count = 50; // 50 * 5ms = 250ms 超时
   // [修正] 这里赋值正确的函数名
   wdg_conf.callback = Motor_Offline_Callback;
+  wdg_conf.online_callback = NULL;
+  strcpy(wdg_conf.name, motor->motor_name);
   motor->wdg = Watchdog_register(&wdg_conf);
 
   motor_instances[motor_count++] = motor;

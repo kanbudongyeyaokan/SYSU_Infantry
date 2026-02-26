@@ -128,9 +128,11 @@ RC_ctrl_t *RC_Data_Get(UART_HandleTypeDef *rc_uart_handle)
     Watchdog_init_t wdg_config = {
         .owner_id = rc_uart,
         .reload_count = 30,
+        .online_callback = NULL,
         .callback = RC_Offline_Callback,
         .name = "RC"
     };
+    
     rc_wdg = Watchdog_register(&wdg_config);
 
     return rc_data;
