@@ -74,7 +74,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_uart.h
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.c
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h
-        
+        2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.c
+        2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver/hwt101_iic.h
+
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
         0-Middleware_Layer/Pid_Controller/algorithm_pid.c
         0-Middleware_Layer/Kalman_Fliter/algorithm_ekf.h
@@ -231,7 +233,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Ramp_Controller
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Filter
-        
+                ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/HWT101_Driver
 
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
