@@ -27,7 +27,7 @@ void Referee_task(void const * argument)
     // 硬件初始化
     // =====================================================
     // 启动裁判系统串口接收
-    referee_data = Referee_Get_Data(&huart6);
+    referee_data = Referee_Get_Data(&huart3);
 
     // 延时等待系统稳定，防止上电瞬间数据不稳定
     osDelay(500);
