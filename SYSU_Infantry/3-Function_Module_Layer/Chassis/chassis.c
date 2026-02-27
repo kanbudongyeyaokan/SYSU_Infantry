@@ -42,6 +42,8 @@ static Djimotor_device_t *chassis_motors[4] = {0};
 // 底盘四个电机的输出
 static Chassis_output_t chassis_output;
 
+extern QueueHandle_t Chassis_cmd_queue_handle; // 声明外部底盘命令队列句柄
+
 Chassis_cmd_send_t test_cmd;
 
 #define abs(x) ((x > 0) ? x : -x)
@@ -53,9 +55,6 @@ Chassis_cmd_send_t test_cmd;
 void Chassis_task_init(void) {
     //底盘模块初始化
     Chassis_init();
-    // 先完成消息中心注册，避免后续大量内存分配导致订阅失败
-    // chassis_feedback_pub = Pub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));
-
     //超电初始化
     // SuperCap_Comm_Init(&hcan2);
 
@@ -184,7 +183,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 {
     //testing
     //printf("vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
-     Uart_printf(test_uart,"vx: %f,vy:%f,mode %d\r\n", cmd->vx,cmd->vy,cmd->chassis_mode);
+    //  Uart_printf(test_uart,"vx: %f,vy:%f,mode %d\r\n", cmd->vx,cmd->vy,cmd->chassis_mode);
     // Uart_printf(test_uart,"offset_angle: %.2f\r\n", cmd->offset_angle);
     // printf("chassis_mode: %d\r\n", cmd->chassis_mode);
    test_cmd = *cmd;
@@ -223,9 +222,18 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
                 Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
             }
 
-            Chassis_cmd_send_t cmd_solved = *cmd; 
+            Chassis_cmd_send_t cmd_solved = *cmd;
 
-            cmd_solved.wz = 0.1f * cmd->offset_angle * abs(cmd->offset_angle);
+            //限制平方项输出
+            // float omega_z = 0.1f * cmd->offset_angle * abs(cmd->offset_angle);
+            // if (omega_z < -CHASSIS_FOLLOW_WZ_LIMIT) {
+            //     omega_z = -CHASSIS_FOLLOW_WZ_LIMIT;
+            // } else if (omega_z > CHASSIS_FOLLOW_WZ_LIMIT) {
+            //     omega_z = CHASSIS_FOLLOW_WZ_LIMIT;
+            // }
+            // cmd_solved.wz = omega_z;
+
+            cmd_solved.wz = 0.5 * cmd->offset_angle * abs(cmd->offset_angle); 
 
             // 矢量变换逻辑
             float theta = -cmd->offset_angle * (M_PI / 180.0f);
@@ -281,7 +289,8 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
     // 反馈底盘数据回决策层
     chassis_feedback.chassis_wz = cmd->wz;
-    // Pub_push_message(chassis_feedback_pub, &chassis_feedback);
+    xQueueOverwrite(Chassis_cmd_queue_handle, &chassis_feedback); // 使用队列发送反馈信息
+    
 }
 
 /**

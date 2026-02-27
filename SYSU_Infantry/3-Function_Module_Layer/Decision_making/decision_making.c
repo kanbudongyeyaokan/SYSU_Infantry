@@ -54,11 +54,12 @@ static Robot_status_e robot_state = ROBOT_OFF;
 
 /**********************接收反馈信息***************************/
 //底盘反馈数据读取
-// static Subscriber_t *chassis_feedback_sub;               //底盘反馈信息订阅者
 static Chassis_feedback_info_t chassis_feedback_recv;   //存储底盘应用层发给决策层的信息
 
 //云台反馈数据读取
-// static Subscriber_t *gimbal_feedback_sub;                //云台反馈信息订阅者
+
+extern QueueHandle_t Shoot_cmd_queue_handle;   //发射机构控制信息队列句柄
+extern QueueHandle_t Chassis_cmd_queue_handle; // 声明外部底盘命令队列句柄
 extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队列句柄
 static Gimbal_feedback_info_t  gimbal_feedback_recv;    //存储云台应用层发给决策层的信息
 static bool gimbal_yaw_initialized = false;
@@ -76,7 +77,7 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 #define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
 #define RC_DEADBAND 5
-#define PITCH_RC_CENTER_OFFSET (70.0f)  // 摇杆中位实测偏移量
+static float PITCH_RC_CENTER_OFFSET = 0.0f;  // 摇杆中位偏移量，上电自动校准
 
 
 
@@ -93,6 +94,9 @@ void Decision_making_task_init()
     vrc_data = Video_RC_Data_Get(&huart1);  // 图传串口，按实际修改
 #else
     rc_data = RC_Data_Get(&huart3);
+    // 上电后等待0.5s，读取pitch摇杆原点值作为偏移量
+    osDelay(500);
+    PITCH_RC_CENTER_OFFSET = (float)rc_data[CURRENT].rc.Rrocker_y;
 #endif
 
     /***********************************初始化决策层的发布者和订阅者***************************************/
@@ -115,14 +119,12 @@ void Decision_making_task_init()
 //获取各个模块的反馈信息
 void Receive_feedback_infomation()
 {
-
     //获取底盘反馈信息
-    // Sub_get_message(chassis_feedback_sub,(void *)(&chassis_feedback_recv));
+    xQueuePeek(Chassis_cmd_queue_handle, &chassis_feedback_recv, 0);
     //获取云台反馈信息
-    // Sub_get_message(gimbal_feedback_sub,(void *)(&gimbal_feedback_recv));
     xQueuePeek(Gimbal_feedback_queue_handle, &gimbal_feedback_recv, 0);
     //获取发射机构反馈信息
-    // Sub_get_message(shoot_feedback_sub,(void *)(&shoot_feedback_recv));
+    xQueuePeek(Shoot_cmd_queue_handle, &shoot_feedback_recv, 0);
 }
 
 void Send_command_to_all_task()
