@@ -61,7 +61,7 @@ QueueHandle_t Gimbal_feedback_queue_handle;
 
 QueueHandle_t Chassis_feedback_queue_handle;\
 
-QueueHandle_t shoot_feedback_queue_handle;
+QueueHandle_t Shoot_feedback_queue_handle;
 
 Uart_instance_t* test_uart = NULL;
 
@@ -84,7 +84,7 @@ void Robot_task_init(void)
 
     Chassis_feedback_queue_handle = xQueueCreate(1, sizeof(Chassis_feedback_info_t));
 
-    shoot_feedback_queue_handle = xQueueCreate(1, sizeof(Shoot_feedback_info_t));
+    Shoot_feedback_queue_handle = xQueueCreate(1, sizeof(Shoot_feedback_info_t));
 
     Buzzer_cmd_queue_handle = xQueueCreate(5,sizeof(uint8_t));
     // 选择要运行的测试任务（取消注释需要的测试）

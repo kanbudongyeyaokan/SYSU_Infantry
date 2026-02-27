@@ -42,7 +42,7 @@ static Djimotor_device_t *chassis_motors[4] = {0};
 // 底盘四个电机的输出
 static Chassis_output_t chassis_output;
 
-extern QueueHandle_t Chassis_cmd_queue_handle; // 声明外部底盘命令队列句柄
+extern QueueHandle_t Chassis_feedback_queue_handle; // 声明外部底盘反馈队列句柄
 
 Chassis_cmd_send_t test_cmd;
 
@@ -289,7 +289,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
     // 反馈底盘数据回决策层
     chassis_feedback.chassis_wz = cmd->wz;
-    xQueueOverwrite(Chassis_cmd_queue_handle, &chassis_feedback); // 使用队列发送反馈信息
+    xQueueOverwrite(Chassis_feedback_queue_handle, &chassis_feedback); // 使用队列发送反馈信息
     
 }
 

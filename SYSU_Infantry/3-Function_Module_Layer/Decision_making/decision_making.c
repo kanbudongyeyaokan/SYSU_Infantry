@@ -58,8 +58,8 @@ static Chassis_feedback_info_t chassis_feedback_recv;   //存储底盘应用层�
 
 //云台反馈数据读取
 
-extern QueueHandle_t Shoot_cmd_queue_handle;   //发射机构控制信息队列句柄
-extern QueueHandle_t Chassis_cmd_queue_handle; // 声明外部底盘命令队列句柄
+extern QueueHandle_t Shoot_feedback_queue_handle;   //发射机构控制信息队列句柄
+extern QueueHandle_t Chassis_feedback_queue_handle; // 声明外部底盘命令队列句柄
 extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队列句柄
 static Gimbal_feedback_info_t  gimbal_feedback_recv;    //存储云台应用层发给决策层的信息
 static bool gimbal_yaw_initialized = false;
