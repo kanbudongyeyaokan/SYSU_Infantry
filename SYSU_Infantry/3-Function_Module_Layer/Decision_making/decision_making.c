@@ -337,7 +337,7 @@ void RC_ctrl_set()
     Emergency_stop();
 
     if (fabsf((float)vrc_data[CURRENT].rc.Lrocker_y) > RC_DEADBAND)
-        chassis_cmd_send.vy = 15.0f * (float)vrc_data[CURRENT].rc.Lrocker_y;
+        chassis_cmd_send.vy = -15.0f * (float)vrc_data[CURRENT].rc.Lrocker_y;
     else
         chassis_cmd_send.vy = 0;
     chassis_cmd_send.vx = -15.0f * (float)vrc_data[CURRENT].rc.Lrocker_x;
