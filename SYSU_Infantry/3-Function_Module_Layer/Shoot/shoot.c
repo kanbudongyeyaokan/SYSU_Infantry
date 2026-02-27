@@ -25,6 +25,8 @@ static Publisher_t *shoot_feedback_pub;
 // 存储发送给决策层的反馈信息
 static Shoot_feedback_info_t shoot_feedback;
 
+extern QueueHandle_t Shoot_cmd_queue_handle;   //发射机构控制信息队列句柄
+
 /****************发射机构电机实例**************************/
 static Djimotor_device_t *shoot_motors[3] = {0};
 
@@ -111,8 +113,6 @@ void Shoot_motors_init(void)
 //发射任务初始化
 void Shoot_task_init(void) {
 	Shoot_motors_init();
-
-	shoot_feedback_pub = Pub_register("shoot_feedback",sizeof(Shoot_feedback_info_t));
 }
 
 //发射任务处理控制命令
@@ -175,5 +175,5 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
     Djimotor_Calc_Output(shoot_motors[2]);
 
     // 其他反馈赋值
-    Pub_push_message(shoot_feedback_pub, (void *)&shoot_feedback);
+    xQueueOverwrite(Shoot_cmd_queue_handle, &shoot_feedback);
 }

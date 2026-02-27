@@ -54,11 +54,12 @@ static Robot_status_e robot_state = ROBOT_OFF;
 
 /**********************接收反馈信息***************************/
 //底盘反馈数据读取
-// static Subscriber_t *chassis_feedback_sub;               //底盘反馈信息订阅者
 static Chassis_feedback_info_t chassis_feedback_recv;   //存储底盘应用层发给决策层的信息
 
 //云台反馈数据读取
-// static Subscriber_t *gimbal_feedback_sub;                //云台反馈信息订阅者
+
+extern QueueHandle_t Shoot_cmd_queue_handle;   //发射机构控制信息队列句柄
+extern QueueHandle_t Chassis_cmd_queue_handle; // 声明外部底盘命令队列句柄
 extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队列句柄
 static Gimbal_feedback_info_t  gimbal_feedback_recv;    //存储云台应用层发给决策层的信息
 static bool gimbal_yaw_initialized = false;
@@ -118,14 +119,12 @@ void Decision_making_task_init()
 //获取各个模块的反馈信息
 void Receive_feedback_infomation()
 {
-
     //获取底盘反馈信息
-    // Sub_get_message(chassis_feedback_sub,(void *)(&chassis_feedback_recv));
+    xQueuePeek(Chassis_cmd_queue_handle, &chassis_feedback_recv, 0);
     //获取云台反馈信息
-    // Sub_get_message(gimbal_feedback_sub,(void *)(&gimbal_feedback_recv));
     xQueuePeek(Gimbal_feedback_queue_handle, &gimbal_feedback_recv, 0);
     //获取发射机构反馈信息
-    // Sub_get_message(shoot_feedback_sub,(void *)(&shoot_feedback_recv));
+    xQueuePeek(Shoot_cmd_queue_handle, &shoot_feedback_recv, 0);
 }
 
 void Send_command_to_all_task()
