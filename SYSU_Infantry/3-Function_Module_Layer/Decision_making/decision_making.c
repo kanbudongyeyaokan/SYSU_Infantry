@@ -76,7 +76,7 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 #define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
 #define RC_DEADBAND 5
-#define PITCH_RC_CENTER_OFFSET (70.0f)  // 摇杆中位实测偏移量
+static float PITCH_RC_CENTER_OFFSET = 0.0f;  // 摇杆中位偏移量，上电自动校准
 
 
 
@@ -93,6 +93,9 @@ void Decision_making_task_init()
     vrc_data = Video_RC_Data_Get(&huart1);  // 图传串口，按实际修改
 #else
     rc_data = RC_Data_Get(&huart3);
+    // 上电后等待0.5s，读取pitch摇杆原点值作为偏移量
+    osDelay(500);
+    PITCH_RC_CENTER_OFFSET = (float)rc_data[CURRENT].rc.Rrocker_y;
 #endif
 
     /***********************************初始化决策层的发布者和订阅者***************************************/
