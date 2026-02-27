@@ -24,6 +24,8 @@
 #include "task.h"
 #include "buzzer_music.h"
 #include "buzzer_alarm.h"
+
+
  // 电机实例数组
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
 static uint8_t motor_count = 0;
@@ -57,7 +59,9 @@ static void Motor_Offline_Callback(void *device) {
   motor->motor_measure.real_current = 0;
 
     // 将状态设为 STOP，停止计算输出
-    motor->motor_status = MOTOR_STOP;
+  motor->motor_status = MOTOR_STOP;
+
+  Watchdog_buzzer_alarm(motor->motor_name); // 触发看门狗报警，提示电机掉线
 }
 
 /**

@@ -12,6 +12,7 @@
 #include "bsp_can.h"
 #include "message_center.h"
 #include "decision_making.h"
+#include "robot_task.h"
 #define ONE_BULLET_DELTA_ANGLE  36.0f
 #define REDUCTION_RATIO_LOADER 36.0f
 /****************接收决策层的射击控制信息********************/
@@ -31,6 +32,9 @@ Shoot_cmd_send_t shoot_test_cmd;
 
 /****************发射机构电机实例**************************/
 static Djimotor_device_t *shoot_motors[3] = {0};
+
+Djimotor_device_t shoot_test_motor;
+
 
 void Shoot_motors_init(void)
 {
@@ -134,8 +138,8 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
         // 开启摩擦轮
         Djimotor_set_status(shoot_motors[0], MOTOR_ENABLED);
         Djimotor_set_status(shoot_motors[1], MOTOR_ENABLED);
-        Djimotor_set_target(shoot_motors[0], 8000);  // 上摩擦轮
-        Djimotor_set_target(shoot_motors[1], -8000); // 下摩擦轮
+        Djimotor_set_target(shoot_motors[0], 12000);  // 上摩擦轮
+        Djimotor_set_target(shoot_motors[1], -12000); // 下摩擦轮
     }
 
     // 2. 处理拨弹盘 (LOADER_MODE)
@@ -171,12 +175,14 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
     // 更新上次模式
     loader_last_mode = cmd->loader_mode;
 
-    // 3. [核心] 算发分离：计算 PID
+    // 算发分离：计算 PID
     // 摩擦轮
     Djimotor_Calc_Output(shoot_motors[0]);
     Djimotor_Calc_Output(shoot_motors[1]);
     // 拨弹盘
     Djimotor_Calc_Output(shoot_motors[2]);
+
+    Uart_printf(test_uart,"shoot_motor[0] current: %.2f, target: %.2f,status:%d\r\n", (float)(shoot_motors[0]->out_current), shoot_motors[0]->motor_pid.pid_target,shoot_motors[0]->motor_status);
 
     // 其他反馈赋值
     xQueueOverwrite(Shoot_feedback_queue_handle, &shoot_feedback);
