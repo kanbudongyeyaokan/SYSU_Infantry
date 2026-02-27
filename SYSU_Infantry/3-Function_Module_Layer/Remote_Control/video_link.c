@@ -18,7 +18,7 @@ void Video_link_ReceiveRCData(uint8_t *data, uint16_t length){
     video_rc_data_t rc_data;
     rc_data.sof = 0x53A9;  // little-endian: A9 53
     memcpy(rc_data.data, data, length);
-    rc_data.crc16 = crc_16_ccitt_false((uint8_t *)&rc_data, offsetof(video_rc_data_t, crc16));
+    //rc_data.crc16 = crc_16_ccitt_false((uint8_t *)&rc_data, offsetof(video_rc_data_t, crc16));
 
 }
 
