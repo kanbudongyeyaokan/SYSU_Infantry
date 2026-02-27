@@ -225,13 +225,15 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             Chassis_cmd_send_t cmd_solved = *cmd;
 
             //限制平方项输出
-            float omega_z = 0.1f * cmd->offset_angle * abs(cmd->offset_angle);
-            if (omega_z < -CHASSIS_FOLLOW_WZ_LIMIT) {
-                omega_z = -CHASSIS_FOLLOW_WZ_LIMIT;
-            } else if (omega_z > CHASSIS_FOLLOW_WZ_LIMIT) {
-                omega_z = CHASSIS_FOLLOW_WZ_LIMIT;
-            }
-            cmd_solved.wz = omega_z;
+            // float omega_z = 0.1f * cmd->offset_angle * abs(cmd->offset_angle);
+            // if (omega_z < -CHASSIS_FOLLOW_WZ_LIMIT) {
+            //     omega_z = -CHASSIS_FOLLOW_WZ_LIMIT;
+            // } else if (omega_z > CHASSIS_FOLLOW_WZ_LIMIT) {
+            //     omega_z = CHASSIS_FOLLOW_WZ_LIMIT;
+            // }
+            // cmd_solved.wz = omega_z;
+
+            cmd_solved.wz = 0.5 * cmd->offset_angle * abs(cmd->offset_angle); 
 
             // 矢量变换逻辑
             float theta = -cmd->offset_angle * (M_PI / 180.0f);
