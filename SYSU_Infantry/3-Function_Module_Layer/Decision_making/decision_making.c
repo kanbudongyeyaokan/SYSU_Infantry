@@ -342,10 +342,13 @@ void RC_ctrl_set()
 
     if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_x) > RC_DEADBAND)
         gimbal_cmd_send.yaw -= GIMBAL_RC_MOVE_RATIO_YAW * (float)vrc_data[CURRENT].rc.Rrocker_x;
+
+
+
     if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_y) > RC_DEADBAND)
         gimbal_cmd_send.pitch += GIMBAL_RC_MOVE_RATIO_PITCH * (float)vrc_data[CURRENT].rc.Rrocker_y;
     if (gimbal_cmd_send.pitch > PITCH_UP_MAX) gimbal_cmd_send.pitch = PITCH_UP_MAX;
-    else if (gimbal_cmd_send.pitch < -PITCH_DOWN_MAX) gimbal_cmd_send.pitch = -PITCH_DOWN_MAX;
+    else if (gimbal_cmd_send.pitch < PITCH_DOWN_MAX) gimbal_cmd_send.pitch = PITCH_DOWN_MAX;
     
     
     // Uart_printf(test_uart, "Vx:%.2f,Vy:%.2f,Wz:%.2f,offset,chassis:%d\r\n",
