@@ -322,8 +322,22 @@ void RC_ctrl_set()
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
     }
 
-    shoot_cmd_send.shoot_mode = vrc_data[CURRENT].rc.trigger ? SHOOT_ON : SHOOT_OFF;
-    shoot_cmd_send.loader_mode = vrc_data[CURRENT].rc.trigger ? LOAD_1_BULLET : LOAD_STOP;
+    //设置发射模式
+    if(vrc_data[CURRENT].rc.dial >300)
+    {
+        shoot_cmd_send.shoot_mode = SHOOT_ON;
+        shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
+        shoot_cmd_send.shoot_rate = 8;
+    }
+    else
+    {
+        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+        shoot_cmd_send.loader_mode = LOAD_STOP;
+        shoot_cmd_send.shoot_rate = 0;
+    }
+
+    // shoot_cmd_send.shoot_mode = vrc_data[CURRENT].rc.trigger ? SHOOT_ON : SHOOT_OFF;
+    // shoot_cmd_send.loader_mode = vrc_data[CURRENT].rc.trigger ? LOAD_1_BULLET : LOAD_STOP;
 
     Emergency_stop();
 

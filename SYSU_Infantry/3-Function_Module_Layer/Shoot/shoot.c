@@ -27,6 +27,8 @@ static Shoot_feedback_info_t shoot_feedback;
 
 extern QueueHandle_t Shoot_feedback_queue_handle;   //发射机构反馈信息队列句柄
 
+Shoot_cmd_send_t shoot_test_cmd;
+
 /****************发射机构电机实例**************************/
 static Djimotor_device_t *shoot_motors[3] = {0};
 
@@ -117,7 +119,9 @@ void Shoot_task_init(void) {
 
 //发射任务处理控制命令
 void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
+    shoot_test_cmd = *cmd;
 
+    
     // 1. 处理摩擦轮 (SHOOT_MODE)
     if (cmd->shoot_mode == SHOOT_OFF) {
         // 关闭摩擦轮
@@ -130,8 +134,8 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
         // 开启摩擦轮
         Djimotor_set_status(shoot_motors[0], MOTOR_ENABLED);
         Djimotor_set_status(shoot_motors[1], MOTOR_ENABLED);
-        Djimotor_set_target(shoot_motors[0], 2500);  // 上摩擦轮
-        Djimotor_set_target(shoot_motors[1], -2500); // 下摩擦轮
+        Djimotor_set_target(shoot_motors[0], 8000);  // 上摩擦轮
+        Djimotor_set_target(shoot_motors[1], -8000); // 下摩擦轮
     }
 
     // 2. 处理拨弹盘 (LOADER_MODE)
@@ -139,8 +143,8 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
     {
         case LOAD_STOP:
             shoot_motors[2]->motor_pid.close_loop = SPEED_LOOP;
-            Djimotor_set_target(shoot_motors[2], 0);
             Djimotor_set_status(shoot_motors[2], MOTOR_STOP);
+            Djimotor_set_target(shoot_motors[2], 0);
             break;
 
         case LOAD_1_BULLET: // 单发

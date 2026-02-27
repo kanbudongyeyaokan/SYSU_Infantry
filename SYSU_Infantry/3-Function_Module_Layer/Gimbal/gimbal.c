@@ -212,7 +212,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_target(pitch_motor, cmd->pitch);
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
-                Uart_printf(test_uart,"pitch_target:%.2f,%.2f\r\n",cmd->pitch,gimbal_imu_data->euler.pitch);
+                // Uart_printf(test_uart,"pitch_target:%.2f,%.2f\r\n",cmd->pitch,gimbal_imu_data->euler.pitch);
                 break;
                 //云台视觉模式
             case GIMBAL_VISION_MODE:
