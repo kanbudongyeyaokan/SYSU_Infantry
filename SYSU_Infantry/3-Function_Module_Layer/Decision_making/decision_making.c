@@ -337,10 +337,10 @@ void RC_ctrl_set()
     Emergency_stop();
 
     if (fabsf((float)vrc_data[CURRENT].rc.Lrocker_y) > RC_DEADBAND)
-        chassis_cmd_send.vy = 15.0f * (float)vrc_data[CURRENT].rc.Lrocker_y;
+        chassis_cmd_send.vy = -2.0f * (float)vrc_data[CURRENT].rc.Lrocker_y;
     else
         chassis_cmd_send.vy = 0;
-    chassis_cmd_send.vx = -15.0f * (float)vrc_data[CURRENT].rc.Lrocker_x;
+    chassis_cmd_send.vx = -2.0f * (float)vrc_data[CURRENT].rc.Lrocker_x;
 
     if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_x) > RC_DEADBAND)
         gimbal_cmd_send.yaw -= GIMBAL_RC_MOVE_RATIO_YAW * (float)vrc_data[CURRENT].rc.Rrocker_x;

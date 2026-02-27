@@ -76,6 +76,8 @@ static bool HWT606_Init(void)
 {
     if (hwt606_dev.hi2c == NULL) return false;
 
+    //延时等待初始化成功
+    HAL_Delay(200);
     // --- 初始化校准变量 ---
     hwt606_dev.is_calibrated = false;
     hwt606_dev.calib_cnt = 0;
@@ -92,11 +94,22 @@ static bool HWT606_Init(void)
         HWT606_Reset_I2C();
     }
 
-    // 检查设备在线 (阻塞式检查一次即可)
-    if (HAL_I2C_IsDeviceReady(hwt606_dev.hi2c, hwt606_dev.dev_addr, 3, 100) != HAL_OK)
+    //加入重试机制
+    uint8_t retry_count = 0;
+    while (HAL_I2C_IsDeviceReady(hwt606_dev.hi2c, hwt606_dev.dev_addr, 3, 100) != HAL_OK)
     {
-        return false;
+        retry_count++;
+        if (retry_count > 5) {
+            // 重试了 5 次 (约 250ms) 还是不行，说明真坏了或线掉了
+            return false;
+        }
+        HAL_Delay(50); // 每次失败等 50ms 再试
     }
+    // 检查设备在线 
+    // if (HAL_I2C_IsDeviceReady(hwt606_dev.hi2c, hwt606_dev.dev_addr, 3, 100) != HAL_OK)
+    // {
+    //     return false;
+    // }
 
     Watchdog_init_t wdg_config = {
     .owner_id = NULL,

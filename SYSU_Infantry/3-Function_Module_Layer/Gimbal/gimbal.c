@@ -117,20 +117,21 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.y),
             .angle_pid = {
-                .kp = 10,
+                .kp = 20,
                 .ki = 0,
                 .kd = 0,
                 .max_out = 500,
                 .max_iout = 100,
-                //可补充
+                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL,
             },
             .speed_pid = {
-                .kp = 10,
+                .kp = 40,
                 .ki = 5,
                 .kd = 0,
                 .deadband = 0.1f,
-                .max_out = 2500,
-                .max_iout = 20000,
+                .max_out = 5000,
+                .max_iout = 2000,
+                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
             },
 
         },
