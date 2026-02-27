@@ -36,6 +36,8 @@ static void Can_filter_config_global(void)
     // 配置 CAN2 过滤器 (Bank 14)
     can_filter_conf.FilterBank = 14;
     can_filter_conf.SlaveStartFilterBank = 14;
+    //修改，将CAN2换到另外一个FIFO，避免和CAN1冲突
+    can_filter_conf.FilterFIFOAssignment = CAN_RX_FIFO1;
     HAL_CAN_ConfigFilter(&hcan2, &can_filter_conf);
 }
 

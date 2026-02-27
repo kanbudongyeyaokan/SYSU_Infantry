@@ -187,7 +187,7 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
   Pid_init(&motor->motor_pid.speed_pid,
            &config->motor_controller_init.speed_pid);
 
-  // 2. CAN 接收配置注册
+  // CAN 接收配置注册
   Can_init_t can_config;
   memset(&can_config, 0, sizeof(Can_init_t));
   can_config.can_handle = config->can_init.can_handle;
@@ -203,7 +203,7 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
     return NULL;
   }
 
-  // 3. 看门狗注册
+  // 看门狗注册
   Watchdog_init_t wdg_conf;
   wdg_conf.owner_id = motor;
   wdg_conf.reload_count = 100; // 50 * 5ms = 250ms 超时
