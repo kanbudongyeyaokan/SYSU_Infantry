@@ -161,10 +161,6 @@ void Gimbal_task_init(void) {
 
     //初始化云台电机
     Gimbal_motor_init();
-
-    // 注册底盘反馈信息发布者
-    // gimbal_pub = Pub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
-
 }
 
 
@@ -191,7 +187,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 //使能电机
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
-
+                // Djimotor_set_status(yaw_motor, MOTOR_STOP);
+                // Djimotor_set_status(pitch_motor, MOTOR_STOP);
                 //设置电机目标值
 
                 //低通平滑
@@ -208,7 +205,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_target(pitch_motor, cmd->pitch);
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
-
+                Uart_printf(test_uart,"pitch_target:%.2f,%.2f\r\n",cmd->pitch,gimbal_imu_data->euler.pitch);
                 break;
                 //云台视觉模式
             case GIMBAL_VISION_MODE:
