@@ -20,7 +20,7 @@
 #include "robot_task.h"
 #include "chassis_power_control.h"
 #include "supercap_comm.h"
-
+#include "algorithm_pid.h"
 
 #define CHASSIS_FOLLOW_YAW_GAIN 0.5f
 #define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
@@ -45,6 +45,9 @@ static Chassis_output_t chassis_output;
 extern QueueHandle_t Chassis_feedback_queue_handle; // 声明外部底盘反馈队列句柄
 
 Chassis_cmd_send_t test_cmd;
+
+//底盘跟随云台，用于计算WZ控制量
+static Pid_instance_t chassis_follow_pid;
 
 #define abs(x) ((x > 0) ? x : -x)
 
@@ -75,6 +78,17 @@ void Chassis_init() {
     chassis_params.track_width = 295.0f; // 默认轮宽295mm
     chassis_params.half_track_width = chassis_params.track_width / 2.0;
     chassis_params.chassis_type = CHASSIS_TYPE_OMNI; // 全向轮底盘
+
+    // 跟随云台速度 PID
+    Pid_init_t follow_pid_config = {
+        .kp = 12.0f,     // 比例系数，如果跟车太慢就加大，太快发抖就减小
+        .ki = 3.0f,     // 通常底盘跟随不需要积分，给 0 即可
+        .kd = 0.1f,     // 微分系数，极其重要！给一点 D 项可以提供阻尼，防止底盘到位时来回摆动
+        .max_out = 800.0f,  // 对应原来的 CHASSIS_FOLLOW_WZ_LIMIT
+        .max_iout = 200.0f,   // 没用到 I 就不管
+        .optimization = PID_OUTPUT_LIMIT, // 开启输出限幅
+    };
+    Pid_init(&chassis_follow_pid, &follow_pid_config);
 
     //设置底盘电机参数
     Djimotor_init_config_t cfg[4] = {
@@ -186,9 +200,16 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
     //  Uart_printf(test_uart,"vx: %f,vy:%f,mode %d\r\n", cmd->vx,cmd->vy,cmd->chassis_mode);
     // Uart_printf(test_uart,"offset_angle: %.2f\r\n", cmd->offset_angle);
     // printf("chassis_mode: %d\r\n", cmd->chassis_mode);
-   test_cmd = *cmd;
 
-    // 1. 使用传入的 'cmd' 指针代替原来的全局变量
+   test_cmd = *cmd;
+   // 刚切入跟随模式时，重置 PID 防止突变
+    static chassis_mode_e last_chassis_mode = CHASSIS_ZERO_FORCE;
+    if (cmd->chassis_mode == CHASSIS_FOLLOW_GIMBAL && last_chassis_mode != CHASSIS_FOLLOW_GIMBAL) {
+        Pid_reset(&chassis_follow_pid); // 刚切入跟随模式时，重置 PID 防止突变
+    }
+    last_chassis_mode = cmd->chassis_mode;
+
+    // 使用传入的 'cmd' 指针代替原来的全局变量
     switch (cmd->chassis_mode) // [注意] 这里把 . 改成了 ->
     {
         case CHASSIS_ZERO_FORCE:
@@ -224,16 +245,8 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
             Chassis_cmd_send_t cmd_solved = *cmd;
 
-            //限制平方项输出
-            // float omega_z = 0.1f * cmd->offset_angle * abs(cmd->offset_angle);
-            // if (omega_z < -CHASSIS_FOLLOW_WZ_LIMIT) {
-            //     omega_z = -CHASSIS_FOLLOW_WZ_LIMIT;
-            // } else if (omega_z > CHASSIS_FOLLOW_WZ_LIMIT) {
-            //     omega_z = CHASSIS_FOLLOW_WZ_LIMIT;
-            // }
-            // cmd_solved.wz = omega_z;
-
-            cmd_solved.wz = 0.5 * cmd->offset_angle * abs(cmd->offset_angle); 
+            // cmd_solved.wz = 0.5 * cmd->offset_angle * abs(cmd->offset_angle); 
+            cmd_solved.wz = Pid_calculate(&chassis_follow_pid, 0.0f, cmd->offset_angle); // 以 offset_angle 作为误差输入 PID，输出作为 Wz 控制量
 
             // 矢量变换逻辑
             float theta = -cmd->offset_angle * (M_PI / 180.0f);

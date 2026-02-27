@@ -19,7 +19,7 @@ void Buzzer_alarm_init(void)
     Buzzer_init(&buzzer, &htim4, TIM_CHANNEL_3); // 示例：TIM4_CH3
     Buzzer_set_volume(&buzzer, VERY_HIGH); // 告警音量（0-100）
 
-    Play_System_Start(&buzzer); // 初始化完成提示音
+    Play_Intel(&buzzer); // 初始化完成提示音
 
 
     // for (uint8_t i = 0; i < 5; i++)

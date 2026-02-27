@@ -99,15 +99,6 @@ void Decision_making_task_init()
     PITCH_RC_CENTER_OFFSET = (float)rc_data[CURRENT].rc.Rrocker_y;
 #endif
 
-    /***********************************初始化决策层的发布者和订阅者***************************************/
-    //底盘
-    // chassis_feedback_sub = Sub_register("chassis_feedback", sizeof(Chassis_feedback_info_t));//底盘反馈数据订阅者
-    //云台
-    // gimbal_feedback_sub = Sub_register("gimbal_feedback", sizeof(Gimbal_feedback_info_t));
-    
-    //发射机构
-    // shoot_feedback_sub = Sub_register("shoot_feedback", sizeof(Shoot_feedback_info_t));
-
     //机器人开始工作 - 关键！缺少此初始化会导致控制无响应
     robot_state = ROBOT_ON;
 

@@ -170,9 +170,14 @@ void Gimbal_task_init(void) {
  * @brief 处理云台控制指令
  */
 void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
-    // 从消息中心获取最新的控制指令
+        //只有当IMU就绪时才可以控制云台
+        //安全保护
+        if(gimbal_imu_data->state != INS_STATE_READY){
+            // Uart_printf(test_uart,"IMU not ready! State: %d\r\n", gimbal_imu_data->state);
+            return;
+        }
         // 根据控制模式进行处理
-        gimbal_cmd  = *cmd; // 复制一份本地变量，避免直接修改指针数据
+        gimbal_cmd  = *cmd; 
         switch (cmd->gimbal_mode) { 
             // 电流零输入,失能云台电机
             case GIMBAL_ZERO_FORCE:
