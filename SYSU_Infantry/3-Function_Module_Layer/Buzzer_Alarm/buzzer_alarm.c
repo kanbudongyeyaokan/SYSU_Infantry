@@ -114,6 +114,21 @@ void Alarm_handle_command(uint8_t *cmd)
     {
         // 清除入队标志，允许该设备下次重新入队（持续离线时继续报警）
         if (*cmd < 32) alarm_in_queue[*cmd] = 0;
+
+        // 错误系统触发的 Critical 错误报警（99）
+        if (*cmd == 99)
+        {
+            // 播放两声短促提示音
+            for (uint8_t i = 0; i < 2; i++)
+            {
+                Buzzer_start(&buzzer);
+                Buzzer_set_frequency(&buzzer, 2000);  // 2kHz 高音
+                vTaskDelay(pdMS_TO_TICKS(100));
+                Buzzer_stop(&buzzer);
+                vTaskDelay(pdMS_TO_TICKS(100));
+            }
+        }
+
         // 特殊值（20/21/22）
         if (*cmd >= ALARM_RC)
         {
