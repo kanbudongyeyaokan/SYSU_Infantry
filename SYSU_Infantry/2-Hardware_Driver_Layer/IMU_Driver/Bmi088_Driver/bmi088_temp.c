@@ -5,14 +5,14 @@
  * @note    基于RoboMaster开发板C型：加热电阻连接在 TIM10_CH1 (PF6)
  *
  */
-#include "imu_temp.h"
+#include "bmi088_temp.h"
 #include "algorithm_pid.h"
 #include "tim.h"
 #include "main.h"
 
 // 目标温度：通常设置为高于环境温度
 // BMI088 在恒温下零漂最稳定
-#define IMU_TEMP_TARGET 40.0f
+#define BMI088_TEMP_TARGET 40.0f
 
 // PWM 最大值
 // ARR 为 1000
@@ -24,7 +24,7 @@ static Pid_instance_t temp_pid;
  * @brief 初始化IMU恒温控制
  * @note  必须在 task 开始前调用，且需确保 MX_TIM10_Init 已执行
  */
-void Imu_Temp_Init(void)
+void Bmi088_temp_init(void)
 {
     //初始化PID参数
     Pid_init_t pid_conf = {
@@ -48,11 +48,11 @@ void Imu_Temp_Init(void)
  * @param current_temp 当前IMU温度 (单位: 摄氏度)
  * @note  建议调用频率：50Hz ~ 100Hz (温度变化慢，不需要 1kHz 那么快)
  */
-void Imu_Temp_Control(float current_temp)
+void Bmi088_temp_control(float current_temp)
 {
     // 计算PID输出
     // 注意：加热是单向控制，只能加热不能制冷
-    float pid_out = Pid_calculate(&temp_pid, current_temp, IMU_TEMP_TARGET);
+    float pid_out = Pid_calculate(&temp_pid, current_temp, BMI088_TEMP_TARGET);
     // 限制输出范围 [0, PWM_MAX]
     if (pid_out < 0.0f) {
         pid_out = 0.0f;

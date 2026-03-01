@@ -13,6 +13,8 @@
 #include <math.h>
 #include "buzzer_alarm.h"
 #include "bsp_wdg.h"
+#include "bmi088_temp.h"
+
 
  // ================= 硬件引脚定义 (C板标准) =================
 #define CS_ACC_GPIO_Port    GPIOA
@@ -25,6 +27,10 @@ static uint8_t acc_rx_buf[8];
 static uint8_t gyro_rx_buf[8];
 static Ekf_state_t ekf_state;
 static Watchdog_device_t *imu_wdg;
+
+// 存放温度读取的原始数据: [0]Dummy, [1]MSB, [2]LSB
+static uint8_t temp_rx_buf[3];  
+static float current_temp = 25.0f; // 缓存当前真实的IMU温度
 
 // 外部 SPI 句柄
 extern SPI_HandleTypeDef hspi1;
@@ -100,6 +106,10 @@ static bool BMI088_Interface_Init(void)
     // 初始化 GPIO 
     HAL_GPIO_WritePin(CS_ACC_GPIO_Port, CS_ACC_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(CS_GYRO_GPIO_Port, CS_GYRO_Pin, GPIO_PIN_SET);
+
+    //控温初始化
+    Bmi088_temp_init();
+
     // 配置硬件
     Bmi088_Config_HardWare();
     HAL_Delay(50);
@@ -135,12 +145,16 @@ static void BMI088_Interface_Start_Read(void)
 {
     // Accel: 读 7 字节 (Dummy + 6 Data)
     Bmi088_Read_Reg(CS_ACC_GPIO_Port, CS_ACC_Pin, ACC_X_LSB_ADDR, acc_rx_buf, 7);
+
 }
 
 static bool BMI088_Interface_Wait_Data(void)
 {
     // Gyro: 读 6 字节 
     Bmi088_Read_Reg(CS_GYRO_GPIO_Port, CS_GYRO_Pin, GYRO_RATE_X_LSB_ADDR, gyro_rx_buf, 6);
+
+    // 读取温度：读 3 字节 (Dummy Byte + MSB + LSB)
+    Bmi088_Read_Reg(CS_ACC_GPIO_Port, CS_ACC_Pin, TEMP_MSB_ADDR, temp_rx_buf, 3);
 
     Watchdog_feed(imu_wdg);
 
@@ -175,6 +189,22 @@ static void BMI088_Interface_Process(Ins_data_t *out_data, float dt_s)
 
     Ekf_update(&ekf_state, acc_mzs, gyro_rad, dt_s);
 
+    // ================= 温度解析与控温 =================
+    uint16_t temp_uint11 = (temp_rx_buf[1] << 3) | (temp_rx_buf[2] >> 5);
+    int16_t temp_int11;
+    
+    if (temp_uint11 > 1023) {
+        temp_int11 = (int16_t)temp_uint11 - 2048;
+    } else {
+        temp_int11 = (int16_t)temp_uint11;
+    }
+    
+    // 换算真实温度: Temperature = Temp_int11 * 0.125 + 23
+    current_temp = temp_int11 * TEMP_UNIT + TEMP_BIAS;
+
+    // 将计算出的当前温度输入给 PID 控制器进行恒温闭环
+    Bmi088_temp_control(current_temp);
+
     out_data->acc_body.x = acc_mzs[0];
     out_data->acc_body.y = acc_mzs[1];
     out_data->acc_body.z = acc_mzs[2];
@@ -186,6 +216,7 @@ static void BMI088_Interface_Process(Ins_data_t *out_data, float dt_s)
     out_data->euler.yaw = ekf_state.euler.yaw;
     out_data->total_yaw = ekf_state.yaw_total_angle;
     out_data->round_count = (int32_t) floorf((out_data->total_yaw + 180.0f) / 360.0f);
+    out_data->temp = current_temp;
 }
 
 static const Ins_driver_interface_t bmi088_drv = {
@@ -196,4 +227,6 @@ static const Ins_driver_interface_t bmi088_drv = {
 };
 
 const Ins_driver_interface_t *BMI088_Get_Driver(void) { return &bmi088_drv; }
-float BMI088_Get_Temp_Raw(void) { return 25.0f; }
+float BMI088_Get_Temp_Raw(void) { 
+    return current_temp; 
+}

@@ -22,10 +22,10 @@
 在系统初始化阶段，调用初始化函数：
 
 ```c
-void Imu_Temp_Init(void);
+void Bmi088_temp_init(void);
 ```
 ### 3.2 周期性执行温控控制
 必须在固定周期任务中调用：(建议调用频率：50Hz ~ 100Hz)
 ```c
-void Imu_Temp_Control(float current_temp);
+void Bmi088_temp_control(float current_temp);
 ```
