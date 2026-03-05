@@ -121,7 +121,7 @@ void Robot_task_init(void)
   osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
   buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
 
-  ERROR_CRITICAL(ERROR_MODULE_SYSTEM, 0x01, "系统启动，初始化完成");
+  ERROR_CRITICAL("SYS", "系统启动，初始化完成");
 
   osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 1024);
   ins_task_handle = osThreadCreate(osThread(ins_task), NULL);

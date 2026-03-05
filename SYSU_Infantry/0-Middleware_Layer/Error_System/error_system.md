@@ -9,7 +9,6 @@
 ```cmake
 # 错误处理系统
 0-Middleware_Layer/Error_System/inc/error_config.h
-0-Middleware_Layer/Error_System/inc/error_code.h
 0-Middleware_Layer/Error_System/inc/error_handler.h
 0-Middleware_Layer/Error_System/src/error_handler.c
 0-Middleware_Layer/Error_System/src/error_port.c
@@ -42,31 +41,34 @@ error_system_init(test_uart);  // 初始化错误系统
 
 ### 2.1 上报错误
 
+**最简写法**：只传入模块名称和错误信息
+
 ```c
 #include "error_handler.h"
 
 /* Info - 信息提示 */
-ERROR_INFO(ERROR_MODULE_SYSTEM, ERROR_SYSTEM_STATE_ERROR,
-           "System state check passed");
+ERROR_INFO("SYS", "System state check passed");
 
 /* Warning - 警告 */
-ERROR_WARN(ERROR_MODULE_CAN, ERROR_CAN_TIMEOUT,
-           "CAN receive timeout");
+ERROR_WARN("CAN", "CAN receive timeout");
 
 /* Error - 错误 */
-ERROR_RAISE(ERROR_MODULE_MOTOR, ERROR_MOTOR_COMM_FAIL,
-            "Motor communication failed");
+ERROR_RAISE("MOTOR", "Motor communication failed");
 
 /* Critical - 严重错误 */
-ERROR_CRITICAL(ERROR_MODULE_IMU, ERROR_IMU_INIT_FAIL,
-               "IMU initialization failed");
+ERROR_CRITICAL("IMU", "IMU initialization failed");
 ```
+
+**说明**：
+- 模块名称可以是任意字符串，如 `"CAN"`、`"IMU"`、`"MyModule"`
+- 不再需要预定义 `ERROR_MODULE_XXX` 宏
+- 不再需要错误 ID，错误详情在 message 中描述
 
 ### 2.2 带上下文数据的错误
 
 ```c
 /* 记录错误时的寄存器值或状态 */
-ERROR_RAISE_CTX(ERROR_MODULE_CAN, ERROR_CAN_SEND_FAIL,
+ERROR_RAISE_CTX("CAN",
                 "CAN send failed",
                 hcan->Instance->ESR,  // 上下文 0: 错误状态寄存器
                 hcan->Instance->TSR,  // 上下文 1: 发送状态寄存器
@@ -81,8 +83,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan)
 {
     if (HAL_CAN_GetRxFillLevel(hcan) > RX_FIFO_DEPTH)
     {
-        ERROR_WARN(ERROR_MODULE_CAN, ERROR_CAN_FIFO_OVERFLOW,
-                   "CAN FIFO overflow detected");
+        ERROR_WARN("CAN", "CAN FIFO overflow detected");
         return;
     }
     // ...
@@ -93,8 +94,7 @@ HAL_StatusTypeDef BMI088_Init(void)
 {
     if (chip_id != BMI088_CORRECT_ID)
     {
-        ERROR_CRITICAL(ERROR_MODULE_IMU, ERROR_IMU_INIT_FAIL,
-                       "BMI088 chip ID mismatch");
+        ERROR_CRITICAL("IMU", "BMI088 chip ID mismatch");
         return HAL_ERROR;
     }
     // ...
@@ -105,15 +105,13 @@ void motor_set_speed(motor_t* motor, float speed)
 {
     if (motor == NULL)
     {
-        ERROR_RAISE(ERROR_MODULE_MOTOR, ERROR_MOTOR_NULL_POINTER,
-                    "motor pointer is NULL");
+        ERROR_RAISE("MOTOR", "motor pointer is NULL");
         return;
     }
 
     if (speed > MAX_SPEED || speed < -MAX_SPEED)
     {
-        ERROR_WARN(ERROR_MODULE_MOTOR, ERROR_MOTOR_INVALID_SPEED,
-                   "speed out of range");
+        ERROR_WARN("MOTOR", "speed out of range");
         speed = fmaxf(-MAX_SPEED, fminf(speed, MAX_SPEED));
     }
     // ...
@@ -137,11 +135,11 @@ void motor_set_speed(motor_t* motor, float speed)
 
 ```c
 // 上报 Critical 错误
-ERROR_CRITICAL(ERROR_MODULE_IMU, ERROR_IMU_INIT_FAIL, "IMU 初始化失败");
+ERROR_CRITICAL("IMU", "IMU 初始化失败");
 ```
 
 **触发结果**:
-1. UART6 输出：`[CRIT][IMU][0x0001] bmi088.c:45 IMU 初始化失败`
+1. UART6 输出：`[CRIT][IMU] bmi088.c:45 IMU 初始化失败`
 2. 蜂鸣器：两声"滴 - 滴"提示音
 3. LED：PG14 闪烁 5 次
 
@@ -162,27 +160,18 @@ if (*cmd == 99)
 
 ## 4. 配置选项
 
-在 `error_config.h` 中修改配置：
+本项目错误系统采用**固定配置**，无需修改：
+
+- **FreeRTOS** 任务管理
+- **UART** 输出
+- **启用** 时间戳
+- **启用** 函数名/行号
+- **禁用** 上下文数据
+
+如需修改缓冲区大小，在 `error_config.h` 中调整：
 
 ```c
-/* 环形缓冲区大小 - 必须是 2 的幂 */
-#define ERROR_BUFFER_SIZE       32u     // 32/64/128...
-
-/* 是否启用时间戳 */
-#define ERROR_USE_TIMESTAMP     1u
-
-/* 是否启用函数名/行号 */
-#define ERROR_USE_SOURCE_INFO   1u
-
-/* 是否启用上下文数据 */
-#define ERROR_USE_CONTEXT       0u      // 1 启用，增加 16 字节/记录
-
-/* 是否启用线程安全 */
-#define ERROR_USE_THREAD_SAFE   1u
-
-/* 输出方式 */
-#define ERROR_OUTPUT_RTT        1u      // SEGGER RTT
-#define ERROR_OUTPUT_UART     0u      // UART
+#define ERROR_BUFFER_SIZE       32u     // 必须是 2 的幂
 ```
 
 ---
@@ -192,43 +181,31 @@ if (*cmd == 99)
 ### 4.1 错误码格式
 
 ```
-[31:24] 模块 ID (8 位)
-[23:8]  错误 ID (16 位)
+[31:8]  保留 (24 位)
 [7:0]   错误等级 (8 位)
 ```
 
-### 4.2 预定义模块
+**注意**：模块名称和错误详情都以字符串形式存储，错误码只保留等级。
 
-| 模块 ID | 名称 | 说明 |
-|---------|------|------|
-| 0x00 | SYS | 系统 |
-| 0x01 | CAN | CAN 总线 |
-| 0x02 | MOTOR | 电机驱动 |
-| 0x03 | IMU | 姿态传感器 |
-| 0x04 | GIMBAL | 云台 |
-| 0x05 | CHASSIS | 底盘 |
-| 0x06 | SHOOT | 射击 |
-| 0x07 | REFEREE | 裁判系统 |
-| 0x08 | REMOTE | 遥控器 |
-| 0x09 | POWER | 电源 |
-| 0x0A | AUDIO | 蜂鸣器 |
-| 0x0B | USB | USB 设备 |
-| 0x0C | FREE | 自定义 |
+### 4.2 模块命名建议
 
-### 4.3 添加自定义错误
+不再需要预定义模块 ID，你可以直接使用任意字符串：
 
-在 `error_code.h` 中添加：
-
-```c
-/* 自定义模块错误 */
-#define ERROR_MY_MODULE_INIT_FAIL   0x0001u
-#define ERROR_MY_MODULE_TIMEOUT     0x0002u
-```
-
-使用：
-```c
-ERROR_RAISE(0x0D, ERROR_MY_MODULE_INIT_FAIL, "自定义错误");
-```
+| 推荐写法 | 说明 |
+|---------|------|
+| `"SYS"` | 系统 |
+| `"CAN"` | CAN 总线 |
+| `"MOTOR"` | 电机驱动 |
+| `"IMU"` | 姿态传感器 |
+| `"GIMBAL"` | 云台 |
+| `"CHASSIS"` | 底盘 |
+| `"SHOOT"` | 射击 |
+| `"REFEREE"` | 裁判系统 |
+| `"REMOTE"` | 遥控器 |
+| `"POWER"` | 电源 |
+| `"AUDIO"` | 蜂鸣器 |
+| `"USB"` | USB 设备 |
+| `"MY_MOD"` | 自定义模块 |
 
 ---
 
@@ -240,8 +217,7 @@ ERROR_RAISE(0x0D, ERROR_MY_MODULE_INIT_FAIL, "自定义错误");
 /* 在 main.c 中 */
 void Error_Handler(void)
 {
-    ERROR_CRITICAL(ERROR_MODULE_SYSTEM, ERROR_SYSTEM_TIMEOUT,
-                   "HAL initialization failed");
+    ERROR_CRITICAL("SYS", "HAL initialization failed");
 
     /* 原有代码 */
     __disable_irq();
@@ -281,11 +257,11 @@ if (level == ERROR_LEVEL_CRITICAL)
 
 ## 6. 内存占用
 
-| 配置 | RAM 占用 |
+| 项目 | RAM 占用 |
 |------|----------|
-| 基础 (32 条记录，无上下文) | 32 × 48 = 1.5KB |
-| 完整 (32 条记录，有上下文) | 32 × 64 = 2KB |
-| 64 条记录 (无上下文) | 64 × 48 = 3KB |
+| 缓冲区 (32 条记录) | 32 × 48 = 1.5KB |
+| 静态开销 | 约 100 字节 |
+| 字符串字面量 | 存储在 Flash 中，不占用 RAM |
 
 ---
 
@@ -294,4 +270,5 @@ if (level == ERROR_LEVEL_CRITICAL)
 1. **环形缓冲区大小必须是 2 的幂**（32/64/128...）
 2. **Critical 错误会触发蜂鸣器报警**（两声 2kHz 提示音，2 秒冷却）
 3. **中断中可以使用**，已做临界区保护
-4. **上下文数据会显著增加 RAM 占用**
+4. **字符串必须使用字面量**，如 `"CAN"`，不能使用局部变量或临时字符串
+5. **模块名称不再受数量限制**，可以随意使用新名称

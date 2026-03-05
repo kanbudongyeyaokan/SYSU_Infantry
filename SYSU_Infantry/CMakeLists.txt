@@ -69,7 +69,6 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c
 
         0-Middleware_Layer/Error_System/inc/error_config.h
-        0-Middleware_Layer/Error_System/inc/error_code.h
         0-Middleware_Layer/Error_System/inc/error_handler.h
         0-Middleware_Layer/Error_System/src/error_handler.c
         0-Middleware_Layer/Error_System/src/error_port.c
@@ -181,7 +180,6 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/Filter/lowpass_filter.h
 
         0-Middleware_Layer/Error_System/inc/error_config.h
-        0-Middleware_Layer/Error_System/inc/error_code.h
         0-Middleware_Layer/Error_System/inc/error_handler.h
         0-Middleware_Layer/Error_System/src/error_handler.c
         0-Middleware_Layer/Error_System/src/error_port.c

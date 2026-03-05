@@ -6,9 +6,9 @@
 #include "error_handler.h"
 #include <string.h>
 #include "cmsis_gcc.h"
+
 /* ================= 私有宏定义 ================= */
 
-/* 环形缓冲区掩码 (BUFFER_SIZE 必须是 2 的幂) */
 #define ERROR_BUFFER_MASK   (ERROR_BUFFER_SIZE - 1u)
 #define ERROR_BUFFER_INDEX(i) ((i) & ERROR_BUFFER_MASK)
 
@@ -16,10 +16,8 @@
 
 /* 环形缓冲区 */
 static error_record_t error_buffer[ERROR_BUFFER_SIZE];
-
-/* 缓冲区索引 */
-static volatile uint32_t error_head = 0u;     /* 写入位置 */
-static volatile uint32_t error_count = 0u;    /* 当前有效数量 */
+static volatile uint32_t error_head = 0u;
+static volatile uint32_t error_count = 0u;
 
 /* 系统状态 */
 static error_system_status_t error_status;
@@ -27,13 +25,12 @@ static error_system_status_t error_status;
 /* Critical 错误标志 */
 static volatile bool error_has_critical_flag = false;
 
-/* UART 句柄指针 - 由初始化时传入 */
+/* UART 句柄指针 */
 static void* error_uart_handle = NULL;
 
 /* ================= 私有函数声明 ================= */
 
 static void error_buffer_push(const error_record_t* record);
-static void error_update_status(uint8_t module);
 
 /* ================= 初始化 ================= */
 
@@ -44,14 +41,13 @@ void error_system_init(void* uart_handle)
     error_count = 0u;
     memset(&error_status, 0, sizeof(error_status));
     error_has_critical_flag = false;
-    error_uart_handle = uart_handle;  /* 保存 UART 句柄 */
+    error_uart_handle = uart_handle;
 }
 
 /* ================= 核心实现 ================= */
 
 void error_report_core(error_level_t level,
-                       uint8_t module,
-                       uint16_t error_id,
+                       const char* module_name,
                        const char* function,
                        uint32_t line,
                        const char* message)
@@ -61,19 +57,12 @@ void error_report_core(error_level_t level,
     /* 构建错误记录 */
     memset(&record, 0, sizeof(record));
 
-    record.error_code = MAKE_ERROR_CODE(module, error_id, level);
-
-#if ERROR_USE_TIMESTAMP
+    record.error_code = MAKE_ERROR_CODE(level);
+    record.module_name = module_name;
     record.timestamp = error_port_get_timestamp();
-#endif
-
-#if ERROR_USE_SOURCE_INFO
     record.function = function;
     record.line = line;
-#endif
-
     record.message = message;
-
 #if ERROR_USE_CONTEXT
     record.context[0] = 0u;
     record.context[1] = 0u;
@@ -86,10 +75,12 @@ void error_report_core(error_level_t level,
     record.reserved = 0u;
 
     /* 写入缓冲区 */
+#if ERROR_BUFFER_SIZE > 0
     error_buffer_push(&record);
+#endif
 
     /* 更新状态 */
-    error_update_status(module);
+    error_status.total_count++;
 
     /* 输出错误信息 */
     error_port_output(&record);
@@ -103,8 +94,7 @@ void error_report_core(error_level_t level,
 }
 
 void error_report_ctx(error_level_t level,
-                      uint8_t module,
-                      uint16_t error_id,
+                      const char* module_name,
                       const char* function,
                       uint32_t line,
                       const char* message,
@@ -115,19 +105,12 @@ void error_report_ctx(error_level_t level,
 
     memset(&record, 0, sizeof(record));
 
-    record.error_code = MAKE_ERROR_CODE(module, error_id, level);
-
-#if ERROR_USE_TIMESTAMP
+    record.error_code = MAKE_ERROR_CODE(level);
+    record.module_name = module_name;
     record.timestamp = error_port_get_timestamp();
-#endif
-
-#if ERROR_USE_SOURCE_INFO
     record.function = function;
     record.line = line;
-#endif
-
     record.message = message;
-
 #if ERROR_USE_CONTEXT
     record.context[0] = ctx0;
     record.context[1] = ctx1;
@@ -140,7 +123,7 @@ void error_report_ctx(error_level_t level,
     record.reserved = 0u;
 
     error_buffer_push(&record);
-    error_update_status(module);
+    error_status.total_count++;
     error_port_output(&record);
 
     if (level == ERROR_LEVEL_CRITICAL)
@@ -153,10 +136,8 @@ void error_report_ctx(error_level_t level,
 
 static void error_buffer_push(const error_record_t* record)
 {
-#if ERROR_USE_THREAD_SAFE
     /* 临界区保护 */
     __disable_irq();
-#endif
 
     /* 写入缓冲区 */
     error_buffer[ERROR_BUFFER_INDEX(error_head)] = *record;
@@ -176,25 +157,7 @@ static void error_buffer_push(const error_record_t* record)
     /* 累计总数 */
     error_status.total_count++;
 
-#if ERROR_USE_THREAD_SAFE
     __enable_irq();
-#endif
-}
-
-static void error_update_status(uint8_t module)
-{
-#if ERROR_USE_THREAD_SAFE
-    __disable_irq();
-#endif
-
-    if (module < 16u)
-    {
-        error_status.module_counts[module]++;
-    }
-
-#if ERROR_USE_THREAD_SAFE
-    __enable_irq();
-#endif
 }
 
 /* ================= 查询接口 ================= */
@@ -233,15 +196,6 @@ const error_record_t* error_get_history(uint32_t index)
     return &error_buffer[actual_index];
 }
 
-uint32_t error_get_module_count(uint8_t module)
-{
-    if (module >= 16u)
-    {
-        return 0u;
-    }
-    return error_status.module_counts[module];
-}
-
 void error_get_system_status(error_system_status_t* status)
 {
     if (status == NULL)
@@ -249,30 +203,20 @@ void error_get_system_status(error_system_status_t* status)
         return;
     }
 
-#if ERROR_USE_THREAD_SAFE
     __disable_irq();
-#endif
-
     *status = error_status;
-
-#if ERROR_USE_THREAD_SAFE
     __enable_irq();
-#endif
 }
 
 void error_clear_records(void)
 {
-#if ERROR_USE_THREAD_SAFE
     __disable_irq();
-#endif
 
     memset(error_buffer, 0, sizeof(error_buffer));
     error_head = 0u;
     error_count = 0u;
 
-#if ERROR_USE_THREAD_SAFE
     __enable_irq();
-#endif
 }
 
 bool error_has_critical(void)
