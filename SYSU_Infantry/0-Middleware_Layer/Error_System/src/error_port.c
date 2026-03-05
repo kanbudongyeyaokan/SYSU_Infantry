@@ -7,6 +7,7 @@
   *          - HAL_GetTick() 时间戳
   *          - UART 输出
   *          - 蜂鸣器告警联动
+  *          - 环形缓冲区：32 条记录
   */
 
 #include "error_handler.h"

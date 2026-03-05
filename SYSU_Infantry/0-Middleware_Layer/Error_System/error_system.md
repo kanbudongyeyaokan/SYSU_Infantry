@@ -8,7 +8,6 @@
 
 ```cmake
 # 错误处理系统
-0-Middleware_Layer/Error_System/inc/error_config.h
 0-Middleware_Layer/Error_System/inc/error_handler.h
 0-Middleware_Layer/Error_System/src/error_handler.c
 0-Middleware_Layer/Error_System/src/error_port.c
@@ -164,11 +163,10 @@ if (*cmd == 99)
 
 - **FreeRTOS** 任务管理
 - **UART** 输出
-- **启用** 时间戳
-- **启用** 函数名/行号
-- **禁用** 上下文数据
+- **启用** 时间戳、函数名、行号
+- **环形缓冲区**：32 条记录
 
-如需修改缓冲区大小，在 `error_config.h` 中调整：
+如需修改缓冲区大小，在 `error_handler.h` 中调整：
 
 ```c
 #define ERROR_BUFFER_SIZE       32u     // 必须是 2 的幂

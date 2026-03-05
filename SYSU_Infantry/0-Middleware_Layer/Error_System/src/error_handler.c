@@ -1,6 +1,10 @@
 /**
   * @file    error_handler.c
   * @brief   错误处理系统核心实现
+  *
+  * @note    本项目固定配置：
+  *          - 环形缓冲区：32 条记录
+  *          - 启用时间戳、函数名、行号
   */
 
 #include "error_handler.h"
@@ -63,21 +67,13 @@ void error_report_core(error_level_t level,
     record.function = function;
     record.line = line;
     record.message = message;
-#if ERROR_USE_CONTEXT
-    record.context[0] = 0u;
-    record.context[1] = 0u;
-    record.context[2] = 0u;
-    record.context[3] = 0u;
-#endif
 
     record.task_id = error_port_get_task_id();
     record.cpu_id = 0u;
     record.reserved = 0u;
 
     /* 写入缓冲区 */
-#if ERROR_BUFFER_SIZE > 0
     error_buffer_push(&record);
-#endif
 
     /* 更新状态 */
     error_status.total_count++;
@@ -111,12 +107,6 @@ void error_report_ctx(error_level_t level,
     record.function = function;
     record.line = line;
     record.message = message;
-#if ERROR_USE_CONTEXT
-    record.context[0] = ctx0;
-    record.context[1] = ctx1;
-    record.context[2] = ctx2;
-    record.context[3] = ctx3;
-#endif
 
     record.task_id = error_port_get_task_id();
     record.cpu_id = 0u;
