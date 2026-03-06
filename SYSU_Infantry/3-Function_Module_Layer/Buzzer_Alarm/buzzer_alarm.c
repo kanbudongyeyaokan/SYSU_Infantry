@@ -118,8 +118,8 @@ void Alarm_handle_command(uint8_t *cmd)
         // 错误系统触发的 Critical 错误报警（99）
         if (*cmd == 99)
         {
-            // 播放两声短促提示音
-            for (uint8_t i = 0; i < 2; i++)
+            // 播放两声短促提示音（200ms 响 + 200ms 停）
+            for (uint8_t i = 0; i < 3; i++)
             {
                 Buzzer_start(&buzzer);
                 Buzzer_set_frequency(&buzzer, 2000);  // 2kHz 高音

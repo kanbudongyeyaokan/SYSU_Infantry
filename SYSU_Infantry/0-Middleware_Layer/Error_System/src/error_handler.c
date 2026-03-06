@@ -80,13 +80,6 @@ void error_report_core(error_level_t level,
 
     /* 输出错误信息 */
     error_port_output(&record);
-
-    /* Critical 错误处理 */
-    if (level == ERROR_LEVEL_CRITICAL)
-    {
-        error_has_critical_flag = true;
-        /* 可在此添加复位、停机处理 */
-    }
 }
 
 void error_report_ctx(error_level_t level,
@@ -115,11 +108,6 @@ void error_report_ctx(error_level_t level,
     error_buffer_push(&record);
     error_status.total_count++;
     error_port_output(&record);
-
-    if (level == ERROR_LEVEL_CRITICAL)
-    {
-        error_has_critical_flag = true;
-    }
 }
 
 /* ================= 缓冲区操作 ================= */
@@ -223,4 +211,12 @@ bool error_has_critical(void)
 void* error_get_uart_handle(void)
 {
     return error_uart_handle;
+}
+
+/**
+  * @brief  设置 Critical 错误标志
+  */
+void error_set_critical_flag(void)
+{
+    error_has_critical_flag = true;
 }
