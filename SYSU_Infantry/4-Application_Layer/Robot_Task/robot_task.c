@@ -1,6 +1,5 @@
 #include "FreeRTOS.h"
 #include "task.h"
-#include "main.h"
 #include "cmsis_os.h"
 #include "robot_task.h"
 #include "bsp_usart.h"
@@ -28,6 +27,7 @@
 #include "buzzer_alarm_task.h"
 #include "buzzer_alarm.h"
 #include "Referee_task.h"
+#include "error_handler.h"
 
   /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
@@ -70,6 +70,12 @@ void Robot_task_init(void)
 {
     test_uart = Uart_register(&huart6,NULL);
 
+    // 创建蜂鸣器队列（必须在错误系统初始化之前！）
+
+
+    // 初始化错误处理系统，传入 UART 句柄
+
+
 
     // 创建队列 (必须在任务创建之前!)
     // ============================================================
@@ -86,7 +92,8 @@ void Robot_task_init(void)
 
     Shoot_feedback_queue_handle = xQueueCreate(1, sizeof(Shoot_feedback_info_t));
 
-    Buzzer_cmd_queue_handle = xQueueCreate(5,sizeof(uint8_t));
+    Buzzer_cmd_queue_handle = xQueueCreate(5, sizeof(uint8_t));
+
     // 选择要运行的测试任务（取消注释需要的测试）
     
     // === 单元测试 ===
@@ -108,6 +115,14 @@ void Robot_task_init(void)
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
     // message_test_task_handle = osThreadCreate(osThread(message_test_task), NULL);
 
+  error_system_init(test_uart);
+
+  // 创建蜂鸣器报警任务（提前启动，确保能处理错误报警）
+  osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
+  buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
+
+  ERROR_INFO("SYS", "Init");
+
   osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 1024);
   ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
     //看门狗任务
@@ -126,17 +141,15 @@ void Robot_task_init(void)
 
     // === 启动底盘与电机任务（必需） ===
     // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
-    // osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
-    // chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
+     osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
+     chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
 
-    // osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
-    // gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
+     osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
+     gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
 
-    // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
-    // shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+     osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
+     shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
-    osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
-    buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
 }
 
 

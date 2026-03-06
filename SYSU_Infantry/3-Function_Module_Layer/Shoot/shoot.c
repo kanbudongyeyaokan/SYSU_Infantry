@@ -182,7 +182,7 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
     // 拨弹盘
     Djimotor_Calc_Output(shoot_motors[2]);
 
-    Uart_printf(test_uart,"shoot_motor[0] current: %.2f, target: %.2f,status:%d\r\n", (float)(shoot_motors[0]->out_current), shoot_motors[0]->motor_pid.pid_target,shoot_motors[0]->motor_status);
+    //Uart_printf(test_uart,"shoot_motor[0] current: %.2f, target: %.2f,status:%d\r\n", (float)(shoot_motors[0]->out_current), shoot_motors[0]->motor_pid.pid_target,shoot_motors[0]->motor_status);
 
     // 其他反馈赋值
     xQueueOverwrite(Shoot_feedback_queue_handle, &shoot_feedback);

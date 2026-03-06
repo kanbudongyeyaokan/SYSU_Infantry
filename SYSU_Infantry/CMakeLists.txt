@@ -68,6 +68,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Execution/Watchdog_Task/watchdog_task.h
         4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c
 
+        0-Middleware_Layer/Error_System/inc/error_handler.h
+        0-Middleware_Layer/Error_System/src/error_handler.c
+        0-Middleware_Layer/Error_System/src/error_port.c
+
 
         2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.h
         2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver/bmi088.c
@@ -173,7 +177,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         0-Middleware_Layer/Ramp_Controller/ramp_controller.h
         0-Middleware_Layer/Filter/lowpass_filter.c
         0-Middleware_Layer/Filter/lowpass_filter.h
-        
+
+        0-Middleware_Layer/Error_System/inc/error_handler.h
+        0-Middleware_Layer/Error_System/src/error_handler.c
+        0-Middleware_Layer/Error_System/src/error_port.c
 
         1-Hardware_Layer/bsp_usb/bsp_usb.c
         1-Hardware_Layer/bsp_usb/bsp_usb.h
@@ -220,7 +227,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Message_Center
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Kalman_Fliter
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Math_lib
-
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Error_System/inc
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Crc
 
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/letter-shell-master/src

@@ -24,9 +24,10 @@
 #include "task.h"
 #include "buzzer_music.h"
 #include "buzzer_alarm.h"
+#include "error_handler.h"
 
 
- // 电机实例数组
+// 电机实例数组
 static Djimotor_device_t *motor_instances[MAX_MOTOR_COUNT] = {NULL};
 static uint8_t motor_count = 0;
 
@@ -53,7 +54,7 @@ extern Uart_instance_t *uart_instance;
  */
 static void Motor_Offline_Callback(void *device) {
   Djimotor_device_t *motor = (Djimotor_device_t *)device;
-
+  ERROR_WARN("MOTOR", "motor %s offline", motor->motor_name);
   // 清空速度和电流反馈，防止 PID 积分暴涨
   motor->motor_measure.angular_velocity = 0;
   motor->motor_measure.real_current = 0;
@@ -61,7 +62,7 @@ static void Motor_Offline_Callback(void *device) {
     // 将状态设为 STOP，停止计算输出
   motor->motor_status = MOTOR_STOP;
 
-  Watchdog_buzzer_alarm(motor->motor_name); // 触发看门狗报警，提示电机掉线
+  //Watchdog_buzzer_alarm(motor->motor_name); // 触发看门狗报警，提示电机掉线
 }
 
 /**
