@@ -9,6 +9,7 @@
 
 #include "error_handler.h"
 #include <string.h>
+#include <stdio.h>
 #include "cmsis_gcc.h"
 
 /* ================= 私有宏定义 ================= */
@@ -54,9 +55,17 @@ void error_report_core(error_level_t level,
                        const char* module_name,
                        const char* function,
                        uint32_t line,
-                       const char* message)
+                       const char* format, ...)
 {
+    static char formatted_message[128];
+    va_list args;
+
     error_record_t record;
+
+    /* 格式化消息 */
+    va_start(args, format);
+    vsnprintf(formatted_message, sizeof(formatted_message), format, args);
+    va_end(args);
 
     /* 构建错误记录 */
     memset(&record, 0, sizeof(record));
@@ -66,7 +75,7 @@ void error_report_core(error_level_t level,
     record.timestamp = error_port_get_timestamp();
     record.function = function;
     record.line = line;
-    record.message = message;
+    record.message = formatted_message;
 
     record.task_id = error_port_get_task_id();
     record.cpu_id = 0u;

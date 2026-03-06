@@ -8,6 +8,7 @@
  */
 
 #include "bsp_wdg.h"
+#include "error_handler.h"
 #include <string.h>
 
 // 注册表，存储所有已注册的看门狗实例
@@ -59,6 +60,9 @@ void Watchdog_feed(Watchdog_device_t* instance)
     {
         instance->is_offline = 0; // 标记为在线
 
+        // 上线恢复，上报 INFO 等级错误
+        ERROR_INFO("WDG", "%s recovered", instance->name);
+
         // 触发上线回调
         if (instance->online_callback) {
             instance->online_callback(instance->owner_id);
@@ -90,6 +94,8 @@ void Watchdog_control_all(void)
             {
                 current_dog->is_offline = 1; // 标记为已离线
 
+                // 首次离线，上报 ERROR 等级错误
+                ERROR_WARN("WDG", "%s timeout", current_dog->name);
             }
             // 无论首次还是持续离线，都触发回调，实现持续报警
             if (current_dog->offline_callback)

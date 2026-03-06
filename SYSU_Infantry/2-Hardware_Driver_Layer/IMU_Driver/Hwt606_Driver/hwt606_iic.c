@@ -7,6 +7,7 @@
 #include <string.h>
 #include "buzzer_alarm.h"
 #include "bsp_wdg.h"
+#include "error_handler.h"
  // ================= 配置 =================
  // 从角速度(0x37)开始，一次读到角度(0x3F)
  // 顺序: Gyro(6) + Mag(6/跳过) + Angle(6)
@@ -68,13 +69,18 @@ static void HWT606_Reset_I2C(void)
 
 static void IMU_Offline_Callback(void *arg)
 {
+    ERROR_CRITICAL("HWT606", "IMU offline");
     Watchdog_buzzer_alarm("imu");
 }
 
 
 static bool HWT606_Init(void)
 {
-    if (hwt606_dev.hi2c == NULL) return false;
+    if (hwt606_dev.hi2c == NULL)
+    {
+        ERROR_RAISE("HWT606", "I2C handle is NULL");
+        return false;
+    }
 
     //延时等待初始化成功
     HAL_Delay(200);
@@ -101,24 +107,20 @@ static bool HWT606_Init(void)
         retry_count++;
         if (retry_count > 5) {
             // 重试了 5 次 (约 250ms) 还是不行，说明真坏了或线掉了
+            ERROR_CRITICAL("HWT606", "Device not ready after 5 retries");
             return false;
         }
         HAL_Delay(50); // 每次失败等 50ms 再试
     }
-    // 检查设备在线 
-    // if (HAL_I2C_IsDeviceReady(hwt606_dev.hi2c, hwt606_dev.dev_addr, 3, 100) != HAL_OK)
-    // {
-    //     return false;
-    // }
 
     Watchdog_init_t wdg_config = {
     .owner_id = NULL,
     .reload_count = 30,
     .callback = IMU_Offline_Callback,
-    .name = "imu"
+    .name = "HWT606"
     };
     imu_wdg = Watchdog_register(&wdg_config);
-
+    ERROR_INFO("HWT606", "Watchdog registered");
 
     hwt606_dev.is_ready = true;
     return true;
@@ -135,6 +137,7 @@ static void HWT606_Start_Read(void)
     // 检查 I2C 状态，如果正忙则跳过本次读取
     if (HAL_I2C_GetState(hwt606_dev.hi2c) != HAL_I2C_STATE_READY)
     {
+        ERROR_INFO("HWT606", "device busy or not ready");
         return;
     }
 
@@ -142,7 +145,8 @@ static void HWT606_Start_Read(void)
     if (HAL_I2C_Mem_Read_DMA(hwt606_dev.hi2c, hwt606_dev.dev_addr, REG_READ_START,
         I2C_MEMADD_SIZE_8BIT, hwt606_dma_buf, READ_LEN) != HAL_OK)
     {
-        // 启动失败
+        // 启动失败，上报错误
+        ERROR_WARN("HWT606", "DMA start failed");
     }
 }
 
@@ -162,8 +166,10 @@ static bool HWT606_Wait_Data(void)
     while (hwt606_dev.read_success == false)
     {
         // 超时退出 (1ms)
-        if (HAL_GetTick() - start_tick > 1)
+        if (HAL_GetTick() - start_tick > 10)
         {
+            // 数据超时，上报错误
+            ERROR_WARN("HWT606", "Data timeout >10ms");
             return false;
         }
     }

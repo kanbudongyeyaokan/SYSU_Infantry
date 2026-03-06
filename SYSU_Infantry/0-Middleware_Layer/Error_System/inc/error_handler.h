@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 /* ================= 固定配置 ================= */
 
@@ -65,7 +66,7 @@ void error_report_core(error_level_t level,
                        const char* module_name,
                        const char* function,
                        uint32_t line,
-                       const char* message);
+                       const char* format, ...);
 
 void error_report_ctx(error_level_t level,
                       const char* module_name,
@@ -77,17 +78,17 @@ void error_report_ctx(error_level_t level,
 
 /* ================= 快捷宏 ================= */
 
-#define ERROR_INFO(module_name, msg) \
-    error_report_core(ERROR_LEVEL_INFO, module_name, __func__, __LINE__, msg)
+#define ERROR_INFO(module_name, fmt, ...) \
+    error_report_core(ERROR_LEVEL_INFO, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
-#define ERROR_WARN(module_name, msg) \
-    error_report_core(ERROR_LEVEL_WARNING, module_name, __func__, __LINE__, msg)
+#define ERROR_WARN(module_name, fmt, ...) \
+    error_report_core(ERROR_LEVEL_WARNING, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
-#define ERROR_RAISE(module_name, msg) \
-    error_report_core(ERROR_LEVEL_ERROR, module_name, __func__, __LINE__, msg)
+#define ERROR_RAISE(module_name, fmt, ...) \
+    error_report_core(ERROR_LEVEL_ERROR, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
-#define ERROR_CRITICAL(module_name, msg) \
-    error_report_core(ERROR_LEVEL_CRITICAL, module_name, __func__, __LINE__, msg)
+#define ERROR_CRITICAL(module_name, fmt, ...) \
+    error_report_core(ERROR_LEVEL_CRITICAL, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
 /* 带上下文的宏 */
 #define ERROR_INFO_CTX(module_name, msg, c0, c1, c2, c3) \
