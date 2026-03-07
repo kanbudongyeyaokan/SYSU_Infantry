@@ -28,7 +28,7 @@ void Bmi088_temp_init(void)
 {
     //初始化PID参数
     Pid_init_t pid_conf = {
-        .kp = 800.0f,      // 比例系数
+        .kp = 700.0f,      // 比例系数
         .ki = 1.0f,         // 积分系数 (加热过程积分不能太大，否则超调严重)
         .kd = 0.0f,         // 微分系数
         .max_out = PWM_MAX_VALUE,   // 最大输出限制 (PWM满占空比)

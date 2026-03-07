@@ -8,7 +8,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "bsp_usart.h" // 用于调试输出
+#include "robot_task.h" // 用于调试输出
 // 常量定义
 #define EKF_GRAVITY 9.80665f
 #define EKF_DEG_TO_RAD (3.14159265f / 180.0f)
@@ -17,6 +18,17 @@
 // 移植自QuaternionEKF的参数
 #define CHI_SQUARE_THRESHOLD_DEFAULT 1e-8f
 #define ERROR_COUNT_MAX 50
+
+// 静止判定与z轴零偏学习参数 (单位: rad/s, m/s^2)
+#define EKF_STATIC_GYRO_NORM_THRESH      0.12f
+#define EKF_STATIC_ACC_LOW               96.0f
+#define EKF_STATIC_ACC_HIGH              97.0f
+#define EKF_Z_BIAS_TIME_CONSTANT_S       0.8f
+#define EKF_Z_BIAS_ALPHA_MIN             0.001f
+#define EKF_Z_BIAS_ALPHA_MAX             0.03f
+#define EKF_Z_BIAS_DEADBAND_RAD_S        0.0005f
+#define EKF_Z_BIAS_LIMIT_RAD_S           0.20f
+#define EKF_Z_ERR_LP_TIME_CONSTANT_S     0.2f
 
 // 私有函数声明
 static float inv_sqrt(float x);
@@ -84,6 +96,7 @@ Ekf_error_e Ekf_init(Ekf_state_t* ekf_state, Ekf_config_t* ekf_config) {
     ekf_state->error_count = 0;
     ekf_state->update_count = 0;
     ekf_state->chi_square = 0.0f;
+    ekf_state->z_bias_err_lp = 0.0f;
     // 航向角连续化相关变量,用于处理±180°跳变
     ekf_state->yaw_round_count = 0;
     ekf_state->yaw_angle_last = 0.0f;
@@ -106,11 +119,6 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
     float acc_norm_val, gyro_norm_val;
     float half_T = 0.5f * dt;
 
-    // [关键修改] 删除"强制去除Z轴零偏"的代码
-    // 我们将通过Ins_task在启动时计算Z轴静态零偏，并填入 gyro_bias[2]
-    // 之后该值保持不变（因为dx[3]和dx[5]逻辑不更新它），从而持续扣除静态漂移
-    // ekf_state->gyro_bias[2] = 0.0f; <--- 删除这行
-
     // 1. 去除零偏后的角速度
     float gx = gyro[0] - ekf_state->gyro_bias[0];
     float gy = gyro[1] - ekf_state->gyro_bias[1];
@@ -122,12 +130,46 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
 
     // 判断稳定性 (用于卡方检验逻辑)
     // 满足条件认为设备静止,此时加速度计测量最可靠
-    if (gyro_norm_val < 0.3f && acc_norm_val > 9.3f && acc_norm_val < 10.3f) {
+    if (gyro_norm_val < EKF_STATIC_GYRO_NORM_THRESH &&
+        acc_norm_val > EKF_STATIC_ACC_LOW &&
+        acc_norm_val < EKF_STATIC_ACC_HIGH) {
         ekf_state->stable_flag = true;
     } else {
         ekf_state->stable_flag = false;
     }
+//Uart_printf(test_uart,"gyro_norm: %.3f, acc_norm: %.3f, stable_flag: %d\r\n", gyro_norm_val, acc_norm_val, ekf_state->stable_flag);
+    // Z轴零偏在线自学习:
+    // 当前6状态EKF只显式估计x/y零偏，z轴不参与状态更新，容易造成yaw长期积分漂移。
+    // 在静止判定成立时，用低通方式逼近gyro[z]均值作为z轴零偏。
+    if (ekf_state->stable_flag) {
+        float alpha = dt / (dt + EKF_Z_BIAS_TIME_CONSTANT_S);
+        if (alpha < EKF_Z_BIAS_ALPHA_MIN) alpha = EKF_Z_BIAS_ALPHA_MIN;
+        if (alpha > EKF_Z_BIAS_ALPHA_MAX) alpha = EKF_Z_BIAS_ALPHA_MAX;
 
+        float err_z = gyro[2] - ekf_state->gyro_bias[2];
+        float err_alpha = dt / (dt + EKF_Z_ERR_LP_TIME_CONSTANT_S);
+        if (err_alpha < 0.01f) err_alpha = 0.01f;
+        if (err_alpha > 1.0f) err_alpha = 1.0f;
+        ekf_state->z_bias_err_lp += err_alpha * (err_z - ekf_state->z_bias_err_lp);
+
+        if (fabsf(ekf_state->z_bias_err_lp) > EKF_Z_BIAS_DEADBAND_RAD_S) {
+            ekf_state->gyro_bias[2] += alpha * ekf_state->z_bias_err_lp;
+            if (ekf_state->gyro_bias[2] > EKF_Z_BIAS_LIMIT_RAD_S) {
+                ekf_state->gyro_bias[2] = EKF_Z_BIAS_LIMIT_RAD_S;
+            }
+            if (ekf_state->gyro_bias[2] < -EKF_Z_BIAS_LIMIT_RAD_S) {
+                ekf_state->gyro_bias[2] = -EKF_Z_BIAS_LIMIT_RAD_S;
+            }
+        }
+    } 
+    
+
+    // 用更新后的偏置重新计算z轴角速度，降低后续积分漂移
+    gz = gyro[2] - ekf_state->gyro_bias[2];
+    if(fabs(gz)< 0.6f && ekf_state->stable_flag){
+    gz = 0.0f;
+    }
+    //Uart_printf(test_uart,"gyro_z: %.4f, z_bias: %.4f\r\n", gz, ekf_state->gyro_bias[2]);
     // 归一化加速度 (量测值)
     float norm_acc[3];
     if (acc_norm_val > 1e-4f) {
@@ -379,6 +421,8 @@ Ekf_error_e Ekf_update(Ekf_state_t* ekf_state, const float acc[3], const float g
 // 辅助函数：检测静态
 bool Ekf_detect_static_state(Ekf_state_t* ekf_state, const float acc[3], const float gyro[3]) {
     // 移植后的算法使用内部的 stable_flag，此函数仅作为接口保留
+    (void)acc;
+    (void)gyro;
     return ekf_state->stable_flag;
 }
 
@@ -463,5 +507,6 @@ static float inv_sqrt(float x) {
 // 占位函数，保持接口兼容
 void Ekf_set_temperature(Ekf_state_t* ekf_state, float current_temp) { (void)ekf_state; (void)current_temp; }
 void Ekf_calculate_temp_compensation(const Ekf_state_t* ekf_state, float temp_compensation[3]) {
+    (void)ekf_state;
     temp_compensation[0] = temp_compensation[1] = temp_compensation[2] = 0.0f;
 }

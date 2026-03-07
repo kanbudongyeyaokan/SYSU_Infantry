@@ -68,7 +68,7 @@ Uart_instance_t* test_uart = NULL;
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
-    test_uart = Uart_register(&huart6,NULL);
+    test_uart = Uart_register(&huart1,NULL);
 
     // 创建蜂鸣器队列（必须在错误系统初始化之前！）
 
@@ -115,13 +115,13 @@ void Robot_task_init(void)
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
     // message_test_task_handle = osThreadCreate(osThread(message_test_task), NULL);
 
-  error_system_init(test_uart);
+  //error_system_init(test_uart);
 
   // 创建蜂鸣器报警任务（提前启动，确保能处理错误报警）
-  osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
-  buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
+  //osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
+  //buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
 
-  ERROR_INFO("SYS", "Init");
+  //ERROR_INFO("SYS", "Init");
 
   osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 1024);
   ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
@@ -129,26 +129,26 @@ void Robot_task_init(void)
    osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityHigh, 0, 512);
   watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
   //   // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
-  osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 512);
-  motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
+  //osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 512);
+  //motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
   //
   //   // 添加短暂延时，让任务有时间初始化
   //  // osDelay(100);
   //
   //   //决策任务
-  osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
-  decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
+  //osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
+  //decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
 
     // === 启动底盘与电机任务（必需） ===
     // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
-     osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
-     chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
+    // osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
+     //chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
 
-     osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
-     gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
+     //osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
+    // gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
 
-     osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
-     shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+    // osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
+     //shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
 }
 
