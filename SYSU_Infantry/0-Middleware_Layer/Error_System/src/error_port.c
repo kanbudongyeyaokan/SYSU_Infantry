@@ -38,10 +38,20 @@ static const char* buzzer_last_critical_module_name = NULL;
 static uint32_t buzzer_last_critical_time = 0;
 #define BUZZER_COOLDOWN_MS  2000u
 
+static uint8_t error_port_in_isr(void)
+{
+    return (__get_IPSR() != 0u) ? 1u : 0u;
+}
+
 /* ================= 平台相关实现 ================= */
 
 uint16_t error_port_get_task_id(void)
 {
+    if (error_port_in_isr())
+    {
+        return 0u;
+    }
+
     if (osKernelRunning())
     {
         osThreadId tid = osThreadGetId();
@@ -74,6 +84,11 @@ void error_port_output(const error_record_t* record)
     };
 
     uint8_t level = ERROR_GET_LEVEL(record->error_code);
+    uint8_t in_isr = error_port_in_isr();
+    if (level > ERROR_LEVEL_CRITICAL)
+    {
+        level = ERROR_LEVEL_ERROR;
+    }
 
     /* 格式化输出（固定包含函数名和行号） */
     memset(error_output_buf, 0, sizeof(error_output_buf));
@@ -100,7 +115,7 @@ void error_port_output(const error_record_t* record)
     /* UART 输出 */
     strcat(error_output_buf, "\r\n");
     Uart_instance_t* uart = (Uart_instance_t*)error_get_uart_handle();
-    if (uart != NULL)
+    if (uart != NULL && !in_isr)
     {
         Uart_printf(uart, "%s", error_output_buf);
     }
@@ -126,7 +141,15 @@ void error_port_output(const error_record_t* record)
             if (Buzzer_cmd_queue_handle != NULL)
             {
                 uint8_t alarm_code = 99;
-                xQueueSend(Buzzer_cmd_queue_handle, &alarm_code, 0);
+                if (in_isr)
+                {
+                    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+                    xQueueSendFromISR(Buzzer_cmd_queue_handle, &alarm_code, &xHigherPriorityTaskWoken);
+                }
+                else
+                {
+                    xQueueSend(Buzzer_cmd_queue_handle, &alarm_code, 0);
+                }
             }
         }
     }

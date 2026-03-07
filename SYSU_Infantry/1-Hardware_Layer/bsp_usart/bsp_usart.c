@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "main.h"
+#include "error_handler.h"
 
 // 管理所有注册的串口实例
 static Uart_instance_t* uart_instances[UART_MAX_COUNT] = {NULL};
@@ -11,11 +13,35 @@ static uint8_t uart_cnt = 0;
 
 static Uart_instance_t uart_instances_pool[UART_MAX_COUNT];
 
+#define UART_ERROR_REPORT_INTERVAL_MS 100u
+static uint32_t uart_last_tx_dma_fail_tick = 0u;
+static uint32_t uart_last_rx_dma_restart_fail_tick = 0u;
+static uint32_t uart_last_fifo_full_tick = 0u;
+static uint32_t uart_last_mutex_fail_tick = 0u;
+static uint32_t uart_last_unknown_irq_tick = 0u;
+static uint32_t uart_last_rx_dma_null_tick = 0u;
+
+static uint8_t Uart_Should_Report(uint32_t *last_tick, uint32_t interval_ms)
+{
+    uint32_t now = HAL_GetTick();
+    if ((now - *last_tick) >= interval_ms)
+    {
+        *last_tick = now;
+        return 1u;
+    }
+    return 0u;
+}
+
 // ============================================================
 // 核心内部函数：尝试启动 DMA 发送
 // ============================================================
 static void Uart_Try_Transmit(Uart_instance_t *inst)
 {
+    if (inst == NULL || inst->uart_handle == NULL) {
+        ERROR_RAISE("USART", "Uart_Try_Transmit instance invalid");
+        return;
+    }
+
     if (inst->is_sending) {
         return;
     }
@@ -47,6 +73,14 @@ static void Uart_Try_Transmit(Uart_instance_t *inst)
     if (HAL_UART_Transmit_DMA(inst->uart_handle, &inst->tx_fifo[tail], send_len) != HAL_OK) {
         // 如果发送失败，清除标志位让下次重试
         inst->is_sending = 0;
+        if (Uart_Should_Report(&uart_last_tx_dma_fail_tick, UART_ERROR_REPORT_INTERVAL_MS))
+        {
+            ERROR_RAISE_CTX("USART", "HAL_UART_Transmit_DMA failed(c0=uart_err,c1=send_len,c2=fifo_r,c3=fifo_w)",
+                            inst->uart_handle->ErrorCode,
+                            send_len,
+                            inst->fifo_read_pos,
+                            inst->fifo_write_pos);
+        }
     }
 }
 
@@ -54,7 +88,10 @@ static void Uart_Try_Transmit(Uart_instance_t *inst)
 // 初始化与注册
 // ============================================================
 static void Uart_init(Uart_instance_t* inst, UART_HandleTypeDef *huart) {
-    if(!inst || !huart) return;
+    if(!inst || !huart) {
+        ERROR_RAISE("USART", "Uart_init param invalid");
+        return;
+    }
     memset(inst, 0, sizeof(Uart_instance_t));
 
     inst->uart_handle = huart;
@@ -63,14 +100,43 @@ static void Uart_init(Uart_instance_t* inst, UART_HandleTypeDef *huart) {
     // 创建互斥锁
     osMutexDef(uart_mutex);
     inst->fifo_mutex = osMutexCreate(osMutex(uart_mutex));
+    if (inst->fifo_mutex == NULL)
+    {
+        ERROR_CRITICAL("USART", "UART fifo mutex create failed");
+    }
 
     // 启动空闲中断接收
-    HAL_UARTEx_ReceiveToIdle_DMA(inst->uart_handle, inst->rx_buffer, inst->rx_buf_length);
-    __HAL_DMA_DISABLE_IT(inst->uart_handle->hdmarx, DMA_IT_HT); // 关闭半传输中断
+    if (HAL_UARTEx_ReceiveToIdle_DMA(inst->uart_handle, inst->rx_buffer, inst->rx_buf_length) != HAL_OK)
+    {
+        ERROR_CRITICAL_CTX("USART", "UART RxToIdle DMA init failed(c0=uart_err,c1=rx_buf_len,c2=reserved,c3=reserved)",
+                           inst->uart_handle->ErrorCode,
+                           inst->rx_buf_length, 0u, 0u);
+    }
+
+    if (inst->uart_handle->hdmarx != NULL)
+    {
+        __HAL_DMA_DISABLE_IT(inst->uart_handle->hdmarx, DMA_IT_HT); // 关闭半传输中断
+    }
+    else if (Uart_Should_Report(&uart_last_rx_dma_null_tick, UART_ERROR_REPORT_INTERVAL_MS))
+    {
+        ERROR_WARN("USART", "UART hdmarx is NULL");
+    }
 }
 
 Uart_instance_t* Uart_register(UART_HandleTypeDef *huart, uart_receive_callback cb) {
-    if (uart_cnt >= UART_MAX_COUNT) return NULL;
+    if (huart == NULL)
+    {
+        ERROR_RAISE("USART", "Uart_register huart is NULL");
+        return NULL;
+    }
+
+    if (uart_cnt >= UART_MAX_COUNT)
+    {
+        ERROR_RAISE_CTX("USART", "UART instance table full(c0=uart_cnt,c1=uart_max,c2=huart_ptr,c3=reserved)",
+                        uart_cnt, UART_MAX_COUNT,
+                        (uint32_t)(uintptr_t)huart, 0u);
+        return NULL;
+    }
 
     // 查重
     for(int i=0; i<uart_cnt; i++) {
@@ -95,10 +161,29 @@ Uart_instance_t* Uart_register(UART_HandleTypeDef *huart, uart_receive_callback 
 // 发送二进制数据
 void Uart_sendData(Uart_instance_t *inst, uint8_t* data, uint16_t length)
 {
-    if (!inst || !data || length == 0) return;
+    if (length == 0u) return;
+    if (!inst || !data)
+    {
+        ERROR_RAISE("USART", "Uart_sendData param invalid");
+        return;
+    }
+    if (inst->fifo_mutex == NULL)
+    {
+        ERROR_CRITICAL("USART", "UART fifo mutex is NULL");
+        return;
+    }
 
     // 获取锁：保证多任务写 FIFO 时指针不会乱
-    if (osMutexWait(inst->fifo_mutex, 10) != osOK) return;
+    if (osMutexWait(inst->fifo_mutex, 10) != osOK)
+    {
+        if (Uart_Should_Report(&uart_last_mutex_fail_tick, UART_ERROR_REPORT_INTERVAL_MS))
+        {
+            ERROR_WARN_CTX("USART", "UART mutex wait timeout(c0=fifo_r,c1=fifo_w,c2=req_len,c3=wait_ms)",
+                           inst->fifo_read_pos, inst->fifo_write_pos,
+                           length, 10u);
+        }
+        return;
+    }
 
     // 检查剩余空间是否足够
     uint16_t free_space = 0;
@@ -109,6 +194,12 @@ void Uart_sendData(Uart_instance_t *inst, uint8_t* data, uint16_t length)
     }
     if (length > free_space) {
         // 空间不足，放弃发送
+        if (Uart_Should_Report(&uart_last_fifo_full_tick, UART_ERROR_REPORT_INTERVAL_MS))
+        {
+            ERROR_WARN_CTX("USART", "UART TX FIFO full(c0=req_len,c1=free_space,c2=fifo_r,c3=fifo_w)",
+                           length, free_space,
+                           inst->fifo_read_pos, inst->fifo_write_pos);
+        }
         osMutexRelease(inst->fifo_mutex);
         return;
     }
@@ -161,9 +252,11 @@ void Uart_printf(Uart_instance_t *inst, const char* fmt, ...)
 // 发送完成回调 (DMA发完一段后触发)
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
+    if (huart == NULL) return;
+
     for (uint8_t i = 0; i < uart_cnt; ++i)
     {
-        if (huart == uart_instances[i]->uart_handle)
+        if (uart_instances[i] != NULL && huart == uart_instances[i]->uart_handle)
         {
             Uart_instance_t *inst = uart_instances[i];
 
@@ -185,14 +278,22 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
             return;
         }
     }
+
+    if (Uart_Should_Report(&uart_last_unknown_irq_tick, UART_ERROR_REPORT_INTERVAL_MS))
+    {
+        ERROR_WARN_CTX("USART", "Unhandled UART TX IRQ(c0=huart_ptr,c1=uart_err,c2=reserved,c3=reserved)",
+                       (uint32_t)(uintptr_t)huart, huart->ErrorCode, 0u, 0u);
+    }
 }
 
 // 接收回调 (Idle 中断)
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
+    if (huart == NULL) return;
+
     for (uint8_t i = 0; i < uart_cnt; ++i)
     {
-        if (huart == uart_instances[i]->uart_handle)
+        if (uart_instances[i] != NULL && huart == uart_instances[i]->uart_handle)
         {
             uart_instances[i]->rx_data_len = Size; // 记录长度
 
@@ -202,11 +303,35 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
             }
 
             // 重新开启接收
-            HAL_UARTEx_ReceiveToIdle_DMA(uart_instances[i]->uart_handle,
-                uart_instances[i]->rx_buffer, uart_instances[i]->rx_buf_length);
-            __HAL_DMA_DISABLE_IT(uart_instances[i]->uart_handle->hdmarx, DMA_IT_HT);
+            if (HAL_UARTEx_ReceiveToIdle_DMA(uart_instances[i]->uart_handle,
+                uart_instances[i]->rx_buffer, uart_instances[i]->rx_buf_length) != HAL_OK)
+            {
+                if (Uart_Should_Report(&uart_last_rx_dma_restart_fail_tick, UART_ERROR_REPORT_INTERVAL_MS))
+                {
+                    ERROR_RAISE_CTX("USART", "UART RX DMA restart failed(c0=uart_err,c1=rx_size,c2=rx_buf_len,c3=huart_ptr)",
+                                    uart_instances[i]->uart_handle->ErrorCode,
+                                    Size,
+                                    uart_instances[i]->rx_buf_length,
+                                    (uint32_t)(uintptr_t)uart_instances[i]->uart_handle);
+                }
+            }
+
+            if (uart_instances[i]->uart_handle->hdmarx != NULL)
+            {
+                __HAL_DMA_DISABLE_IT(uart_instances[i]->uart_handle->hdmarx, DMA_IT_HT);
+            }
+            else if (Uart_Should_Report(&uart_last_rx_dma_null_tick, UART_ERROR_REPORT_INTERVAL_MS))
+            {
+                ERROR_WARN("USART", "UART hdmarx is NULL in RxEvent");
+            }
 
             return;
         }
+    }
+
+    if (Uart_Should_Report(&uart_last_unknown_irq_tick, UART_ERROR_REPORT_INTERVAL_MS))
+    {
+        ERROR_WARN_CTX("USART", "Unhandled UART RX IRQ(c0=huart_ptr,c1=uart_err,c2=rx_size,c3=reserved)",
+                       (uint32_t)(uintptr_t)huart, huart->ErrorCode, Size, 0u);
     }
 }
