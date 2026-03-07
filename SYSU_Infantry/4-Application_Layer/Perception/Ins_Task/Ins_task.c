@@ -8,6 +8,7 @@
 #include "hwt606_iic.h" // 引用 HWT606 IIC 驱动头文件
 #include "i2c.h" // 引用 IIC 底层驱动头文件
 #include "vofa.h"
+#include "bsp_usart.h" // 用于调试输出
 
 void Ins_task(void const *argument)
 {
@@ -29,11 +30,16 @@ void Ins_task(void const *argument)
 
         // 如果需要数据，直接 Ins_get_data()
         data = Ins_get_data();
-         VOFA_Send(test_uart,
-              data->euler.yaw,
-              data->euler.pitch,
-              data->temp,
-              (float)data->state); 
+        Uart_printf(test_uart, "Yaw:%.2f, Pitch:%.2f, Temp:%.2f, State:%d\r\n", 
+                    data->euler.yaw, 
+                    data->euler.pitch, 
+                    data->temp, 
+                    data->state);
+        //  VOFA_Send(test_uart,
+        //       data->euler.yaw,
+        //       data->euler.pitch,
+        //       data->temp,
+        //       (float)data->state); 
          //打印 欧拉角 + Z轴加速度 + 采样时间dt
        /* Uart_printf(test_uart, "Yaw:%.2f, AccZ:%.2f, dt:%.4f\r\n", 
                     data->euler.yaw, 
