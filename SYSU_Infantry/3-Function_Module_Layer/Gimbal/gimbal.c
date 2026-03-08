@@ -28,6 +28,7 @@
 #include <string.h> 
 #include "lowpass_filter.h"
 #include "bmi088.h" // 引用驱动头文件
+#include "error_handler.h"
 
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
@@ -158,7 +159,8 @@ void Gimbal_task_init(void) {
     gimbal_imu_data = Ins_get_data();
 
     if (gimbal_imu_data == NULL) {
-        while(1); 
+        ERROR_CRITICAL("GIMBAL", "Failed to get IMU data pointer from INS module");
+        return;
     }
 
     //初始化云台电机
@@ -232,6 +234,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
    // VOFA_Send(test_uart,cmd->yaw,yaw_motor->motor_measure.total_angle,yaw_motor->out_current);
         //反馈数据
         gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
+        //ERROR_INFO("GIMBAL", "Yaw single round angle: %.2f", gimbal_feedback.yaw_motor_single_round_angle);
         //推送消息
         // 将当前的电机状态（编码器数据）发布给决策层，用于下一帧的闭环控制或逻辑判断
         // Pub_push_message(gimbal_pub, (void *) &gimbal_feedback);

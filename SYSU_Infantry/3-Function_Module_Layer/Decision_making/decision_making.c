@@ -23,6 +23,7 @@
 #include "robot_task.h"
 #include "bsp_usart.h"
 #include "video_link.h"
+#include "error_handler.h"
 /**********************发出决策信息***************************/
 //存储遥控器数据，CURRENT-当前数据,LAST-上一次数据
 #if USE_SBUS_RECEIVER == 1
@@ -101,6 +102,7 @@ void Decision_making_task_init()
 
     //机器人开始工作 - 关键！缺少此初始化会导致控制无响应
     robot_state = ROBOT_ON;
+    ERROR_INFO("DECISION", "Init: robot_state=ON, default chassis_mode=%d", CHASSIS_NO_FOLLOW);
 
     // 初始化默认模式
     gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  // 默认使能云台控制
@@ -148,13 +150,13 @@ void Robot_set_command()
 
 
     //图传链路遥控调试输出
-    // 调试输出: 遥控器摇杆数据
-    // Uart_printf(test_uart,"lx:%d,ly:%d,rx:%d,ry:%d,dial:%d\r\n",
+    //调试输出: 遥控器摇杆数据
+    // ERROR_INFO("DMAKING","lx:%d,ly:%d,rx:%d,ry:%d,dial:%d\r\n",
     //     vrc_data[CURRENT].rc.Lrocker_x,  // 左摇杆X轴
     //     vrc_data[CURRENT].rc.Lrocker_y,// 左摇杆Y轴
     //     vrc_data[CURRENT].rc.Rrocker_x,  // 右摇杆X轴
     //     vrc_data[CURRENT].rc.Rrocker_y,  // 右摇杆Y轴
-    //     vrc_data[CURRENT].rc.dial);       // 拨轮值    
+    //     vrc_data[CURRENT].rc.dial);       // 拨轮值
     // 调试输出: 遥控器按键状态
     // Uart_printf(test_uart,"mode:%d,pause:%d,bl:%d,br:%d,trig:%d\r\n",
     //     vrc_data[CURRENT].rc.mode_switch, // 模式开关
@@ -676,6 +678,7 @@ void Calc_offset_angle()
     else
         temp_offset_angle = angle - YAW_ALIGN_ANGLE + 360.0f;
     //计算出最终的偏差角
+    //ERROR_INFO("DECISION_MAKING","offset_angle=%f",temp_offset_angle);
     chassis_cmd_send.offset_angle = temp_offset_angle;
 
 #endif

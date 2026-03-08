@@ -142,7 +142,7 @@ void Robot_task_init(void)
       chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
   //
       osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
-  //    gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
+      gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
   //
       osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
       shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);

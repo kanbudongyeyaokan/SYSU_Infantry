@@ -289,6 +289,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 // 接收回调 (Idle 中断)
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
+    //ERROR_INFO("USART", "UART Rx Event Callback=0x%lx",(uint32_t)huart);
     if (huart == NULL) return;
 
     for (uint8_t i = 0; i < uart_cnt; ++i)

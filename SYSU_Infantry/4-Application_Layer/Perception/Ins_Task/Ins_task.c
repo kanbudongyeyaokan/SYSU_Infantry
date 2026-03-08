@@ -9,6 +9,7 @@
 #include "i2c.h" // 引用 IIC 底层驱动头文件
 #include "vofa.h"
 #include "bsp_usart.h" // 用于调试输出
+#include "error_handler.h"
 
 void Ins_task(void const *argument)
 {
@@ -29,7 +30,7 @@ void Ins_task(void const *argument)
 
         // 如果需要数据，直接 Ins_get_data()
         data = Ins_get_data();
-        // Uart_printf(test_uart, "Yaw:%.2f, Pitch:%.2f, Temp:%.2f, State:%d\r\n",
+        // ERROR_INFO("HWT606","Yaw:%.2f, Pitch:%.2f, Temp:%.2f, State:%d\r\n",
         //             data->euler.yaw,
         //             data->euler.pitch,
         //             data->temp,
