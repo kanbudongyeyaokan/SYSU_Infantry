@@ -75,11 +75,11 @@ static void Uart_Try_Transmit(Uart_instance_t *inst)
         inst->is_sending = 0;
         if (Uart_Should_Report(&uart_last_tx_dma_fail_tick, UART_ERROR_REPORT_INTERVAL_MS))
         {
-            ERROR_RAISE_CTX("USART", "HAL_UART_Transmit_DMA failed(c0=uart_err,c1=send_len,c2=fifo_r,c3=fifo_w)",
-                            inst->uart_handle->ErrorCode,
-                            send_len,
-                            inst->fifo_read_pos,
-                            inst->fifo_write_pos);
+            ERROR_RAISE("USART", "HAL_UART_Transmit_DMA failed uart_err=%lu send_len=%lu fifo_r=%lu fifo_w=%lu",
+                        inst->uart_handle->ErrorCode,
+                        send_len,
+                        inst->fifo_read_pos,
+                        inst->fifo_write_pos);
         }
     }
 }
@@ -108,9 +108,9 @@ static void Uart_init(Uart_instance_t* inst, UART_HandleTypeDef *huart) {
     // 启动空闲中断接收
     if (HAL_UARTEx_ReceiveToIdle_DMA(inst->uart_handle, inst->rx_buffer, inst->rx_buf_length) != HAL_OK)
     {
-        ERROR_CRITICAL_CTX("USART", "UART RxToIdle DMA init failed(c0=uart_err,c1=rx_buf_len,c2=reserved,c3=reserved)",
-                           inst->uart_handle->ErrorCode,
-                           inst->rx_buf_length, 0u, 0u);
+        ERROR_CRITICAL("USART", "UART RxToIdle DMA init failed uart_err=%lu rx_buf_len=%lu",
+                       inst->uart_handle->ErrorCode,
+                       inst->rx_buf_length);
     }
 
     if (inst->uart_handle->hdmarx != NULL)
@@ -132,9 +132,9 @@ Uart_instance_t* Uart_register(UART_HandleTypeDef *huart, uart_receive_callback 
 
     if (uart_cnt >= UART_MAX_COUNT)
     {
-        ERROR_RAISE_CTX("USART", "UART instance table full(c0=uart_cnt,c1=uart_max,c2=huart_ptr,c3=reserved)",
-                        uart_cnt, UART_MAX_COUNT,
-                        (uint32_t)(uintptr_t)huart, 0u);
+        ERROR_RAISE("USART", "UART instance table full uart_cnt=%lu uart_max=%lu huart_ptr=0x%lx",
+                    uart_cnt, UART_MAX_COUNT,
+                    (uint32_t)(uintptr_t)huart);
         return NULL;
     }
 
@@ -178,9 +178,9 @@ void Uart_sendData(Uart_instance_t *inst, uint8_t* data, uint16_t length)
     {
         if (Uart_Should_Report(&uart_last_mutex_fail_tick, UART_ERROR_REPORT_INTERVAL_MS))
         {
-            ERROR_WARN_CTX("USART", "UART mutex wait timeout(c0=fifo_r,c1=fifo_w,c2=req_len,c3=wait_ms)",
-                           inst->fifo_read_pos, inst->fifo_write_pos,
-                           length, 10u);
+            ERROR_WARN("USART", "UART mutex wait timeout fifo_r=%lu fifo_w=%lu req_len=%lu wait_ms=%lu",
+                       inst->fifo_read_pos, inst->fifo_write_pos,
+                       length, 10u);
         }
         return;
     }
@@ -196,9 +196,9 @@ void Uart_sendData(Uart_instance_t *inst, uint8_t* data, uint16_t length)
         // 空间不足，放弃发送
         if (Uart_Should_Report(&uart_last_fifo_full_tick, UART_ERROR_REPORT_INTERVAL_MS))
         {
-            ERROR_WARN_CTX("USART", "UART TX FIFO full(c0=req_len,c1=free_space,c2=fifo_r,c3=fifo_w)",
-                           length, free_space,
-                           inst->fifo_read_pos, inst->fifo_write_pos);
+            ERROR_WARN("USART", "UART TX FIFO full req_len=%lu free_space=%lu fifo_r=%lu fifo_w=%lu",
+                       length, free_space,
+                       inst->fifo_read_pos, inst->fifo_write_pos);
         }
         osMutexRelease(inst->fifo_mutex);
         return;
@@ -281,8 +281,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
     if (Uart_Should_Report(&uart_last_unknown_irq_tick, UART_ERROR_REPORT_INTERVAL_MS))
     {
-        ERROR_WARN_CTX("USART", "Unhandled UART TX IRQ(c0=huart_ptr,c1=uart_err,c2=reserved,c3=reserved)",
-                       (uint32_t)(uintptr_t)huart, huart->ErrorCode, 0u, 0u);
+        ERROR_WARN("USART", "Unhandled UART TX IRQ huart_ptr=0x%lx uart_err=%lu",
+                   (uint32_t)(uintptr_t)huart, huart->ErrorCode);
     }
 }
 
@@ -308,11 +308,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
             {
                 if (Uart_Should_Report(&uart_last_rx_dma_restart_fail_tick, UART_ERROR_REPORT_INTERVAL_MS))
                 {
-                    ERROR_RAISE_CTX("USART", "UART RX DMA restart failed(c0=uart_err,c1=rx_size,c2=rx_buf_len,c3=huart_ptr)",
-                                    uart_instances[i]->uart_handle->ErrorCode,
-                                    Size,
-                                    uart_instances[i]->rx_buf_length,
-                                    (uint32_t)(uintptr_t)uart_instances[i]->uart_handle);
+                    ERROR_RAISE("USART", "UART RX DMA restart failed uart_err=%lu rx_size=%lu rx_buf_len=%lu huart_ptr=0x%lx",
+                                uart_instances[i]->uart_handle->ErrorCode,
+                                Size,
+                                uart_instances[i]->rx_buf_length,
+                                (uint32_t)(uintptr_t)uart_instances[i]->uart_handle);
                 }
             }
 
@@ -331,7 +331,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
     if (Uart_Should_Report(&uart_last_unknown_irq_tick, UART_ERROR_REPORT_INTERVAL_MS))
     {
-        ERROR_WARN_CTX("USART", "Unhandled UART RX IRQ(c0=huart_ptr,c1=uart_err,c2=rx_size,c3=reserved)",
-                       (uint32_t)(uintptr_t)huart, huart->ErrorCode, Size, 0u);
+        ERROR_WARN("USART", "Unhandled UART RX IRQ huart_ptr=0x%lx uart_err=%lu rx_size=%lu",
+                   (uint32_t)(uintptr_t)huart, huart->ErrorCode, Size);
     }
 }

@@ -35,10 +35,9 @@ static void RC_Offline_Callback(void *arg)
     memset(&rc_data[CURRENT], 0, sizeof(RC_ctrl_t));
     memset(&rc_data[LAST], 0, sizeof(RC_ctrl_t));
 
-    ERROR_CRITICAL_CTX("REMOTE", "Remote offline(c0=rc_uart_ptr,c1=rc_wdg_ptr,c2=reserved,c3=reserved)",
-                       (uint32_t)(uintptr_t)rc_uart,
-                       (uint32_t)(uintptr_t)rc_wdg,
-                       0u, 0u);
+    ERROR_CRITICAL("REMOTE", "Remote offline rc_uart_ptr=0x%lx rc_wdg_ptr=0x%lx",
+                   (uint32_t)(uintptr_t)rc_uart,
+                   (uint32_t)(uintptr_t)rc_wdg);
     Watchdog_buzzer_alarm("RC");
 }
 
@@ -134,9 +133,9 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf)
          rc_data[CURRENT].rc.Lswitch < 1u || rc_data[CURRENT].rc.Lswitch > 3u) &&
         Remote_Should_Report(&remote_last_switch_invalid_tick, REMOTE_ERROR_REPORT_INTERVAL_MS))
     {
-        ERROR_WARN_CTX("REMOTE", "Remote switch abnormal(c0=lsw,c1=rsw,c2=raw_byte5,c3=reserved)",
-                       rc_data[CURRENT].rc.Lswitch, rc_data[CURRENT].rc.Rswitch,
-                       sbus_buf[5], 0u);
+        ERROR_WARN("REMOTE", "Remote switch abnormal lsw=%lu rsw=%lu raw_byte5=%lu",
+                   rc_data[CURRENT].rc.Lswitch, rc_data[CURRENT].rc.Rswitch,
+                   sbus_buf[5]);
     }
 
     rc_data[CURRENT].mouse.x = sbus_buf[6] | (sbus_buf[7] << 8);
@@ -175,8 +174,8 @@ RC_ctrl_t *RC_Data_Get(UART_HandleTypeDef *rc_uart_handle)
     rc_uart = Uart_register(rc_uart_handle, RC_receive_callback);
     if (rc_uart == NULL)
     {
-        ERROR_CRITICAL_CTX("REMOTE", "Remote UART register failed(c0=uart_handle_ptr,c1=reserved,c2=reserved,c3=reserved)",
-                           (uint32_t)(uintptr_t)rc_uart_handle, 0u, 0u, 0u);
+        ERROR_CRITICAL("REMOTE", "Remote UART register failed uart_handle_ptr=0x%lx",
+                       (uint32_t)(uintptr_t)rc_uart_handle);
     }
 
     // 注册看门狗

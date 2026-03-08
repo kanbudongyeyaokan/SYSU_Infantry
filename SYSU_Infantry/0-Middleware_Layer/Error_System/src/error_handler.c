@@ -88,40 +88,6 @@ void error_report_core(error_level_t level,
     error_port_output(&record);
 }
 
-void error_report_ctx(error_level_t level,
-                      const char* module_name,
-                      const char* function,
-                      uint32_t line,
-                      const char* message,
-                      uint32_t ctx0, uint32_t ctx1,
-                      uint32_t ctx2, uint32_t ctx3)
-{
-    static char formatted_ctx_message[192];
-    error_record_t record;
-
-    memset(&record, 0, sizeof(record));
-
-    snprintf(formatted_ctx_message, sizeof(formatted_ctx_message),
-             "%s [ctx0=0x%08lX ctx1=0x%08lX ctx2=0x%08lX ctx3=0x%08lX]",
-             (message != NULL) ? message : "no-message",
-             (unsigned long)ctx0, (unsigned long)ctx1,
-             (unsigned long)ctx2, (unsigned long)ctx3);
-
-    record.error_code = MAKE_ERROR_CODE(level);
-    record.module_name = module_name;
-    record.timestamp = error_port_get_timestamp();
-    record.function = function;
-    record.line = line;
-    record.message = formatted_ctx_message;
-
-    record.task_id = error_port_get_task_id();
-    record.cpu_id = 0u;
-    record.reserved = 0u;
-
-    error_buffer_push(&record);
-    error_port_output(&record);
-}
-
 /* ================= 缓冲区操作 ================= */
 
 static void error_buffer_push(const error_record_t* record)

@@ -51,11 +51,10 @@ static void Can_filter_config_global(void)
     can_filter_conf.FilterBank = 0;
     if (HAL_CAN_ConfigFilter(&hcan1, &can_filter_conf) != HAL_OK)
     {
-        ERROR_CRITICAL_CTX("CAN", "CAN1 filter config failed(c0=hal_err,c1=esr,c2=msr,c3=reserved)",
-                           HAL_CAN_GetError(&hcan1),
-                           (hcan1.Instance != NULL) ? hcan1.Instance->ESR : 0u,
-                           (hcan1.Instance != NULL) ? hcan1.Instance->MSR : 0u,
-                           0u);
+        ERROR_CRITICAL("CAN", "CAN1 filter config failed hal_err=%lu esr=0x%lx msr=0x%lx",
+                       HAL_CAN_GetError(&hcan1),
+                       (hcan1.Instance != NULL) ? hcan1.Instance->ESR : 0u,
+                       (hcan1.Instance != NULL) ? hcan1.Instance->MSR : 0u);
     }
 
     // 配置 CAN2 过滤器 (Bank 14)
@@ -65,11 +64,10 @@ static void Can_filter_config_global(void)
     can_filter_conf.FilterFIFOAssignment = CAN_RX_FIFO1;
     if (HAL_CAN_ConfigFilter(&hcan2, &can_filter_conf) != HAL_OK)
     {
-        ERROR_CRITICAL_CTX("CAN", "CAN2 filter config failed(c0=hal_err,c1=esr,c2=msr,c3=reserved)",
-                           HAL_CAN_GetError(&hcan2),
-                           (hcan2.Instance != NULL) ? hcan2.Instance->ESR : 0u,
-                           (hcan2.Instance != NULL) ? hcan2.Instance->MSR : 0u,
-                           0u);
+        ERROR_CRITICAL("CAN", "CAN2 filter config failed hal_err=%lu esr=0x%lx msr=0x%lx",
+                       HAL_CAN_GetError(&hcan2),
+                       (hcan2.Instance != NULL) ? hcan2.Instance->ESR : 0u,
+                       (hcan2.Instance != NULL) ? hcan2.Instance->MSR : 0u);
     }
 }
 
@@ -82,52 +80,42 @@ void Can_init()
 
     if (HAL_CAN_Start(&hcan1) != HAL_OK)
     {
-        ERROR_CRITICAL_CTX("CAN", "CAN1 start failed(c0=hal_err,c1=esr,c2=msr,c3=reserved)",
-                           HAL_CAN_GetError(&hcan1),
-                           (hcan1.Instance != NULL) ? hcan1.Instance->ESR : 0u,
-                           (hcan1.Instance != NULL) ? hcan1.Instance->MSR : 0u,
-                           0u);
+        ERROR_CRITICAL("CAN", "CAN1 start failed hal_err=%lu esr=0x%lx msr=0x%lx",
+                       HAL_CAN_GetError(&hcan1),
+                       (hcan1.Instance != NULL) ? hcan1.Instance->ESR : 0u,
+                       (hcan1.Instance != NULL) ? hcan1.Instance->MSR : 0u);
     }
     if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
     {
-        ERROR_CRITICAL_CTX("CAN", "CAN1 FIFO0 IRQ enable failed(c0=hal_err,c1=irq_mask,c2=reserved,c3=reserved)",
-                           HAL_CAN_GetError(&hcan1),
-                           CAN_IT_RX_FIFO0_MSG_PENDING,
-                           0u,
-                           0u);
+        ERROR_CRITICAL("CAN", "CAN1 FIFO0 IRQ enable failed hal_err=%lu irq_mask=%lu",
+                       HAL_CAN_GetError(&hcan1),
+                       CAN_IT_RX_FIFO0_MSG_PENDING);
     }
     if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK)
     {
-        ERROR_CRITICAL_CTX("CAN", "CAN1 FIFO1 IRQ enable failed(c0=hal_err,c1=irq_mask,c2=reserved,c3=reserved)",
-                           HAL_CAN_GetError(&hcan1),
-                           CAN_IT_RX_FIFO1_MSG_PENDING,
-                           0u,
-                           0u);
+        ERROR_CRITICAL("CAN", "CAN1 FIFO1 IRQ enable failed hal_err=%lu irq_mask=%lu",
+                       HAL_CAN_GetError(&hcan1),
+                       CAN_IT_RX_FIFO1_MSG_PENDING);
     }
 
     if (HAL_CAN_Start(&hcan2) != HAL_OK)
     {
-        ERROR_CRITICAL_CTX("CAN", "CAN2 start failed(c0=hal_err,c1=esr,c2=msr,c3=reserved)",
-                           HAL_CAN_GetError(&hcan2),
-                           (hcan2.Instance != NULL) ? hcan2.Instance->ESR : 0u,
-                           (hcan2.Instance != NULL) ? hcan2.Instance->MSR : 0u,
-                           0u);
+        ERROR_CRITICAL("CAN", "CAN2 start failed hal_err=%lu esr=0x%lx msr=0x%lx",
+                       HAL_CAN_GetError(&hcan2),
+                       (hcan2.Instance != NULL) ? hcan2.Instance->ESR : 0u,
+                       (hcan2.Instance != NULL) ? hcan2.Instance->MSR : 0u);
     }
     if (HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
     {
-        ERROR_CRITICAL_CTX("CAN", "CAN2 FIFO0 IRQ enable failed(c0=hal_err,c1=irq_mask,c2=reserved,c3=reserved)",
-                           HAL_CAN_GetError(&hcan2),
-                           CAN_IT_RX_FIFO0_MSG_PENDING,
-                           0u,
-                           0u);
+        ERROR_CRITICAL("CAN", "CAN2 FIFO0 IRQ enable failed hal_err=%lu irq_mask=%lu",
+                       HAL_CAN_GetError(&hcan2),
+                       CAN_IT_RX_FIFO0_MSG_PENDING);
     }
     if (HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK)
     {
-        ERROR_CRITICAL_CTX("CAN", "CAN2 FIFO1 IRQ enable failed(c0=hal_err,c1=irq_mask,c2=reserved,c3=reserved)",
-                           HAL_CAN_GetError(&hcan2),
-                           CAN_IT_RX_FIFO1_MSG_PENDING,
-                           0u,
-                           0u);
+        ERROR_CRITICAL("CAN", "CAN2 FIFO1 IRQ enable failed hal_err=%lu irq_mask=%lu",
+                       HAL_CAN_GetError(&hcan2),
+                       CAN_IT_RX_FIFO1_MSG_PENDING);
     }
 }
 
@@ -142,17 +130,17 @@ Can_controller_t* Can_device_init(Can_init_t *can_config)
 
     if (can_config->can_handle == NULL)
     {
-        ERROR_RAISE_CTX("CAN", "Can_device_init can_handle NULL(c0=can_id,c1=tx_id,c2=rx_id,c3=reserved)",
-                        can_config->can_id, can_config->tx_id,
-                        can_config->rx_id, 0u);
+        ERROR_RAISE("CAN", "Can_device_init can_handle NULL can_id=%lu tx_id=%lu rx_id=%lu",
+                    can_config->can_id, can_config->tx_id,
+                    can_config->rx_id);
         return NULL;
     }
 
     if (can_ix >= CAN_MAX_COUNT)
     {
-        ERROR_RAISE_CTX("CAN", "CAN device table full(c0=can_ix,c1=max,c2=can_id,c3=rx_id)",
-                        can_ix, CAN_MAX_COUNT,
-                        can_config->can_id, can_config->rx_id);
+        ERROR_RAISE("CAN", "CAN device table full can_ix=%lu max=%lu can_id=%lu rx_id=%lu",
+                    can_ix, CAN_MAX_COUNT,
+                    can_config->can_id, can_config->rx_id);
         return NULL;
     }
 
@@ -160,9 +148,9 @@ Can_controller_t* Can_device_init(Can_init_t *can_config)
     Can_controller_t* can_dev = (Can_controller_t*)malloc(sizeof(Can_controller_t));
     if (can_dev == NULL)
     {
-        ERROR_RAISE_CTX("CAN", "CAN device malloc failed(c0=size,c1=can_ix,c2=can_id,c3=rx_id)",
-                        sizeof(Can_controller_t), can_ix,
-                        can_config->can_id, can_config->rx_id);
+        ERROR_RAISE("CAN", "CAN device malloc failed size=%lu can_ix=%lu can_id=%lu rx_id=%lu",
+                    sizeof(Can_controller_t), can_ix,
+                    can_config->can_id, can_config->rx_id);
         return NULL;
     }
     memset(can_dev, 0, sizeof(Can_controller_t));
@@ -187,27 +175,25 @@ Can_controller_t* Can_device_init(Can_init_t *can_config)
         if (can_config->can_handle == &hcan1) {
             if (can1_rx_lut[can_config->rx_id] != NULL)
             {
-                ERROR_WARN_CTX("CAN", "CAN1 LUT overwrite(c0=rx_id,c1=old_can_id,c2=new_can_id,c3=reserved)",
-                               can_config->rx_id,
-                               can1_rx_lut[can_config->rx_id]->can_id,
-                               can_config->can_id,
-                               0u);
+                ERROR_WARN("CAN", "CAN1 LUT overwrite rx_id=%lu old_can_id=%lu new_can_id=%lu",
+                           can_config->rx_id,
+                           can1_rx_lut[can_config->rx_id]->can_id,
+                           can_config->can_id);
             }
             can1_rx_lut[can_config->rx_id] = can_dev;
         } else if (can_config->can_handle == &hcan2) {
             if (can2_rx_lut[can_config->rx_id] != NULL)
             {
-                ERROR_WARN_CTX("CAN", "CAN2 LUT overwrite(c0=rx_id,c1=old_can_id,c2=new_can_id,c3=reserved)",
-                               can_config->rx_id,
-                               can2_rx_lut[can_config->rx_id]->can_id,
-                               can_config->can_id,
-                               0u);
+                ERROR_WARN("CAN", "CAN2 LUT overwrite rx_id=%lu old_can_id=%lu new_can_id=%lu",
+                           can_config->rx_id,
+                           can2_rx_lut[can_config->rx_id]->can_id,
+                           can_config->can_id);
             }
             can2_rx_lut[can_config->rx_id] = can_dev;
         } else {
-            ERROR_WARN_CTX("CAN", "CAN unknown controller(c0=handle_ptr,c1=can_id,c2=tx_id,c3=rx_id)",
-                           (uint32_t)(uintptr_t)can_config->can_handle,
-                           can_config->can_id, can_config->tx_id, can_config->rx_id);
+            ERROR_WARN("CAN", "CAN unknown controller handle_ptr=0x%lx can_id=%lu tx_id=%lu rx_id=%lu",
+                       (uint32_t)(uintptr_t)can_config->can_handle,
+                       can_config->can_id, can_config->tx_id, can_config->rx_id);
         }
     }
 
@@ -234,11 +220,11 @@ uint8_t Can_send_data(Can_controller_t* Can_controller, uint8_t *tx_buff)
     {
         if (Can_Should_Report(&can_last_mailbox_full_tick, CAN_ERROR_REPORT_INTERVAL_MS))
         {
-            ERROR_WARN_CTX("CAN", "CAN TX mailbox full(c0=can_id,c1=tsr,c2=esr,c3=free_level)",
-                           Can_controller->can_id,
-                           (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->TSR : 0u,
-                           (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->ESR : 0u,
-                           free_level);
+            ERROR_WARN("CAN", "CAN TX mailbox full can_id=%lu tsr=0x%lx esr=0x%lx free_level=%lu",
+                       Can_controller->can_id,
+                       (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->TSR : 0u,
+                       (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->ESR : 0u,
+                       free_level);
         }
         return 0;
     }
@@ -248,11 +234,11 @@ uint8_t Can_send_data(Can_controller_t* Can_controller, uint8_t *tx_buff)
     {
         if (Can_Should_Report(&can_last_tx_fail_tick, CAN_ERROR_REPORT_INTERVAL_MS))
         {
-            ERROR_RAISE_CTX("CAN", "HAL_CAN_AddTxMessage failed(c0=can_id,c1=hal_err,c2=tsr,c3=esr)",
-                            Can_controller->can_id,
-                            HAL_CAN_GetError(Can_controller->can_handle),
-                            (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->TSR : 0u,
-                            (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->ESR : 0u);
+            ERROR_RAISE("CAN", "HAL_CAN_AddTxMessage failed can_id=%lu hal_err=%lu tsr=0x%lx esr=0x%lx",
+                        Can_controller->can_id,
+                        HAL_CAN_GetError(Can_controller->can_handle),
+                        (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->TSR : 0u,
+                        (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->ESR : 0u);
         }
         return 0;
     }
@@ -303,11 +289,11 @@ static inline void Can_fifo_process(CAN_HandleTypeDef *hcan, uint32_t fifox)
         {
             if (Can_Should_Report(&can_last_rx_fail_tick, CAN_ERROR_REPORT_INTERVAL_MS))
             {
-                ERROR_RAISE_CTX("CAN", "HAL_CAN_GetRxMessage failed(c0=fifo,c1=hal_err,c2=rf0r,c3=rf1r)",
-                                fifox,
-                                HAL_CAN_GetError(hcan),
-                                (hcan->Instance != NULL) ? hcan->Instance->RF0R : 0u,
-                                (hcan->Instance != NULL) ? hcan->Instance->RF1R : 0u);
+                ERROR_RAISE("CAN", "HAL_CAN_GetRxMessage failed fifo=%lu hal_err=%lu rf0r=0x%lx rf1r=0x%lx",
+                            fifox,
+                            HAL_CAN_GetError(hcan),
+                            (hcan->Instance != NULL) ? hcan->Instance->RF0R : 0u,
+                            (hcan->Instance != NULL) ? hcan->Instance->RF1R : 0u);
             }
             break;
         }

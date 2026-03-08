@@ -68,15 +68,6 @@ void error_report_core(error_level_t level,
                        uint32_t line,
                        const char* format, ...);
 
-void error_report_ctx(error_level_t level,
-                      const char* module_name,
-                      const char* function,
-                      uint32_t line,
-                      const char* message,
-                      uint32_t ctx0, uint32_t ctx1,
-                      uint32_t ctx2, uint32_t ctx3);
-
-/* ================= 快捷宏 ================= */
 
 #define ERROR_INFO(module_name, fmt, ...) \
     error_report_core(ERROR_LEVEL_INFO, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
@@ -90,20 +81,7 @@ void error_report_ctx(error_level_t level,
 #define ERROR_CRITICAL(module_name, fmt, ...) \
     error_report_core(ERROR_LEVEL_CRITICAL, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
-/* 带上下文的宏 */
-#define ERROR_INFO_CTX(module_name, msg, c0, c1, c2, c3) \
-    error_report_ctx(ERROR_LEVEL_INFO, module_name, __func__, __LINE__, msg, c0, c1, c2, c3)
-
-#define ERROR_WARN_CTX(module_name, msg, c0, c1, c2, c3) \
-    error_report_ctx(ERROR_LEVEL_WARNING, module_name, __func__, __LINE__, msg, c0, c1, c2, c3)
-
-#define ERROR_RAISE_CTX(module_name, msg, c0, c1, c2, c3) \
-    error_report_ctx(ERROR_LEVEL_ERROR, module_name, __func__, __LINE__, msg, c0, c1, c2, c3)
-
-#define ERROR_CRITICAL_CTX(module_name, msg, c0, c1, c2, c3) \
-    error_report_ctx(ERROR_LEVEL_CRITICAL, module_name, __func__, __LINE__, msg, c0, c1, c2, c3)
-
-/* ================= 错误查询接口 ================= */
+/* ================= 快捷宏 ================= */
 
 uint32_t error_get_total_count(void);
 const error_record_t* error_get_latest(void);

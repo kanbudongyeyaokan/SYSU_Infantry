@@ -84,11 +84,10 @@ void Ins_update(void)
     {
         if (Ins_Should_Report(&ins_last_dt_abnormal_tick, INS_ERROR_REPORT_INTERVAL_MS))
         {
-            ERROR_WARN_CTX("INS", "INS dt abnormal(c0=dt_us,c1=now_ms,c2=last_ms,c3=reserved)",
-                           (uint32_t)(dt * 1000000.0f),
-                           (uint32_t)(now_s * 1000.0f),
-                           (uint32_t)(last_time_s * 1000.0f),
-                           0u);
+            ERROR_WARN("INS", "INS dt abnormal dt_us=%lu now_ms=%lu last_ms=%lu",
+                       (uint32_t)(dt * 1000000.0f),
+                       (uint32_t)(now_s * 1000.0f),
+                       (uint32_t)(last_time_s * 1000.0f));
         }
         if (dt <= 0.0001f) dt = 0.001f;
     }
@@ -117,10 +116,9 @@ void Ins_update(void)
     {
         if (ins_wait_timeout_count > 0u)
         {
-            ERROR_INFO_CTX("INS", "INS wait recovered(c0=timeout_cnt,c1=dt_us,c2=reserved,c3=reserved)",
-                           ins_wait_timeout_count,
-                           (uint32_t)(dt * 1000000.0f),
-                           0u, 0u);
+            ERROR_INFO("INS", "INS wait recovered timeout_cnt=%lu dt_us=%lu",
+                       ins_wait_timeout_count,
+                       (uint32_t)(dt * 1000000.0f));
             ins_wait_timeout_count = 0u;
         }
 
@@ -143,19 +141,17 @@ void Ins_update(void)
 
         if (Ins_Should_Report(&ins_last_wait_timeout_tick, INS_ERROR_REPORT_INTERVAL_MS))
         {
-            ERROR_RAISE_CTX("INS", "INS wait timeout(c0=timeout_cnt,c1=dt_us,c2=reserved,c3=reserved)",
-                            ins_wait_timeout_count,
-                            (uint32_t)(dt * 1000000.0f),
-                            0u, 0u);
+            ERROR_RAISE("INS", "INS wait timeout timeout_cnt=%lu dt_us=%lu",
+                        ins_wait_timeout_count,
+                        (uint32_t)(dt * 1000000.0f));
         }
 
         if (ins_wait_timeout_count >= INS_TIMEOUT_CRITICAL_THRESHOLD &&
             Ins_Should_Report(&ins_last_wait_timeout_critical_tick, INS_ERROR_REPORT_INTERVAL_MS))
         {
-            ERROR_CRITICAL_CTX("INS", "INS consecutive timeout(c0=timeout_cnt,c1=crit_threshold,c2=reserved,c3=reserved)",
-                               ins_wait_timeout_count,
-                               INS_TIMEOUT_CRITICAL_THRESHOLD,
-                               0u, 0u);
+            ERROR_CRITICAL("INS", "INS consecutive timeout timeout_cnt=%lu crit_threshold=%lu",
+                           ins_wait_timeout_count,
+                           INS_TIMEOUT_CRITICAL_THRESHOLD);
         }
     }
 }

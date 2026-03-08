@@ -67,12 +67,15 @@ ERROR_CRITICAL("IMU", "IMU initialization failed");
 
 ```c
 /* 记录错误时的寄存器值或状态 */
-ERROR_RAISE_CTX("CAN",
-                "CAN send failed",
-                hcan->Instance->ESR,  // 上下文 0: 错误状态寄存器
-                hcan->Instance->TSR,  // 上下文 1: 发送状态寄存器
-                0, 0);                 // 上下文 2,3
+ERROR_RAISE("CAN", "CAN send failed esr=0x%lx tsr=0x%lx",
+            hcan->Instance->ESR,  // 错误状态寄存器
+            hcan->Instance->TSR); // 发送状态寄存器
 ```
+
+**说明**：
+- 所有错误宏都支持 printf 风格的格式化参数
+- 使用 `%lu` 输出十进制，`0x%lx` 输出十六进制
+- 强制类型转换：`(uint32_t)(uintptr_t)ptr` 输出指针
 
 ### 2.3 在现有代码中集成
 
