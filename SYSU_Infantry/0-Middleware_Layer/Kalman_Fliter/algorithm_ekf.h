@@ -72,6 +72,9 @@ typedef struct {
     uint32_t update_count;
     float chi_square;            /*!< 卡方值 */
 
+    // z轴零偏估计辅助量
+    float z_bias_err_lp;         /*!< z轴误差的一阶低通值 (rad/s) */
+
     // Yaw连续性
     float yaw_angle_last;
     int32_t yaw_round_count;

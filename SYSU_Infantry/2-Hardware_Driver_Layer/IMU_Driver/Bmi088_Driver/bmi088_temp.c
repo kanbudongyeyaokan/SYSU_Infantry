@@ -28,11 +28,11 @@ void Bmi088_temp_init(void)
 {
     //初始化PID参数
     Pid_init_t pid_conf = {
-        .kp = 800.0f,      // 比例系数
-        .ki = 1.0f,         // 积分系数 (加热过程积分不能太大，否则超调严重)
+        .kp = 100.0f,      // 比例系数
+        .ki = 15.0f,         // 积分系数 (加热过程积分不能太大，否则超调严重)
         .kd = 0.0f,         // 微分系数
         .max_out = PWM_MAX_VALUE,   // 最大输出限制 (PWM满占空比)
-        .max_iout = 200.0f,         // 积分限幅
+        .max_iout = 500.0f,         // 积分限幅
         .deadband = 0.1f,           // 死区
         .optimization = PID_OUTPUT_LIMIT | PID_TRAPEZOID_INTERGRAL // 启用输出限幅和梯形积分
     };
