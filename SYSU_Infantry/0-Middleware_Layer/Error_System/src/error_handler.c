@@ -84,38 +84,7 @@ void error_report_core(error_level_t level,
     /* 写入缓冲区 */
     error_buffer_push(&record);
 
-    /* 更新状态 */
-    error_status.total_count++;
-
     /* 输出错误信息 */
-    error_port_output(&record);
-}
-
-void error_report_ctx(error_level_t level,
-                      const char* module_name,
-                      const char* function,
-                      uint32_t line,
-                      const char* message,
-                      uint32_t ctx0, uint32_t ctx1,
-                      uint32_t ctx2, uint32_t ctx3)
-{
-    error_record_t record;
-
-    memset(&record, 0, sizeof(record));
-
-    record.error_code = MAKE_ERROR_CODE(level);
-    record.module_name = module_name;
-    record.timestamp = error_port_get_timestamp();
-    record.function = function;
-    record.line = line;
-    record.message = message;
-
-    record.task_id = error_port_get_task_id();
-    record.cpu_id = 0u;
-    record.reserved = 0u;
-
-    error_buffer_push(&record);
-    error_status.total_count++;
     error_port_output(&record);
 }
 

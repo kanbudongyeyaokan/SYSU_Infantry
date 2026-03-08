@@ -3,20 +3,41 @@
 #include "bsp_usart.h"
 #include "bsp_wdg.h"
 #include "buzzer_alarm.h"
+#include "error_handler.h"
 /**遥控器数据定义区**/
 static RC_ctrl_t rc_data[2];//0-当前数据 ， 1-上一次数据
 static Uart_instance_t *rc_uart;//获取遥控器数据的串口实例
 static Watchdog_device_t *rc_wdg; //看门狗实例
+
+#define REMOTE_ERROR_REPORT_INTERVAL_MS  200u
+static uint32_t remote_last_null_buf_tick = 0u;
+static uint32_t remote_last_switch_invalid_tick = 0u;
+static uint32_t remote_last_state_null_tick = 0u;
+
+static uint8_t Remote_Should_Report(uint32_t *last_tick, uint32_t interval_ms)
+{
+    uint32_t now = HAL_GetTick();
+    if ((now - *last_tick) >= interval_ms)
+    {
+        *last_tick = now;
+        return 1u;
+    }
+    return 0u;
+}
 
 /**
  * @brief 遥控器离线回调函数 (由看门狗触发)
  */
 static void RC_Offline_Callback(void *arg)
 {
+    (void)arg;
     // 遥控器断联，为了安全，必须将数据全部清零
     memset(&rc_data[CURRENT], 0, sizeof(RC_ctrl_t));
     memset(&rc_data[LAST], 0, sizeof(RC_ctrl_t));
 
+    ERROR_CRITICAL("REMOTE", "Remote offline rc_uart_ptr=0x%lx rc_wdg_ptr=0x%lx",
+                   (uint32_t)(uintptr_t)rc_uart,
+                   (uint32_t)(uintptr_t)rc_wdg);
     Watchdog_buzzer_alarm("RC");
 }
 
@@ -53,7 +74,14 @@ static void Rectify_rc_data(void)
 static void sbus_to_rc(volatile const uint8_t *sbus_buf)
 {
     // 安全检查
-    if (sbus_buf == NULL) return;
+    if (sbus_buf == NULL)
+    {
+        if (Remote_Should_Report(&remote_last_null_buf_tick, REMOTE_ERROR_REPORT_INTERVAL_MS))
+        {
+            ERROR_WARN("REMOTE", "sbus_to_rc got NULL buffer");
+        }
+        return;
+    }
 
     // 备份旧数据
     rc_data[LAST] = rc_data[CURRENT];
@@ -101,6 +129,15 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf)
     rc_data[CURRENT].rc.Rswitch = ((sbus_buf[5] >> 4) & 0x0003);
     rc_data[CURRENT].rc.Lswitch = ((sbus_buf[5] >> 4) & 0x000C) >> 2;
 
+    if ((rc_data[CURRENT].rc.Rswitch < 1u || rc_data[CURRENT].rc.Rswitch > 3u ||
+         rc_data[CURRENT].rc.Lswitch < 1u || rc_data[CURRENT].rc.Lswitch > 3u) &&
+        Remote_Should_Report(&remote_last_switch_invalid_tick, REMOTE_ERROR_REPORT_INTERVAL_MS))
+    {
+        ERROR_WARN("REMOTE", "Remote switch abnormal lsw=%lu rsw=%lu raw_byte5=%lu",
+                   rc_data[CURRENT].rc.Lswitch, rc_data[CURRENT].rc.Rswitch,
+                   sbus_buf[5]);
+    }
+
     rc_data[CURRENT].mouse.x = sbus_buf[6] | (sbus_buf[7] << 8);
     rc_data[CURRENT].mouse.y = sbus_buf[8] | (sbus_buf[9] << 8);
     rc_data[CURRENT].mouse.z = sbus_buf[10] | (sbus_buf[11] << 8);
@@ -115,13 +152,32 @@ static void sbus_to_rc(volatile const uint8_t *sbus_buf)
  */
 static void RC_receive_callback()
 {
+    if (rc_uart == NULL)
+    {
+        ERROR_RAISE("REMOTE", "RC_receive_callback uart not ready");
+        return;
+    }
     sbus_to_rc(rc_uart->rx_buffer); // 进行协议解析
 }
 
 RC_ctrl_t *RC_Data_Get(UART_HandleTypeDef *rc_uart_handle)
 {
+    if (rc_uart_handle == NULL)
+    {
+        ERROR_CRITICAL("REMOTE", "RC_Data_Get uart_handle is NULL");
+        memset(&rc_data[CURRENT], 0, sizeof(RC_ctrl_t));
+        memset(&rc_data[LAST], 0, sizeof(RC_ctrl_t));
+        return rc_data;
+    }
+
     //注册管理遥控器数据的串口,如果是自研板，填加了反相器的串口，C板是串口3
     rc_uart = Uart_register(rc_uart_handle, RC_receive_callback);
+    if (rc_uart == NULL)
+    {
+        ERROR_CRITICAL("REMOTE", "Remote UART register failed uart_handle_ptr=0x%lx",
+                       (uint32_t)(uintptr_t)rc_uart_handle);
+    }
+
     // 注册看门狗
     // 遥控器发送频率 14ms (两帧)，我们设超时时间 30ms (允许丢1帧，丢2帧判离线)
     // 假设 Watchdog 单位是任务周期(1ms)，则 reload_count = 30
@@ -134,6 +190,10 @@ RC_ctrl_t *RC_Data_Get(UART_HandleTypeDef *rc_uart_handle)
     };
     
     rc_wdg = Watchdog_register(&wdg_config);
+    if (rc_wdg == NULL)
+    {
+        ERROR_RAISE("REMOTE", "Remote watchdog register failed");
+    }
 
     return rc_data;
 }
@@ -141,5 +201,13 @@ RC_ctrl_t *RC_Data_Get(UART_HandleTypeDef *rc_uart_handle)
 // 提供给外部判断遥控器状态
 uint8_t RC_Is_Online(void)
 {
+    if (rc_wdg == NULL)
+    {
+        if (Remote_Should_Report(&remote_last_state_null_tick, REMOTE_ERROR_REPORT_INTERVAL_MS))
+        {
+            ERROR_WARN("REMOTE", "RC_Is_Online called before watchdog init");
+        }
+        return 0u;
+    }
     return Watchdog_is_online(rc_wdg);
 }
