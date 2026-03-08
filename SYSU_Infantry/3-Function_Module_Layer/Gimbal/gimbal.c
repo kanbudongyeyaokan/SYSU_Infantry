@@ -71,7 +71,7 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->total_yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
-                .kp = 40,
+                .kp = 30,
                 .ki = 0,
                 .kd = 0,
                 .deadband = 0.0f,
@@ -89,7 +89,7 @@ static void Gimbal_motor_init(void) {
                 .feedfoward_coefficient = 0.05f,
                 .LPF_coefficient = 0.0f,
                 .integral_separation_threshold = 0.0f,
-                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
+                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD|PID_OUTPUT_FILTER,
 
             },
             
@@ -118,7 +118,7 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.y),
             .angle_pid = {
-                .kp = 30,
+                .kp = 30,// 30
                 .ki = 0,
                 .kd = 0,
                 .max_out = 500,
@@ -126,8 +126,8 @@ static void Gimbal_motor_init(void) {
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL,
             },
             .speed_pid = {
-                .kp = 60,
-                .ki = 20,
+                .kp = 60,// 60
+                .ki = 20.0,// 20
                 .kd = 0,
                 .deadband = 0.1f,
                 .max_out = 12000,
@@ -194,26 +194,20 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             //云台陀螺仪反馈模式
             case GIMBAL_GYRO_MODE:
                 //使能电机
-                Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
+                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
                 // Djimotor_set_status(yaw_motor, MOTOR_STOP);
                 // Djimotor_set_status(pitch_motor, MOTOR_STOP);
                 //设置电机目标值
 
-                //低通平滑
-                // // 1. 获取阶跃的遥控器目标
-                // float raw_yaw_target = cmd->yaw;
-                // // 2. 使用低通滤波器将阶梯变成平滑斜坡
-                // float smooth_yaw_target = LPF_Calc(&yaw_target_lpf, raw_yaw_target);
-
-                Djimotor_set_target(yaw_motor, cmd->yaw);
-
+            
                 // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
-
-                // Djimotor_set_target(yaw_motor, smooth_yaw_target);  
+                Djimotor_set_target(yaw_motor, cmd->yaw);
                 Djimotor_set_target(pitch_motor, cmd->pitch);
+               
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
+
                 // Uart_printf(test_uart,"pitch_target:%.2f,%.2f\r\n",cmd->pitch,gimbal_imu_data->euler.pitch);
                 break;
                 //云台视觉模式
@@ -226,6 +220,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 break;
         }
 
+        Uart_printf(test_uart,"yaw_speed:%.2f,pitch_speed:%.2f\r\n",gimbal_imu_data->gyro_body.z,gimbal_imu_data->gyro_body.y);
 
         //Uart_printf(test_uart, "pitch:%.2f,%.2f,%.2f\r\n", pitch_motor->motor_pid.pid_target, *(pitch_motor->motor_pid.other_angle_feedback_ptr),pitch_motor->motor_pid.speed_pid.Output);
     /***************************************测试SHELL改云台电机参数********************/

@@ -92,7 +92,7 @@ void Decision_making_task_init()
 #if USE_SBUS_RECEIVER == 1
     sbus_data = SBUS_Data_Get(&huart3);
 #elif USE_SBUS_RECEIVER == 2
-    vrc_data = Video_RC_Data_Get(&huart6);  // 图传串口，按实际修改
+    vrc_data = Video_RC_Data_Get(&huart1);  // 图传串口，按实际修改
 #else
     rc_data = RC_Data_Get(&huart3);
     // 上电后等待0.5s，读取pitch摇杆原点值作为偏移量

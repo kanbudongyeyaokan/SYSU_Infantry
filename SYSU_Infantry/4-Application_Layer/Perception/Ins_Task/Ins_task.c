@@ -30,23 +30,15 @@ void Ins_task(void const *argument)
         Ins_update();
 
         // 如果需要数据，直接 Ins_get_data()
-        // data = Ins_get_data();
+        data = Ins_get_data();
         // Uart_printf(test_uart, "Yaw:%.2f, Pitch:%.2f, Temp:%.2f, State:%d\r\n", 
         //             data->euler.yaw, 
         //             data->euler.pitch, 
         //             data->temp, 
         //             data->state);
-        //  VOFA_Send(test_uart,
-        //       data->euler.yaw,
-        //       data->euler.pitch,
-        //       data->temp,
-        //       (float)data->state); 
-         //打印 欧拉角 + Z轴加速度 + 采样时间dt
-       /* Uart_printf(test_uart, "Yaw:%.2f, AccZ:%.2f, dt:%.4f\r\n", 
-                    data->euler.yaw, 
-                     data->acc_body.z, 
-                     data->dt_s);  */
-
+        // 反馈数据
+        // Uart_printf(test_uart,"yaw_speed:%.2f,%.2f\r\n",data->gyro_body.z,data->gyro_body.x);
+         // 将当前的 INS 数据发布给决策层，用于下一帧的闭环控制或逻辑判断 
         osDelay(2); 
     }
 }
