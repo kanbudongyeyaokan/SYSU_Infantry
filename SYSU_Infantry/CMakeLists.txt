@@ -82,6 +82,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver/hwt606_iic.h
         2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver/hwt101_iic.c
         2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver/hwt101_iic.h
+        2-Hardware_Driver_Layer/IMU_Driver/JY61P_Driver/jy61p_iic.c
+        2-Hardware_Driver_Layer/IMU_Driver/JY61P_Driver/jy61p_iic.h
+        2-Hardware_Driver_Layer/IMU_Driver/JY61P_Driver/jy61p_uart.c
+        2-Hardware_Driver_Layer/IMU_Driver/JY61P_Driver/jy61p_uart.h
 
         
         0-Middleware_Layer/Pid_Controller/algorithm_pid.h
@@ -268,6 +272,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Bmi088_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Hwt606_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/Hwt101_Driver
+        ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/IMU_Driver/JY61P_Driver
         
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Decision_Making
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Robot_Definitions
