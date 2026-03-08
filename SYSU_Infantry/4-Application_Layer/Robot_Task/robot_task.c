@@ -68,12 +68,7 @@ Uart_instance_t* test_uart = NULL;
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
-    test_uart = Uart_register(&huart1,NULL);
-
-    // 创建蜂鸣器队列（必须在错误系统初始化之前！）
-
-
-    // 初始化错误处理系统，传入 UART 句柄
+    test_uart = Uart_register(&huart6,NULL);
 
 
 
@@ -115,13 +110,15 @@ void Robot_task_init(void)
     // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
     // message_test_task_handle = osThreadCreate(osThread(message_test_task), NULL);
 
-  //error_system_init(test_uart);
 
   // 创建蜂鸣器报警任务（提前启动，确保能处理错误报警）
-  //osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
-  //buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
+  osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
+  buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
 
-  //ERROR_INFO("SYS", "Init");
+  error_system_init(test_uart);
+
+
+  ERROR_INFO("SYS", "Init");
 
   osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 1024);
   ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
@@ -133,7 +130,7 @@ void Robot_task_init(void)
   motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);
   //
   //   // 添加短暂延时，让任务有时间初始化
-  //  // osDelay(100);
+  osDelay(100);
   //
   //   //决策任务
   osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);

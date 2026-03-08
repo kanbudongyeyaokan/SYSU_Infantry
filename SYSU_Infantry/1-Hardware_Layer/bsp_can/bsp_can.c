@@ -3,6 +3,7 @@
 #include <string.h>
 #include "can.h"
 #include "stdio.h"
+#include "error_handler.h"
 
 // [新增] 快速查找表 (Look-Up Table)
 // 索引是 CAN ID，存储的是对应的设备指针
@@ -12,6 +13,23 @@ static Can_controller_t *can2_rx_lut[CAN_FAST_LUT_SIZE] = {NULL};
 // 原有的线性列表保留，用于管理内存防止泄露，或者处理超出 LUT 范围的 ID
 static Can_controller_t *can_controller[CAN_MAX_COUNT] = {NULL};
 static uint8_t can_ix = 0; // 全局CAN实例索引
+
+/* 高频报错限频，避免影响控制回路 */
+#define CAN_ERROR_REPORT_INTERVAL_MS  100u
+static uint32_t can_last_mailbox_full_tick = 0u;
+static uint32_t can_last_tx_fail_tick = 0u;
+static uint32_t can_last_rx_fail_tick = 0u;
+
+static uint8_t Can_Should_Report(uint32_t *last_tick, uint32_t interval_ms)
+{
+    uint32_t now = HAL_GetTick();
+    if ((now - *last_tick) >= interval_ms)
+    {
+        *last_tick = now;
+        return 1u;
+    }
+    return 0u;
+}
 
 /**
  * @brief 配置全局 CAN 过滤器
@@ -31,14 +49,26 @@ static void Can_filter_config_global(void)
 
     // 配置 CAN1 过滤器 (Bank 0)
     can_filter_conf.FilterBank = 0;
-    HAL_CAN_ConfigFilter(&hcan1, &can_filter_conf);
+    if (HAL_CAN_ConfigFilter(&hcan1, &can_filter_conf) != HAL_OK)
+    {
+        ERROR_CRITICAL("CAN", "CAN1 filter config failed hal_err=%lu esr=0x%lx msr=0x%lx",
+                       HAL_CAN_GetError(&hcan1),
+                       (hcan1.Instance != NULL) ? hcan1.Instance->ESR : 0u,
+                       (hcan1.Instance != NULL) ? hcan1.Instance->MSR : 0u);
+    }
 
     // 配置 CAN2 过滤器 (Bank 14)
     can_filter_conf.FilterBank = 14;
     can_filter_conf.SlaveStartFilterBank = 14;
     //修改，将CAN2换到另外一个FIFO，避免和CAN1冲突
     can_filter_conf.FilterFIFOAssignment = CAN_RX_FIFO1;
-    HAL_CAN_ConfigFilter(&hcan2, &can_filter_conf);
+    if (HAL_CAN_ConfigFilter(&hcan2, &can_filter_conf) != HAL_OK)
+    {
+        ERROR_CRITICAL("CAN", "CAN2 filter config failed hal_err=%lu esr=0x%lx msr=0x%lx",
+                       HAL_CAN_GetError(&hcan2),
+                       (hcan2.Instance != NULL) ? hcan2.Instance->ESR : 0u,
+                       (hcan2.Instance != NULL) ? hcan2.Instance->MSR : 0u);
+    }
 }
 
 /**
@@ -48,23 +78,81 @@ void Can_init()
 {
     Can_filter_config_global();
 
-    HAL_CAN_Start(&hcan1);
-    HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
-    HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING);
+    if (HAL_CAN_Start(&hcan1) != HAL_OK)
+    {
+        ERROR_CRITICAL("CAN", "CAN1 start failed hal_err=%lu esr=0x%lx msr=0x%lx",
+                       HAL_CAN_GetError(&hcan1),
+                       (hcan1.Instance != NULL) ? hcan1.Instance->ESR : 0u,
+                       (hcan1.Instance != NULL) ? hcan1.Instance->MSR : 0u);
+    }
+    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+    {
+        ERROR_CRITICAL("CAN", "CAN1 FIFO0 IRQ enable failed hal_err=%lu irq_mask=%lu",
+                       HAL_CAN_GetError(&hcan1),
+                       CAN_IT_RX_FIFO0_MSG_PENDING);
+    }
+    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK)
+    {
+        ERROR_CRITICAL("CAN", "CAN1 FIFO1 IRQ enable failed hal_err=%lu irq_mask=%lu",
+                       HAL_CAN_GetError(&hcan1),
+                       CAN_IT_RX_FIFO1_MSG_PENDING);
+    }
 
-    HAL_CAN_Start(&hcan2);
-    HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING);
-    HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING);
+    if (HAL_CAN_Start(&hcan2) != HAL_OK)
+    {
+        ERROR_CRITICAL("CAN", "CAN2 start failed hal_err=%lu esr=0x%lx msr=0x%lx",
+                       HAL_CAN_GetError(&hcan2),
+                       (hcan2.Instance != NULL) ? hcan2.Instance->ESR : 0u,
+                       (hcan2.Instance != NULL) ? hcan2.Instance->MSR : 0u);
+    }
+    if (HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+    {
+        ERROR_CRITICAL("CAN", "CAN2 FIFO0 IRQ enable failed hal_err=%lu irq_mask=%lu",
+                       HAL_CAN_GetError(&hcan2),
+                       CAN_IT_RX_FIFO0_MSG_PENDING);
+    }
+    if (HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK)
+    {
+        ERROR_CRITICAL("CAN", "CAN2 FIFO1 IRQ enable failed hal_err=%lu irq_mask=%lu",
+                       HAL_CAN_GetError(&hcan2),
+                       CAN_IT_RX_FIFO1_MSG_PENDING);
+    }
 }
 
 /* CAN管理者注册 */
 Can_controller_t* Can_device_init(Can_init_t *can_config)
 {
-    if (can_ix >= CAN_MAX_COUNT) return NULL;
+    if (can_config == NULL)
+    {
+        ERROR_RAISE("CAN", "Can_device_init config is NULL");
+        return NULL;
+    }
+
+    if (can_config->can_handle == NULL)
+    {
+        ERROR_RAISE("CAN", "Can_device_init can_handle NULL can_id=%lu tx_id=%lu rx_id=%lu",
+                    can_config->can_id, can_config->tx_id,
+                    can_config->rx_id);
+        return NULL;
+    }
+
+    if (can_ix >= CAN_MAX_COUNT)
+    {
+        ERROR_RAISE("CAN", "CAN device table full can_ix=%lu max=%lu can_id=%lu rx_id=%lu",
+                    can_ix, CAN_MAX_COUNT,
+                    can_config->can_id, can_config->rx_id);
+        return NULL;
+    }
 
     // 1. 分配内存
     Can_controller_t* can_dev = (Can_controller_t*)malloc(sizeof(Can_controller_t));
-    if (can_dev == NULL) return NULL;
+    if (can_dev == NULL)
+    {
+        ERROR_RAISE("CAN", "CAN device malloc failed size=%lu can_ix=%lu can_id=%lu rx_id=%lu",
+                    sizeof(Can_controller_t), can_ix,
+                    can_config->can_id, can_config->rx_id);
+        return NULL;
+    }
     memset(can_dev, 0, sizeof(Can_controller_t));
 
     // 2. 赋值
@@ -85,9 +173,27 @@ Can_controller_t* Can_device_init(Can_init_t *can_config)
     if (can_config->rx_id < CAN_FAST_LUT_SIZE)
     {
         if (can_config->can_handle == &hcan1) {
+            if (can1_rx_lut[can_config->rx_id] != NULL)
+            {
+                ERROR_WARN("CAN", "CAN1 LUT overwrite rx_id=%lu old_can_id=%lu new_can_id=%lu",
+                           can_config->rx_id,
+                           can1_rx_lut[can_config->rx_id]->can_id,
+                           can_config->can_id);
+            }
             can1_rx_lut[can_config->rx_id] = can_dev;
         } else if (can_config->can_handle == &hcan2) {
+            if (can2_rx_lut[can_config->rx_id] != NULL)
+            {
+                ERROR_WARN("CAN", "CAN2 LUT overwrite rx_id=%lu old_can_id=%lu new_can_id=%lu",
+                           can_config->rx_id,
+                           can2_rx_lut[can_config->rx_id]->can_id,
+                           can_config->can_id);
+            }
             can2_rx_lut[can_config->rx_id] = can_dev;
+        } else {
+            ERROR_WARN("CAN", "CAN unknown controller handle_ptr=0x%lx can_id=%lu tx_id=%lu rx_id=%lu",
+                       (uint32_t)(uintptr_t)can_config->can_handle,
+                       can_config->can_id, can_config->tx_id, can_config->rx_id);
         }
     }
 
@@ -100,19 +206,40 @@ Can_controller_t* Can_device_init(Can_init_t *can_config)
 /* CAN发送数据 */
 uint8_t Can_send_data(Can_controller_t* Can_controller, uint8_t *tx_buff)
 {
-    if (tx_buff == NULL || Can_controller == NULL) return 0;
+    if (tx_buff == NULL || Can_controller == NULL || Can_controller->can_handle == NULL)
+    {
+        ERROR_RAISE("CAN", "Can_send_data param invalid");
+        return 0;
+    }
 
     static uint32_t tx_mailbox;
+    uint32_t free_level = HAL_CAN_GetTxMailboxesFreeLevel(Can_controller->can_handle);
 
     // 检查邮箱
-    if (HAL_CAN_GetTxMailboxesFreeLevel(Can_controller->can_handle) == 0)
+    if (free_level == 0u)
     {
+        if (Can_Should_Report(&can_last_mailbox_full_tick, CAN_ERROR_REPORT_INTERVAL_MS))
+        {
+            ERROR_WARN("CAN", "CAN TX mailbox full can_id=%lu tsr=0x%lx esr=0x%lx free_level=%lu",
+                       Can_controller->can_id,
+                       (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->TSR : 0u,
+                       (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->ESR : 0u,
+                       free_level);
+        }
         return 0;
     }
 
     if (HAL_CAN_AddTxMessage(Can_controller->can_handle, &Can_controller->tx_config,
                              tx_buff, &tx_mailbox) != HAL_OK)
     {
+        if (Can_Should_Report(&can_last_tx_fail_tick, CAN_ERROR_REPORT_INTERVAL_MS))
+        {
+            ERROR_RAISE("CAN", "HAL_CAN_AddTxMessage failed can_id=%lu hal_err=%lu tsr=0x%lx esr=0x%lx",
+                        Can_controller->can_id,
+                        HAL_CAN_GetError(Can_controller->can_handle),
+                        (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->TSR : 0u,
+                        (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->ESR : 0u);
+        }
         return 0;
     }
     return 1;
@@ -127,7 +254,7 @@ static inline void Can_fifo_process(CAN_HandleTypeDef *hcan, uint32_t fifox)
     Can_controller_t *target_dev = NULL;
 
     // 循环取出 FIFO 中的所有数据
-    while (HAL_CAN_GetRxFifoFillLevel(hcan, fifox) > 0)
+    while (HAL_CAN_GetRxFifoFillLevel(hcan, fifox) > 0u)
     {
         if (HAL_CAN_GetRxMessage(hcan, fifox, &rxconf, can_rx_buff) == HAL_OK)
         {
@@ -157,6 +284,18 @@ static inline void Can_fifo_process(CAN_HandleTypeDef *hcan, uint32_t fifox)
             }
             // 重置指针，防止污染下一次循环
             target_dev = NULL;
+        }
+        else
+        {
+            if (Can_Should_Report(&can_last_rx_fail_tick, CAN_ERROR_REPORT_INTERVAL_MS))
+            {
+                ERROR_RAISE("CAN", "HAL_CAN_GetRxMessage failed fifo=%lu hal_err=%lu rf0r=0x%lx rf1r=0x%lx",
+                            fifox,
+                            HAL_CAN_GetError(hcan),
+                            (hcan->Instance != NULL) ? hcan->Instance->RF0R : 0u,
+                            (hcan->Instance != NULL) ? hcan->Instance->RF1R : 0u);
+            }
+            break;
         }
     }
 }
