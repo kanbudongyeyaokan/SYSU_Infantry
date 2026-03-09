@@ -22,6 +22,7 @@ typedef struct
     float offset_angle; // 底盘和归中位置的夹角
     float gimbal_yaw_total_angle; // 云台多圈角度
     float gimbal_yaw_rate;        // 云台角速度
+    float cmd_yaw;        // 底盘跟随云台时的旋转控制量
     chassis_mode_e chassis_mode;        //底盘控制模式
 }Chassis_cmd_send_t;
 

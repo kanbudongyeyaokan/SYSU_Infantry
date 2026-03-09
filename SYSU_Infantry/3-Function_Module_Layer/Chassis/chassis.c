@@ -86,7 +86,8 @@ void Chassis_init() {
         .kd = 0.1f,     // 微分系数，极其重要！给一点 D 项可以提供阻尼，防止底盘到位时来回摆动
         .max_out = 800.0f,  // 对应原来的 CHASSIS_FOLLOW_WZ_LIMIT
         .max_iout = 200.0f,   // 没用到 I 就不管
-        .optimization = PID_OUTPUT_LIMIT, // 开启输出限幅
+        .feedfoward_coefficient = 0.5f, // 前馈项，给一个小的前馈系数可以让底盘更快响应云台的转动，减少误差
+        .optimization = PID_OUTPUT_LIMIT|PID_FEEDFOWARD, // 开启输出限幅
     };
     Pid_init(&chassis_follow_pid, &follow_pid_config);
 
@@ -246,7 +247,15 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             Chassis_cmd_send_t cmd_solved = *cmd;
 
             // cmd_solved.wz = 0.5 * cmd->offset_angle * abs(cmd->offset_angle); 
-            cmd_solved.wz = Pid_calculate(&chassis_follow_pid, 0.0f, cmd->offset_angle); // 以 offset_angle 作为误差输入 PID，输出作为 Wz 控制量
+            // cmd_solved.wz = Pid_calculate(&chassis_follow_pid, 0.0f, cmd->offset_angle); // 以 offset_angle 作为误差输入 PID，输出作为 Wz 控制量
+            // PID 依然负责消除静差
+            float pid_out = Pid_calculate(&chassis_follow_pid, 0.0f, cmd->offset_angle); 
+            // 前馈
+            float K_ff = 1050.0f; 
+            // 最终控制量 = (指令预测速度) + (误差补偿速度)
+            cmd_solved.wz = (cmd->cmd_yaw * K_ff) + pid_out;
+
+
 
             // 矢量变换逻辑
             float theta = -cmd->offset_angle * (M_PI / 180.0f);

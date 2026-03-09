@@ -349,9 +349,21 @@ void RC_ctrl_set()
         chassis_cmd_send.vy = 0;
     chassis_cmd_send.vx = -2.0f * (float)vrc_data[CURRENT].rc.Lrocker_x;
 
+    // if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_x) > RC_DEADBAND)
+    //     gimbal_cmd_send.yaw -= GIMBAL_RC_MOVE_RATIO_YAW * (float)vrc_data[CURRENT].rc.Rrocker_x;
+    // YAW 轴处理 (死区 + 降速)
     if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_x) > RC_DEADBAND)
-        gimbal_cmd_send.yaw -= GIMBAL_RC_MOVE_RATIO_YAW * (float)vrc_data[CURRENT].rc.Rrocker_x;
-
+    {
+        // 提取出这一帧的旋转增量 (也就是目标速度)
+        float yaw_step = -GIMBAL_RC_MOVE_RATIO_YAW * (float)vrc_data[CURRENT].rc.Rrocker_x; 
+        
+        gimbal_cmd_send.yaw += yaw_step;         // 云台目标角度累加
+        chassis_cmd_send.cmd_yaw = yaw_step;     // 抄送给底盘作为前馈速度！
+    }
+    else
+    {
+        chassis_cmd_send.cmd_yaw = 0.0f;         // 摇杆回中时，前馈速度为0
+    }
 
 
     if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_y) > RC_DEADBAND)
