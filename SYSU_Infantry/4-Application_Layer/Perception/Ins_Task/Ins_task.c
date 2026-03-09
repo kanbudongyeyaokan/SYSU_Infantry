@@ -30,7 +30,7 @@ void Ins_task(void const *argument)
         Ins_update();
 
         // 如果需要数据，直接 Ins_get_data()
-        data = Ins_get_data();
+        // data = Ins_get_data();
         // Uart_printf(test_uart, "Yaw:%.2f, Pitch:%.2f, Temp:%.2f, State:%d\r\n", 
         //             data->euler.yaw, 
         //             data->euler.pitch, 

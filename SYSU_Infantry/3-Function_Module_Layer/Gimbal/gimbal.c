@@ -116,7 +116,7 @@ static void Gimbal_motor_init(void) {
             .speed_source = OTHER_FEEDBACK,
             //使用ins模块姿态数据作为反馈
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
-            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.y),
+            .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.x),
             .angle_pid = {
                 .kp = 30,// 30
                 .ki = 0,
