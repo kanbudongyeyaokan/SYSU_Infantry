@@ -254,8 +254,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             float K_ff = 1050.0f; 
             // 最终控制量 = (指令预测速度) + (误差补偿速度)
             cmd_solved.wz = (cmd->cmd_yaw * K_ff) + pid_out;
-
-
+            
 
             // 矢量变换逻辑
             float theta = -cmd->offset_angle * (M_PI / 180.0f);

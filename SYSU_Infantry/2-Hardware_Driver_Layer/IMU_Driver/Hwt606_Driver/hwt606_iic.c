@@ -142,8 +142,29 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     float gy = gyro_int[1] * HWT_GYRO_2000_SEN * DEG2SEC;
     float gz = gyro_int[2] * HWT_GYRO_2000_SEN * DEG2SEC;
 
-    // 动态抗干扰 Mahony 核心逻辑 
+    //零漂处理
+    static float gyro_z_bias = 0.0f; // 静态 Z 轴零偏记录
     float acc_norm = sqrtf(ax*ax + ay*ay + az*az);
+
+    // 静止检测：加速度模长接近 1g，且三轴角速度极小
+    if (acc_norm > 9.6f && acc_norm < 10.0f && 
+        fabsf(gx) < 0.02f && fabsf(gy) < 0.02f && fabsf(gz) < 0.02f) {
+        
+        // 低通滤波在线学习 Z 轴当前的温漂误差 ，学习率为0.001，可以进行修改
+        gyro_z_bias += 0.001f * (gz - gyro_z_bias); 
+    }
+
+    // 扣除学习到的零偏
+    gz -= gyro_z_bias;
+
+    // 施加死区 (Deadband)：彻底滤除静止时的残余白噪声
+    // 0.0015 rad/s 约等于 0.08 deg/s，如果角速度比这个还小，直接视为云台绝对静止
+    if (fabsf(gz) < 0.0015f) {
+        gz = 0.0f; 
+    }
+
+    // 动态抗干扰 Mahony 核心逻辑 
+    // float acc_norm = sqrtf(ax*ax + ay*ay + az*az);
     float Kp = 1.0f;  // 互补滤波比例增益
     float Ki = 0.005f;// 互补滤波积分增益 (用于消除陀螺仪静态零偏)
 
