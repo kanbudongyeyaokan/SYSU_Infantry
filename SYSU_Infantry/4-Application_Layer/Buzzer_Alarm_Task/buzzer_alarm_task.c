@@ -5,6 +5,7 @@
 #include "buzzer_music.h"
 
 void Buzzer_alarm_control_task(void const *argument) {
+    osDelay(2000);
     Buzzer_alarm_init();
     uint8_t recv_alarm_times = 0;
 

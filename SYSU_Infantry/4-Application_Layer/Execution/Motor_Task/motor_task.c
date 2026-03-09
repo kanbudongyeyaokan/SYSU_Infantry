@@ -31,7 +31,7 @@ void Motor_control_task(void const *argument)
     // 获取当前时间 tick
     TickType_t PreviousWakeTime = xTaskGetTickCount();
     const uint32_t TimeIncrement = 1; // 1ms
-
+    osDelay(2000); // 启动后短暂延时，等待系统稳定
     for (;;)
     {
         // 后台发送CAN报文，实现算发分离

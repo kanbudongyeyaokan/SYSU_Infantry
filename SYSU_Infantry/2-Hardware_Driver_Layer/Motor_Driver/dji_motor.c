@@ -298,9 +298,9 @@ void Djimotor_Calc_Output(Djimotor_device_t *motor) {
     return;
 
   // 1. 离线检查：如果掉线，强制停止输出
-  if (motor->wdg && !Watchdog_is_online(motor->wdg)) {
-    motor->motor_status = MOTOR_STOP;
-  }
+  // if (motor->wdg && !Watchdog_is_online(motor->wdg)) {
+  //   motor->motor_status = MOTOR_STOP;
+  // }
 
   float output = 0.0f;
   Djimotor_measure_t *measure = &motor->motor_measure;
