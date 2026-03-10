@@ -53,7 +53,7 @@ void Shoot_motors_init(void)
                 .kd = 0.1,
                 .max_iout = 2000,
                 .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                .max_out = 10000,
+                .max_out = 20000,
 				
             },
 			},
@@ -72,7 +72,7 @@ void Shoot_motors_init(void)
                 .kd = 0.1,
                 .max_iout = 2000,
                 .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                .max_out = 10000,
+                .max_out = 20000,
 				
             },
 		},
@@ -89,19 +89,19 @@ void Shoot_motors_init(void)
 				.angle_pid = {
                 // 如果启用位置环来控制发弹,需要较大的I值保证输出力矩的线性度否则出现接近拨出的力矩大幅下降
                 .kp = 10, // 10
-                .ki = 0.5,
-                .kd = 5,
+                .ki = 2, // 1
+                .kd = 0,
               .max_iout = 1000,
               .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
                 .max_out = 2000,
             },
             .speed_pid = {
-                .kp = 10, // 10
-                .ki = 0.5, // 1
-                .kd = 1,
-               .max_iout = 1500,
+                .kp = 20, // 10
+                .ki = 3, // 1
+                .kd = 0,
+               .max_iout = 3000,
                 .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                .max_out = 2000,
+                .max_out = 10000,
             },
 			},
 			.can_init = {.can_handle = &hcan2, .can_id = 0x200, .tx_id = 3, .rx_id = 0x203}
@@ -138,8 +138,8 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
         // 开启摩擦轮
         Djimotor_set_status(shoot_motors[0], MOTOR_ENABLED);
         Djimotor_set_status(shoot_motors[1], MOTOR_ENABLED);
-        Djimotor_set_target(shoot_motors[0], 12000);  // 上摩擦轮
-        Djimotor_set_target(shoot_motors[1], -12000); // 下摩擦轮
+        Djimotor_set_target(shoot_motors[0], 15000);  // 上摩擦轮
+        Djimotor_set_target(shoot_motors[1], -15000); // 下摩擦轮
     }
 
     // 2. 处理拨弹盘 (LOADER_MODE)
