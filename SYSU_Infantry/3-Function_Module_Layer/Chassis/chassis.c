@@ -82,7 +82,7 @@ void Chassis_init() {
     // 跟随云台速度 PID
     Pid_init_t follow_pid_config = {
         .kp = 10.0f,     // 比例系数，如果跟车太慢就加大，太快发抖就减小
-        .ki = 5.0f,     // 通常底盘跟随不需要积分，给 0 即可
+        .ki = 0.0f,     // 通常底盘跟随不需要积分，给 0 即可
         .kd = 0.1f,     // 微分系数，极其重要！给一点 D 项可以提供阻尼，防止底盘到位时来回摆动
         .max_out = 800.0f,  // 对应原来的 CHASSIS_FOLLOW_WZ_LIMIT
         .max_iout = 200.0f,   // 没用到 I 就不管
@@ -102,7 +102,7 @@ void Chassis_init() {
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 15,
+                    .kp = 20,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
@@ -124,7 +124,7 @@ void Chassis_init() {
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 15,
+                    .kp = 20,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
@@ -146,7 +146,7 @@ void Chassis_init() {
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 15,
+                    .kp = 20,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
@@ -168,7 +168,7 @@ void Chassis_init() {
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 15,
+                    .kp = 20,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
@@ -251,7 +251,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             // PID 依然负责消除静差
             float pid_out = Pid_calculate(&chassis_follow_pid, 0.0f, cmd->offset_angle); 
             // 前馈
-            float K_ff = 1050.0f; 
+            float K_ff = 1200.0f; 
             // 最终控制量 = (指令预测速度) + (误差补偿速度)
             cmd_solved.wz = (cmd->cmd_yaw * K_ff) + pid_out;
             
