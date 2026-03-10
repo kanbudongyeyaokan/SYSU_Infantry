@@ -220,7 +220,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 break;
         }
 
-        Uart_printf(test_uart,"yaw_speed:%.2f,pitch_speed:%.2f\r\n",gimbal_imu_data->gyro_body.z,gimbal_imu_data->gyro_body.y);
+        //Uart_printf(test_uart,"yaw_speed:%.2f,pitch_speed:%.2f\r\n",gimbal_imu_data->gyro_body.z,gimbal_imu_data->gyro_body.y);
 
         //Uart_printf(test_uart, "pitch:%.2f,%.2f,%.2f\r\n", pitch_motor->motor_pid.pid_target, *(pitch_motor->motor_pid.other_angle_feedback_ptr),pitch_motor->motor_pid.speed_pid.Output);
     /***************************************测试SHELL改云台电机参数********************/

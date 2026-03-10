@@ -5,6 +5,7 @@
 #include "referee.h"
 #include "remote_control.h"
 #include "supercap_comm.h"
+#include "error_handler.h"
 
 static Pid_instance_t chassis_buffer_pid;
 static uint8_t cap_state = 0;
@@ -58,13 +59,24 @@ void Chassis_Power_Control_Init(void)
     };
 
     Pid_init(&chassis_buffer_pid, &pid_cfg);
+    ERROR_INFO("CHASSIS_POWER", "Power control initialized");
 }
 
 void Chassis_Power_Control(Chassis_output_t *output, Djimotor_device_t *motors[4])
 {
     if (output == NULL || motors == NULL)
     {
+        ERROR_RAISE("CHASSIS_POWER", "NULL pointer: output=%p, motors=%p", output, motors);
         return;
+    }
+
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        if (motors[i] == NULL)
+        {
+            ERROR_RAISE("CHASSIS_POWER", "Motor %d pointer is NULL", i);
+            return;
+        }
     }
 
     uint16_t max_power_limit = 40;//最低为40
@@ -83,10 +95,20 @@ void Chassis_Power_Control(Chassis_output_t *output, Djimotor_device_t *motors[4
 
     chassis_power_buffer = ChassisPower_GetBuffer();
 
-    //将缓冲能量控制在50，充分利用能量
+    if (chassis_power_buffer == 0)
+    {
+        ERROR_WARN("CHASSIS_POWER", "Referee buffer energy is 0, referee offline?");
+    }
+
     float buffer_pid_out = Pid_calculate(&chassis_buffer_pid, chassis_power_buffer, 50.0f);
 
-    max_power_limit = ChassisPower_GetMaxLimit();//根据等级增长最大规律变化
+    max_power_limit = ChassisPower_GetMaxLimit();
+
+    if (max_power_limit == 0)
+    {
+        ERROR_WARN("CHASSIS_POWER", "Referee power limit is 0, using default 40W");
+        max_power_limit = 40;
+    }
 
     //加上缓冲能量可用的功率，得到当前底盘可用的最大功率，加或减实际测试
     input_power = (float) max_power_limit - buffer_pid_out;
@@ -132,6 +154,12 @@ void Chassis_Power_Control(Chassis_output_t *output, Djimotor_device_t *motors[4
     {
         float power_scale = chassis_max_power / initial_total_power;
         float scaled_give_power[4] = { 0 };
+
+        if (power_scale <= 0.0f || power_scale > 1.0f)
+        {
+            ERROR_WARN("CHASSIS_POWER", "Invalid power scale: %.2f", power_scale);
+            return;
+        }
 
         for (uint8_t i = 0; i < 4; i++)
         {
