@@ -225,9 +225,10 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     out_data->acc_body.x  = ax * acc_norm; // 恢复原始未归一化的m/s^2
     out_data->acc_body.y  = ay * acc_norm;
     out_data->acc_body.z  = az * acc_norm;
-    out_data->gyro_body.x = gyro_int[0] * HWT_GYRO_2000_SEN;
-    out_data->gyro_body.y = gyro_int[1] * HWT_GYRO_2000_SEN;
-    out_data->gyro_body.z = gyro_int[2] * HWT_GYRO_2000_SEN;
+    out_data->gyro_body.x = gx * RAD2DEG;
+    out_data->gyro_body.y = gy * RAD2DEG;
+    out_data->gyro_body.z = gz * RAD2DEG;
+    //ERROR_INFO("HWT606", "gyro_body_z: %.2f, gz: %.2f", out_data->gyro_body.y, gy * RAD2DEG);
 
     // 5. 连续偏航角(Yaw)多圈处理
     if (hwt606_dev.is_first_frame) {

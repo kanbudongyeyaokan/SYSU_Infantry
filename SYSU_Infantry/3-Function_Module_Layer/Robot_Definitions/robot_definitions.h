@@ -9,7 +9,8 @@
           
 // 云台参数
 // #define YAW_CHASSIS_ALIGN_ECD 900  // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
-#define YAW_CHASSIS_ALIGN_ECD 2094  // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
+//现在下面这个是对齐45度方向的角度，如果想对齐0度方向需要改成2190
+#define YAW_CHASSIS_ALIGN_ECD 1050  // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
 #define YAW_ECD_GREATER_THAN_4096 0 // ALIGN_ECD值是否大于4096,是为1,否为0;用于计算云台偏转角度
 #define PITCH_HORIZON_ECD 760      // 云台处于水平位置时编码器值（760）,若对云台有机械改动需要修改
 

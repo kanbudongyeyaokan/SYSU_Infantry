@@ -21,11 +21,13 @@
 #include "chassis_power_control.h"
 #include "supercap_comm.h"
 #include "algorithm_pid.h"
+#include "error_handler.h"
 
 #define CHASSIS_FOLLOW_YAW_GAIN 0.5f
 #define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
 #define CHASSIS_ROTATE_WZ 500.0f
 #define CHASSIS_MOTOR_PID_MAX_OUT 15000.0f
+#define CHASSIS_FORWARD_ANGLE 45.0f
 
 /****************发送给决策层的底盘反馈信息******************/
 // 发布给决策层的底盘反馈信息
@@ -257,7 +259,8 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             
 
             // 矢量变换逻辑
-            float theta = -cmd->offset_angle * (M_PI / 180.0f);
+            //这里对齐45度变换
+            float theta = (-cmd->offset_angle -45.0f) * (M_PI / 180.0f);
             float cos_theta = arm_cos_f32(theta);
             float sin_theta = arm_sin_f32(theta);
 
@@ -282,15 +285,12 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
             Chassis_cmd_send_t rotate_cmd = *cmd;
 
-            // 修改副本的 Wz
             rotate_cmd.wz = CHASSIS_ROTATE_WZ;
 
             float angle_error = cmd->offset_angle;
             float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);
             float sin_theta = arm_sin_f32(angle_error * MATH_DEG2RAD);
 
-            // [修正] 使用原始数据 cmd 计算，赋值给副本 rotate_cmd
-            // 这样保证计算 vy 时，vx 还是原始值
             rotate_cmd.vx = cmd->vx * cos_theta - cmd->vy * sin_theta;
             rotate_cmd.vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
 
