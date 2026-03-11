@@ -104,7 +104,7 @@ void Chassis_init() {
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 20,
+                    .kp = 15,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
@@ -126,7 +126,7 @@ void Chassis_init() {
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 20,
+                    .kp = 15,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
@@ -148,7 +148,7 @@ void Chassis_init() {
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 20,
+                    .kp = 15,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
@@ -170,7 +170,7 @@ void Chassis_init() {
                 .close_loop = SPEED_LOOP,
                 .speed_source = MOTOR_FEEDBACK,
                 .speed_pid = {
-                    .kp = 20,
+                    .kp = 15,
                     .ki = 0,
                     .kd = 0,
                     .max_iout = 3000,
