@@ -329,7 +329,7 @@ void RC_ctrl_set()
     {
         shoot_cmd_send.shoot_mode = SHOOT_ON;
         shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
-        shoot_cmd_send.shoot_rate = 8;
+        shoot_cmd_send.shoot_rate = 6;
     }
     else
     {

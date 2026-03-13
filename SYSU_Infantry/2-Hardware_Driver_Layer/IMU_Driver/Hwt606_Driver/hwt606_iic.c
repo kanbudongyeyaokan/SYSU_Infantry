@@ -155,7 +155,7 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     }
 
     // 扣除学习到的零偏
-    gz -= gyro_z_bias;
+    // gz -= gyro_z_bias;
 
     // 施加死区 (Deadband)：彻底滤除静止时的残余白噪声
     // 0.0015 rad/s 约等于 0.08 deg/s，如果角速度比这个还小，直接视为云台绝对静止

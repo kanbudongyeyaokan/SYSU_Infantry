@@ -88,7 +88,7 @@ void Chassis_init() {
         .kd = 0.1f,     // 微分系数，极其重要！给一点 D 项可以提供阻尼，防止底盘到位时来回摆动
         .max_out = 800.0f,  // 对应原来的 CHASSIS_FOLLOW_WZ_LIMIT
         .max_iout = 200.0f,   // 没用到 I 就不管
-        .feedfoward_coefficient = 0.5f, // 前馈项，给一个小的前馈系数可以让底盘更快响应云台的转动，减少误差
+        .deadband = 0.7f,   // 死区，误差绝对值小于这个值时不输出，防止底盘一直微调
         .optimization = PID_OUTPUT_LIMIT|PID_FEEDFOWARD, // 开启输出限幅
     };
     Pid_init(&chassis_follow_pid, &follow_pid_config);

@@ -74,18 +74,18 @@ float Pid_calculate(Pid_instance_t *pid, float measure, float target)
     pid->error = pid->target - pid->measure;
 
     // 3. 死区判断
-    /*
+    
     if (fabsf(pid->error) < pid->deadband)
     {
         pid->error = 0.0f;
         // 进入死区可选策略：清空输出，或者保持 Iout 不变
         // 这里选择不更新 Output，直接返回上一次的值，或者输出0
         // 步兵底盘通常希望死区内无力
-        pid->Pout = 0.0f;
+        // pid->Pout = 0.0f;
         // 积分项是否清零视需求而定，通常不清零以保持姿态，但长时间死区应防饱和
-       // return 0.0f;
+        pid->Output = 0.0f; // 死区内输出为0
     }
-*/
+
     // 4. P项计算
     pid->Pout = pid->kp * pid->error;
 
