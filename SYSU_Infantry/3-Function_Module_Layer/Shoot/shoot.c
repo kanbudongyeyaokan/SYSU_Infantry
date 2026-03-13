@@ -133,7 +133,7 @@ void Shoot_task_init(void) {
 void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
     shoot_test_cmd = *cmd;
 
-    // 1. 处理摩擦轮 (SHOOT_MODE)
+    // 处理摩擦轮 (SHOOT_MODE)
     if (cmd->shoot_mode == SHOOT_OFF) {
         // 关闭摩擦轮
         Djimotor_set_status(shoot_motors[0], MOTOR_STOP);

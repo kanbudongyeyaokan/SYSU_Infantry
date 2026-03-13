@@ -170,6 +170,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Decision_Making/Shell_task.h
         3-Function_Module_Layer/Shell/shell_port.c
         3-Function_Module_Layer/Shell/shell_port.h
+
+        3-Function_Module_Layer/Vision_Comm/vision_comm.c
+        3-Function_Module_Layer/Vision_Comm/vision_comm.h
+
         0-Middleware_Layer/Crc/crc_referee.c
         0-Middleware_Layer/Crc/crc_referee.h
 
@@ -273,6 +277,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Robot_Definitions
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Chassis
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Gimbal
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Vision_Comm
+
+
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Ins
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Referee
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Shoot
