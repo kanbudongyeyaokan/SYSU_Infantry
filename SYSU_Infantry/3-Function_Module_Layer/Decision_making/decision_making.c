@@ -8,22 +8,20 @@
  * @note    决策控制模式，控制量，并传送到对应的任务
  */
 #include "decision_making.h"
-//通信
 #include "message_center.h"
-//状态机获取
 #include "robot_definitions.h"
-//遥控器控制
-#include <stdio.h>
 #include "remote_control.h"
+#include <stdio.h>
 #include "main.h"
 #include <stdbool.h>
 #include <math.h>
 #include "SBUS.h"
-#include "gimbal.h"  // 用于获取云台状态
+#include "gimbal.h"
 #include "robot_task.h"
 #include "bsp_usart.h"
 #include "video_link.h"
 #include "error_handler.h"
+#include "vision_comm.h"
 /**********************发出决策信息***************************/
 //存储遥控器数据，CURRENT-当前数据,LAST-上一次数据
 #if USE_SBUS_RECEIVER == 1
@@ -311,16 +309,21 @@ void RC_ctrl_set()
     if (vrc_data[CURRENT].rc.mode_switch == 0)
     {
         chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
-        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
     }
     else if (vrc_data[CURRENT].rc.mode_switch == 2)
     {
         chassis_cmd_send.chassis_mode = CHASSIS_ROTATE;
-        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
     }
     else
     {
         chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
+    }
+    if (vrc_data[CURRENT].rc.trigger == 1)
+    {
+        gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
+    }
+    else
+    {
         gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
     }
 
@@ -519,9 +522,6 @@ void Keyboard_ctrl_set()
     //     kb.w, kb.s, kb.a, kb.d, kb.shift, kb.ctrl,
     //     kb.q, kb.e, kb.r, kb.f, kb.g,
     //     kb.z, kb.x, kb.c, kb.v, kb.b);
-    chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;//设置底盘的控制模式为跟随云台模式
-    gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;//设置云台的控制模式为陀螺仪模式。
-    Emergency_stop();//调用急停函数
 
     //三种底盘模式，用于 C 键循环切换
     static const chassis_mode_e vrc_modes[] = {CHASSIS_FOLLOW_GIMBAL, CHASSIS_NO_FOLLOW, CHASSIS_ROTATE};

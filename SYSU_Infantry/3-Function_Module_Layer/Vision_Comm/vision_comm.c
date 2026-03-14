@@ -1,9 +1,14 @@
 #include "vision_comm.h"
-#include "bsp_usb.h"        // 你的底层 USB 库
-#include "crc_referee.h"    // 你的大疆官方 CRC 库
+// ========== USB 方式（测试完成后切换回来） ==========
+// #include "bsp_usb.h"
+
+// ========== 串口方式（测试用） ==========
+#include "bsp_usart.h"
+#include "usart.h"
+#include "crc_referee.h"
 #include "cmsis_os.h"
 #include "string.h"
-
+#include "error_handler.h"
 // ==========================================
 // 内部变量
 // ==========================================
@@ -18,10 +23,18 @@ static Infantry_Vision_Rx_Data_t latest_vision_data;
 // 记录最后一次收到有效数据的时间 (用于掉线检测)
 static uint32_t last_valid_time = 0; 
 
+// ========== 串口方式（测试用） ==========
+static Uart_instance_t *vision_uart = NULL; 
+
 // ==========================================
 // 内部函数声明
 // ==========================================
-static void Vision_Rx_Callback(uint8_t* buf, uint32_t len);
+// ========== USB 方式 ==========
+// static void Vision_Rx_Callback(uint8_t* buf, uint32_t len);
+
+// ========== 串口方式（测试用） ==========
+static void Vision_Rx_Callback(void);
+
 static uint16_t Get_FIFO_Data_Len(void);
 static void Read_FIFO_Data(uint8_t* dest, uint16_t len, uint16_t offset);
 
@@ -32,15 +45,46 @@ static void Read_FIFO_Data(uint8_t* dest, uint16_t len, uint16_t offset);
 void Vision_Comm_Init(void) {
     memset(&latest_vision_data, 0, sizeof(Infantry_Vision_Rx_Data_t));
     
-    // 初始化你的 USB 库，并注册本模块的接收回调函数 (在中断中执行)
-    Usb_Init(Vision_Rx_Callback);
+    // ========== USB 方式（测试完成后切换回来） ==========
+    // Usb_Init(Vision_Rx_Callback);
+    
+    // ========== 串口方式（测试用） ==========
+    vision_uart = Uart_register(&huart6, Vision_Rx_Callback);
+    
+    if (vision_uart != NULL) {
+        ERROR_INFO("VISION", "Init OK, UART6 registered");
+    } else {
+        ERROR_CRITICAL("VISION", "Init FAILED, UART6 register error");
+    }
 }
 
+// ========== USB 方式 ==========
 // USB 接收回调函数 (由 bsp_usb.c 在中断中触发)
-static void Vision_Rx_Callback(uint8_t* buf, uint32_t len) {
+// static void Vision_Rx_Callback(uint8_t* buf, uint32_t len) {
+//     if (buf == NULL || len == 0) return;
+//     
+//     // 极速将收到的数据推入 FIFO，绝不阻塞！
+//     for (uint32_t i = 0; i < len; i++) {
+//         rx_fifo[rx_head] = buf[i];
+//         rx_head++;
+//         if (rx_head >= VISION_RX_FIFO_SIZE) {
+//             rx_head = 0;
+//         }
+//     }
+// }
+
+// ========== 串口方式（测试用） ==========
+static void Vision_Rx_Callback(void) {
+    if (vision_uart == NULL) {
+        ERROR_WARN("VISION", "Rx callback called but UART not registered");
+        return;
+    }
+    
+    uint8_t *buf = vision_uart->rx_buffer;
+    uint32_t len = vision_uart->rx_data_len;
+    
     if (buf == NULL || len == 0) return;
     
-    // 极速将收到的数据推入 FIFO，绝不阻塞！
     for (uint32_t i = 0; i < len; i++) {
         rx_fifo[rx_head] = buf[i];
         rx_head++;
@@ -92,6 +136,7 @@ void Vision_Comm_Parse_Task(void) {
         if (Verify_CRC8_Check_Sum(header_buf, 5) == 0) {
             // 帧头校验失败，说明是伪造的 SOF 或者错位了，丢弃 SOF 继续找
             rx_tail = (rx_tail + 1) % VISION_RX_FIFO_SIZE;
+            ERROR_WARN("VISION","CRC8 fail, discarding byte");
             continue;
         }
         
@@ -103,6 +148,8 @@ void Vision_Comm_Parse_Task(void) {
         // 保护机制：如果解析出的长度超大(例如错包)，直接丢弃帧头
         if (frame_total_len > 128) {
             rx_tail = (rx_tail + 1) % VISION_RX_FIFO_SIZE;
+            ERROR_WARN("VISION","Frame too long (%d), discarding byte", frame_total_len);
+
             continue;
         }
         
@@ -135,6 +182,7 @@ void Vision_Comm_Parse_Task(void) {
         } else {
             // CRC16 错误，说明数据中途损坏，仅丢弃 SOF 继续找
             rx_tail = (rx_tail + 1) % VISION_RX_FIFO_SIZE;
+            ERROR_WARN("VISION","CRC16 fail, discarding byte");
         }
     }
 }

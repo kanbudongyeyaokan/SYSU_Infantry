@@ -27,8 +27,9 @@
 #include <stdlib.h> 
 #include <string.h> 
 #include "lowpass_filter.h"
-#include "bmi088.h" // 引用驱动头文件
+#include "bmi088.h"
 #include "error_handler.h"
+#include "vision_comm.h"
 
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
@@ -165,6 +166,8 @@ void Gimbal_task_init(void) {
 
     //初始化云台电机
     Gimbal_motor_init();
+
+    Vision_Comm_Init();
 }
 
 
@@ -212,8 +215,21 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 break;
                 //云台视觉模式
             case GIMBAL_VISION_MODE:
-                //根据视觉补充
-
+                Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
+                Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
+                
+                if (Is_Vision_Online()) {
+                    const Infantry_Vision_Rx_Data_t* v = Get_Vision_Data();
+                    Djimotor_set_target(yaw_motor, cmd->yaw + v->yaw_angle);
+                    Djimotor_set_target(pitch_motor,cmd->pitch + v->pitch_angle);
+                } else {
+                    ERROR_CRITICAL("GIMBAL", "Vision data not available, cannot enter VISION_MODE");
+                    Djimotor_set_target(yaw_motor, cmd->yaw);
+                    Djimotor_set_target(pitch_motor, cmd->pitch);
+                }
+                
+                Djimotor_Calc_Output(yaw_motor);
+                Djimotor_Calc_Output(pitch_motor);
                 break;
 
             default:

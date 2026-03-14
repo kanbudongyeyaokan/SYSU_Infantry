@@ -68,7 +68,7 @@ Uart_instance_t* test_uart = NULL;
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
-    test_uart = Uart_register(&huart6,NULL);
+    //test_uart = Uart_register(&huart6,NULL);
 
     // 创建队列 (必须在任务创建之前!)
     // ============================================================

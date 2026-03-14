@@ -29,8 +29,8 @@ typedef struct {
 // 步兵视觉接收数据段结构体 (9字节)
 typedef struct {
     uint8_t  vision_flags;    // 视觉状态标志位 (bit0: is_detected, bit1: is_tracking, bit2: is_fire)
-    float    yaw_angle;       // 相对云台中心的 Yaw 轴目标角度误差 (rad)
-    float    pitch_angle;     // 相对云台中心的 Pitch 轴目标角度误差 (rad)
+    float    yaw_angle;       // 目标绝对 Yaw 角度 (deg)
+    float    pitch_angle;     // 目标绝对 Pitch 角度 (deg)
 } Infantry_Vision_Rx_Data_t;
 
 #pragma pack(pop)

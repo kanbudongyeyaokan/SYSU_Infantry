@@ -4,6 +4,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "vision_comm.h"
 
 
 // 云台控制频率 200Hz (5ms)
@@ -24,8 +25,8 @@ void Gimbal_control_task(void const *argument) {
     TickType_t PreviousWakeTime = xTaskGetTickCount();
 
     for (;;) {
-        // 非阻塞查询队列 (Receive 0)
-        // 如果有新指令就更新 cmd_recv，没有就沿用上一帧的指令
+        Vision_Comm_Parse_Task();
+        
         xQueueReceive(Gimbal_cmd_queue_handle, &cmd_recv, 0);
 
         // Uart_printf(test_uart,"yaw:%f, pitch:%f\r\n",cmd_recv.yaw,cmd_recv.pitch);
