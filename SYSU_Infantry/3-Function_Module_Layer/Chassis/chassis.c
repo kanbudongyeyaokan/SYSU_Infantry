@@ -64,7 +64,7 @@ void Chassis_task_init(void) {
     // SuperCap_Comm_Init(&hcan2);
 
     //底盘功率控制初始化
-    Chassis_Power_Control_Init();
+    //Chassis_Power_Control_Init();
 }
 
 /**
@@ -190,6 +190,7 @@ void Chassis_init() {
     }
     // chassis_motors[2] = DJI_Motor_Init(&cfg[2]);
     // chassis_motors[3] = DJI_Motor_Init(&cfg[3]);
+    Chassis_Power_Control_Init();
 }
 
 /**
@@ -230,7 +231,6 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             }
 
             Chassis_kinematics_solve(cmd, &chassis_output);
-            // Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
@@ -268,7 +268,6 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             cmd_solved.vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
 
             Chassis_kinematics_solve(&cmd_solved, &chassis_output);
-            //Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
@@ -296,7 +295,6 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 
             // 传入副本的地址
             Chassis_kinematics_solve(&rotate_cmd, &chassis_output);
-            //Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
@@ -307,6 +305,9 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
         default:
             break;
     }
+
+    // 在 1kHz 控制周期末统一做动态功率控制与等比例电流限幅
+    Chassis_Power_Control(chassis_motors);
 
     // 反馈底盘数据回决策层
     chassis_feedback.chassis_wz = cmd->wz;

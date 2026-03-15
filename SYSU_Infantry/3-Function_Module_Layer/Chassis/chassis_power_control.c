@@ -1,92 +1,332 @@
 #include "chassis_power_control.h"
-#include <math.h>
-#include "referee.h" // 确保包含你的裁判系统获取接口
-#include "error_handler.h"
 
-// ==================  3508 物理常数 ==================
-#define TORQUE_COEF 0.0003662109375f        // (20/16384)*(0.3), 电机转矩系数
-#define POWER_COEF (187.0f / 3591.0f / 9.55f) // 机械功率系数，适配 rpm
-static const float K1[4] = {1.23e-07f, 1.23e-07f, 1.23e-07f, 1.23e-07f}; // 电流平方项系数
-static const float K2[4] = {1.453e-07f, 1.453e-07f, 1.453e-07f, 1.453e-07f}; // 转速平方项系数
-static const float constant[4] = {4.081f, 4.081f, 4.081f, 4.081f};       // 静态功耗
+#include <stddef.h>
+#include <stdbool.h>
+#include "error_handler.h"
+#include "referee.h"
+
+#define CHASSIS_POWER_WHEEL_NUM          4U
+#define CHASSIS_POWER_EPSILON            1e-6f
+#define CHASSIS_MOTOR_CURRENT_MAX        16000.0f
+#define CHASSIS_POWER_ERR_INTERVAL_TICK  200U
+
+#define CHASSIS_PWR_MODULE               "CHASSIS_PWR"
+
+#define CHASSIS_POWER_LIMIT_DEFAULT      40.0f
+#define CHASSIS_POWER_BUFFER_DEFAULT     60.0f
+
+#define CHASSIS_POWER_K_T_DEFAULT        1.0e-4f
+#define CHASSIS_POWER_STATIC_DEFAULT     2.0f
+#define CHASSIS_POWER_DANGER_LINE_DEFAULT 30.0f
+#define CHASSIS_POWER_BUFFER_KP_DEFAULT  1.0f
+#define CHASSIS_POWER_MIN_ALLOW_DEFAULT  1.0f
+
+static chassis_power_ctrl_param_t g_chassis_power_param =
+{
+    .k_t = CHASSIS_POWER_K_T_DEFAULT,
+    .p_static = CHASSIS_POWER_STATIC_DEFAULT,
+    .danger_energy_line = CHASSIS_POWER_DANGER_LINE_DEFAULT,
+    .k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT,
+    .p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT,
+};
+
+/* 错误节流与恢复状态，防止 1kHz 日志刷屏 */
+static uint16_t g_null_input_err_cd = 0U;
+static uint16_t g_null_motors_err_cd = 0U;
+static uint16_t g_ref_limit_err_cd = 0U;
+static uint16_t g_ref_buffer_err_cd = 0U;
+static uint16_t g_param_pmin_err_cd = 0U;
+static uint16_t g_pmax_floor_warn_cd = 0U;
+
+static uint16_t g_motor_null_warn_cd[CHASSIS_POWER_WHEEL_NUM] = {0U};
+static bool g_motor_null_active[CHASSIS_POWER_WHEEL_NUM] = {false};
+static bool g_ref_limit_abnormal_active = false;
+static bool g_ref_buffer_abnormal_active = false;
+static bool g_pmax_floor_active = false;
+
+static bool chassis_power_should_report(uint16_t *cooldown)
+{
+    if (cooldown == NULL)
+    {
+        return false;
+    }
+
+    if (*cooldown == 0U)
+    {
+        *cooldown = CHASSIS_POWER_ERR_INTERVAL_TICK;
+        return true;
+    }
+
+    (*cooldown)--;
+    return false;
+}
+
+static float chassis_absf(float x)
+{
+    return (x >= 0.0f) ? x : -x;
+}
+
+static float chassis_clampf(float x, float min_val, float max_val)
+{
+    if (x < min_val)
+    {
+        return min_val;
+    }
+    if (x > max_val)
+    {
+        return max_val;
+    }
+    return x;
+}
+
+static int16_t chassis_float_to_i16_clamped(float x)
+{
+    float bounded = chassis_clampf(x, -CHASSIS_MOTOR_CURRENT_MAX, CHASSIS_MOTOR_CURRENT_MAX);
+    if (bounded >= 0.0f)
+    {
+        return (int16_t)(bounded + 0.5f);
+    }
+    return (int16_t)(bounded - 0.5f);
+}
+
+void Chassis_Power_Control_Init(void)
+{
+    g_chassis_power_param.k_t = CHASSIS_POWER_K_T_DEFAULT;
+    g_chassis_power_param.p_static = CHASSIS_POWER_STATIC_DEFAULT;
+    g_chassis_power_param.danger_energy_line = CHASSIS_POWER_DANGER_LINE_DEFAULT;
+    g_chassis_power_param.k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT;
+    g_chassis_power_param.p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT;
+
+    ERROR_INFO(CHASSIS_PWR_MODULE,
+               "init k_t=%.6f p_static=%.2f danger=%.2f kp=%.2f pmin=%.2f",
+               g_chassis_power_param.k_t,
+               g_chassis_power_param.p_static,
+               g_chassis_power_param.danger_energy_line,
+               g_chassis_power_param.k_p_buffer,
+               g_chassis_power_param.p_min_allow);
+}
+
+void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
+                                const chassis_power_ctrl_param_t *param,
+                                chassis_power_ctrl_output_t *output)
+{
+    uint8_t i;
+    float p_total = 0.0f;
+    float p_max_allow;
+    float p_limit;
+    float e_buffer;
+    float p_min_allow;
+    float p_max_allow_raw;
+    float alpha = 1.0f;
+
+    if ((input == NULL) || (param == NULL) || (output == NULL))
+    {
+        if (chassis_power_should_report(&g_null_input_err_cd))
+        {
+            ERROR_RAISE(CHASSIS_PWR_MODULE,
+                        "calc null ptr input=0x%lx param=0x%lx output=0x%lx",
+                        (uint32_t)(uintptr_t)input,
+                        (uint32_t)(uintptr_t)param,
+                        (uint32_t)(uintptr_t)output);
+        }
+        return;
+    }
+
+    p_limit = input->p_limit;
+    e_buffer = input->e_buffer;
+    p_min_allow = param->p_min_allow;
+
+    if (p_min_allow <= CHASSIS_POWER_EPSILON)
+    {
+        if (chassis_power_should_report(&g_param_pmin_err_cd))
+        {
+            ERROR_WARN(CHASSIS_PWR_MODULE,
+                       "param p_min_allow invalid=%.3f, fallback=%.3f",
+                       p_min_allow,
+                       CHASSIS_POWER_MIN_ALLOW_DEFAULT);
+        }
+        p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT;
+    }
+
+    if (p_limit <= 0.0f)
+    {
+        if (chassis_power_should_report(&g_ref_limit_err_cd))
+        {
+            ERROR_WARN(CHASSIS_PWR_MODULE,
+                       "ref power limit invalid=%.2f, clamp to p_min_allow=%.2f",
+                       p_limit,
+                       p_min_allow);
+        }
+        p_limit = p_min_allow;
+        g_ref_limit_abnormal_active = true;
+    }
+    else if (g_ref_limit_abnormal_active)
+    {
+        ERROR_INFO(CHASSIS_PWR_MODULE, "ref power limit recovered=%.2f", p_limit);
+        g_ref_limit_abnormal_active = false;
+    }
+
+    if (e_buffer < 0.0f)
+    {
+        if (chassis_power_should_report(&g_ref_buffer_err_cd))
+        {
+            ERROR_WARN(CHASSIS_PWR_MODULE,
+                       "buffer energy invalid=%.2f, clamp to 0", e_buffer);
+        }
+        e_buffer = 0.0f;
+        g_ref_buffer_abnormal_active = true;
+    }
+    else if (g_ref_buffer_abnormal_active)
+    {
+        ERROR_INFO(CHASSIS_PWR_MODULE, "buffer energy recovered=%.2f", e_buffer);
+        g_ref_buffer_abnormal_active = false;
+    }
+
+    for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
+    {
+        /* 步骤1：单轮功率估算 P_esti = K_t * abs(I_cmd * w_fdb) + P_static */
+        float i_mul_w = input->i_cmd[i] * input->w_fdb[i];
+        float p_wheel = param->k_t * chassis_absf(i_mul_w) + param->p_static;
+        output->p_wheel_esti[i] = p_wheel;
+
+        /* 步骤2：四轮功率求和 */
+        p_total += p_wheel;
+    }
+
+    output->p_total = p_total;
+
+    /* 步骤3：缓冲能量防线动态限功 */
+    if (e_buffer > param->danger_energy_line)
+    {
+        p_max_allow_raw = p_limit;
+    }
+    else
+    {
+        p_max_allow_raw = p_limit -
+                          param->k_p_buffer * (param->danger_energy_line - e_buffer);
+    }
+
+    p_max_allow = p_max_allow_raw;
+
+    /* 底层保底，避免功率上限 <= 0 */
+    if (p_max_allow < p_min_allow)
+    {
+        p_max_allow = p_min_allow;
+
+        if (chassis_power_should_report(&g_pmax_floor_warn_cd))
+        {
+            ERROR_WARN(CHASSIS_PWR_MODULE,
+                       "p_max_allow floor raw=%.2f floor=%.2f p_limit=%.2f e_buffer=%.2f",
+                       p_max_allow_raw,
+                       p_min_allow,
+                       p_limit,
+                       e_buffer);
+        }
+        g_pmax_floor_active = true;
+    }
+    else if (g_pmax_floor_active)
+    {
+        ERROR_INFO(CHASSIS_PWR_MODULE,
+                   "p_max_allow recovered raw=%.2f p_limit=%.2f e_buffer=%.2f",
+                   p_max_allow_raw,
+                   p_limit,
+                   e_buffer);
+        g_pmax_floor_active = false;
+    }
+    output->p_max_allow = p_max_allow;
+
+    /* 步骤4：超功率时做等比例电流缩放 */
+    if ((p_total > p_max_allow) && (p_total > CHASSIS_POWER_EPSILON))
+    {
+        /* 除零保护：仅在 p_total 足够大时进行除法 */
+        alpha = p_max_allow / p_total;
+        if (alpha < 0.0f)
+        {
+            alpha = 0.0f;
+        }
+        if (alpha > 1.0f)
+        {
+            alpha = 1.0f;
+        }
+    }
+    else
+    {
+        alpha = 1.0f;
+    }
+
+    output->alpha = alpha;
+
+    for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
+    {
+        output->i_out[i] = input->i_cmd[i] * alpha;
+    }
+}
 
 void Chassis_Power_Control(Djimotor_device_t *motors[4])
 {
-    if (motors == NULL) return;
+    uint8_t i;
+    chassis_power_ctrl_input_t input;
+    chassis_power_ctrl_output_t output;
 
-    // 获取裁判系统状态
-    float buffer_energy = ChassisPower_GetBuffer(); // 当前缓冲能量 (满管一般 60J)
-    float ref_power_limit = ChassisPower_GetMaxLimit(); // 裁判系统给定的功率上限 (如 45W, 60W, 80W)
-
-    if (ref_power_limit < 40.0f) ref_power_limit = 40.0f; // 容错机制
-
-    // 缓冲能量动态限幅 
-    float chassis_max_power = ref_power_limit;
-    
-    // 假设满缓冲是 60J。当跌破 30J 时，开始强制线性压低功率上限
-    if (buffer_energy < 30.0f) {
-        // 留 10J 作为绝对死线，低于 10J 功率直接降到 10W 以下保命
-        float scale = (buffer_energy - 10.0f) / 20.0f; 
-        if (scale < 0.0f) scale = 0.0f;
-        chassis_max_power = 10.0f + (ref_power_limit - 10.0f) * scale;
-    }
-
-    // 统计 4 个轮子的基础预测功率 
-    float initial_total_power = 0.0f;
-    float initial_give_power[4] = {0};
-
-    for (uint8_t i = 0; i < 4; i++) {
-        if (motors[i] == NULL || motors[i]->motor_status == MOTOR_STOP) continue;
-
-        float speed_rpm = motors[i]->motor_measure.angular_velocity;
-        float current_cmd = (float)motors[i]->out_current; // PID算出的原始需求电流
-
-        float A = K1[i] * current_cmd * current_cmd;
-        float B = K2[i] * speed_rpm * speed_rpm;
-        float C = POWER_COEF * speed_rpm * current_cmd * TORQUE_COEF;
-
-        initial_give_power[i] = A + B + C + constant[i];
-
-        // 仅将做功状态（消耗功率 > 0）的功率计入总和，发电刹车不计入
-        if (initial_give_power[i] > 0.0f) {
-            initial_total_power += initial_give_power[i];
+    if (motors == NULL)
+    {
+        if (chassis_power_should_report(&g_null_motors_err_cd))
+        {
+            ERROR_RAISE(CHASSIS_PWR_MODULE, "motors array is NULL");
         }
+        return;
     }
 
-    // 判断是否超功率，执行等比例功率缩放与二次方程逆解
-    if (initial_total_power > chassis_max_power) {
-        float ratio = chassis_max_power / initial_total_power;
+    for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
+    {
+        if ((motors[i] == NULL) || (motors[i]->motor_status == MOTOR_STOP))
+        {
+            input.i_cmd[i] = 0.0f;
+            input.w_fdb[i] = 0.0f;
 
-        for (uint8_t i = 0; i < 4; i++) {
-            if (motors[i] == NULL || motors[i]->motor_status == MOTOR_STOP) continue;
-
-            // 发电状态（功率 < 0）直接跳过限制，保证刹车性能
-            if (initial_give_power[i] <= 0.0f) continue;
-
-            // 计算该轮子被分配到的目标功率
-            float target_power = initial_give_power[i] * ratio;
-            float speed_rpm = motors[i]->motor_measure.angular_velocity;
-
-            // 构建二次方程: a*I^2 + b*I + c = 0
-            float a = K1[i];
-            float b = TORQUE_COEF * POWER_COEF * speed_rpm;
-            float c = K2[i] * speed_rpm * speed_rpm - target_power + constant[i];
-
-            float discriminant = b * b - 4.0f * a * c;
-
-            if (discriminant >= 0.0f) {
-                // 根据原始 PID 期望电流的方向，决定取正根还是负根
-                if (motors[i]->out_current > 0) {
-                    motors[i]->out_current = (int16_t)((-b + sqrtf(discriminant)) / (2.0f * a));
-                    if (motors[i]->out_current > 16000) motors[i]->out_current = 16000;
-                } else {
-                    motors[i]->out_current = (int16_t)((-b - sqrtf(discriminant)) / (2.0f * a));
-                    if (motors[i]->out_current < -16000) motors[i]->out_current = -16000;
+            if (motors[i] == NULL)
+            {
+                if (chassis_power_should_report(&g_motor_null_warn_cd[i]))
+                {
+                    ERROR_WARN(CHASSIS_PWR_MODULE, "motor[%lu] is NULL", (uint32_t)i);
                 }
-            } else {
-                // 无解极端情况：纯摩擦和静态损耗已超过分配功率，强制锁死电流保命
-                motors[i]->out_current = 0;
+                g_motor_null_active[i] = true;
             }
+            continue;
         }
+
+        if (g_motor_null_active[i])
+        {
+            ERROR_INFO(CHASSIS_PWR_MODULE, "motor[%lu] pointer recovered", (uint32_t)i);
+            g_motor_null_active[i] = false;
+        }
+
+        input.i_cmd[i] = (float)motors[i]->out_current;
+        input.w_fdb[i] = motors[i]->motor_measure.angular_velocity;
     }
+
+    input.p_limit = (float)ChassisPower_GetMaxLimit();
+    input.e_buffer = (float)ChassisPower_GetBuffer();
+
+    if (input.p_limit < CHASSIS_POWER_LIMIT_DEFAULT)
+    {
+        input.p_limit = CHASSIS_POWER_LIMIT_DEFAULT;
+        input.e_buffer = CHASSIS_POWER_BUFFER_DEFAULT;
+    }
+
+    Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output);
+
+    for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
+    {
+        if ((motors[i] == NULL) || (motors[i]->motor_status == MOTOR_STOP))
+        {
+            continue;
+        }
+        motors[i]->out_current = chassis_float_to_i16_clamped(output.i_out[i]);
+    }
+}
+
+void Send2SuperCap(void)
+{
+    /* 预留接口：可在此处发送当前功率状态到超电模块 */
 }
