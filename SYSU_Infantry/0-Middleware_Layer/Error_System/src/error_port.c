@@ -20,6 +20,7 @@
 #include "robot_task.h"
 
 #include "bsp_usart.h"
+#include "SEGGER_RTT.h"
 extern Uart_instance_t* test_uart;
 
 /* 声明获取 UART 句柄的内部函数 */
@@ -119,6 +120,9 @@ void error_port_output(const error_record_t* record)
     {
         Uart_printf(uart, "%s", error_output_buf);
     }
+
+    /* RTT 输出 */
+    SEGGER_RTT_WriteString(0, error_output_buf);
 
     /* Critical 错误处理：设置标志 + 蜂鸣器报警 */
     if (level == ERROR_LEVEL_CRITICAL)
