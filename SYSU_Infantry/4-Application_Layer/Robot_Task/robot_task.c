@@ -131,7 +131,7 @@ void Robot_task_init(void)
   osDelay(100);
 
   //   //决策任务
-  osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
+  osThreadDef(decision_making_task,Decision_making_task,osPriorityAboveNormal,0,1024);
   decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
 
     // === 启动底盘与电机任务（必需） ===
@@ -139,7 +139,7 @@ void Robot_task_init(void)
     osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
      chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
 
-     osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
+     osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityAboveNormal, 0, 512);
     gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
 
     osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);

@@ -8,7 +8,7 @@
 
 
 // 云台控制频率 200Hz (5ms)
-#define GIMBAL_TASK_PERIOD 5
+#define GIMBAL_TASK_PERIOD 1
 
 void Gimbal_control_task(void const *argument) {
     // 初始化

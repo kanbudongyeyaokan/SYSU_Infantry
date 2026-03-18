@@ -140,11 +140,17 @@ float Pid_calculate(Pid_instance_t *pid, float measure, float target)
     // 8. 计算总输出
     pid->Output = pid->Pout + pid->Iout + pid->Dout;
 
-    // 9. 前馈控制
+   // 9. 前馈控制 
     if (pid->optimization & PID_FEEDFOWARD) {
-        pid->Output += pid->feedfoward_coefficient * pid->target;
+        if (pid->feedforward_source != NULL) {
+            // 如果提供了外部前馈源，将其乘以系数后叠加到输出上
+            pid->Output += pid->feedfoward_coefficient * (*pid->feedforward_source);
+        } else {
+            // 如果没有外部前馈源，但开启了前馈，默认将目标值作为前馈项
+            // 这在速度环中通常是用来做“速度前馈” 
+            pid->Output += pid->feedfoward_coefficient * pid->target; 
+        }
     }
-
     // 10. 输出限幅
     if (pid->optimization & PID_OUTPUT_LIMIT) {
         LIMIT_MAX(pid->Output, pid->max_out);

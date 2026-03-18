@@ -210,7 +210,7 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     // 计算标准欧拉角 (ZYX顺序)
     float roll  = atan2f(2.0f*(q0*q1 + q2*q3), 1.0f - 2.0f*(q1*q1 + q2*q2)) * RAD2DEG;
     float pitch = asinf(-2.0f*(q1*q3 - q0*q2)) * RAD2DEG;
-    // float yaw   = atan2f(2.0f*(q0*q3 + q1*q2), 1.0f - 2.0f*(q2*q2 + q3*q3)) * RAD2DEG;
+    float yaw   = atan2f(2.0f*(q0*q3 + q1*q2), 1.0f - 2.0f*(q2*q2 + q3*q3)) * RAD2DEG;
 
     // ================= 新增：提取维特硬件 YAW 角度 =================
     // buf[18~19]是X角, buf[20~21]是Y角, buf[22~23]是Z角(YAW)
@@ -219,8 +219,8 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
 
     out_data->euler.roll  = pitch;  // 若需对调，改为 pitch
     out_data->euler.pitch = roll; // 若需对调，改为 roll
-    // out_data->euler.yaw   = yaw;
-    out_data->euler.yaw   = hw_yaw; // 直接使用维特硬件输出的 YAW 角度，单位是度
+    out_data->euler.yaw   = yaw;
+    // out_data->euler.yaw   = hw_yaw; // 直接使用维特硬件输出的 YAW 角度，单位是度
 
     out_data->acc_body.x  = ax * acc_norm; // 恢复原始未归一化的m/s^2
     out_data->acc_body.y  = ay * acc_norm;
@@ -232,16 +232,16 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
 
     // 5. 连续偏航角(Yaw)多圈处理
     if (hwt606_dev.is_first_frame) {
-        hwt606_dev.last_yaw = hw_yaw;
+        hwt606_dev.last_yaw = yaw;
         hwt606_dev.is_first_frame = false;
     }
-    float yaw_diff = hw_yaw - hwt606_dev.last_yaw;
+    float yaw_diff = yaw - hwt606_dev.last_yaw;
     if (yaw_diff < -180.0f) hwt606_dev.round_count++;
     else if (yaw_diff > 180.0f) hwt606_dev.round_count--;
-    hwt606_dev.last_yaw = hw_yaw;
+    hwt606_dev.last_yaw = yaw;
 
     out_data->round_count = hwt606_dev.round_count;
-    out_data->total_yaw   = (hwt606_dev.round_count * 360.0f) + hw_yaw;
+    out_data->total_yaw   = (hwt606_dev.round_count * 360.0f) + yaw;
     out_data->state = INS_STATE_READY;
 }
 

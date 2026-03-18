@@ -93,7 +93,6 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4])
 {
     if (!is_energy_pd_init || motors == NULL) return;
 
-<<<<<<< Updated upstream
     // 1. 获取裁判系统基础数据
     float buffer_energy = ChassisPower_GetBuffer();      // 实时缓冲能量,上限为60J
     float referee_max_power = ChassisPower_GetMaxLimit(); // 裁判系统上限
@@ -154,62 +153,9 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4])
         } else if (sum_error_rpm > ERROR_LOWER_BOUND) {
             k_coe = (sum_error_rpm - ERROR_LOWER_BOUND) / (ERROR_UPPER_BOUND - ERROR_LOWER_BOUND);
         }
-=======
-    // 1. 获取裁判系统状态
-    float buffer_energy = ChassisPower_GetBuffer(); 
-    float ref_power_limit = ChassisPower_GetMaxLimit(); 
-    if (ref_power_limit < 40.0f) ref_power_limit = 40.0f; 
-
-    // 【修复1：上电掉线保护】
-    // 如果缓冲能量为0，说明极大可能裁判系统还没上线，默认给满功率保证底盘能走
-    float chassis_max_power = ref_power_limit;
-    if (buffer_energy > 0.1f) {
-        if (buffer_energy < 30.0f) {
-            float scale = (buffer_energy - 10.0f) / 20.0f; 
-            if (scale < 0.0f) scale = 0.0f;
-            chassis_max_power = 10.0f + (ref_power_limit - 10.0f) * scale;
-        }
-    }
-
-    // 【修复2：明确常数定义，防止张冠李戴】
-    float K_copper = 1.453e-07f;   // 铜损系数 (对应电流平方)
-    float K_friction = 1.23e-07f;  // 摩擦系数 (对应转速平方)
-    float static_power = 4.081f;   // 底盘总静态功耗
-
-    // 【修复3：剥离静态功耗】
-    // 我们只能分配和限制底盘的“动态做功”，静态功耗是不可控的
-    float total_dynamic_limit = chassis_max_power - static_power;
-    if (total_dynamic_limit < 0.0f) total_dynamic_limit = 0.0f;
-
-    float initial_dynamic_power = 0.0f;
-    float P_dyn_req[4] = {0};
-
-    // 第一轮：预测动态功率
-    for (uint8_t i = 0; i < 4; i++) {
-        if (motors[i] == NULL || motors[i]->motor_status == MOTOR_STOP) continue;
-
-        float speed_rpm = motors[i]->motor_measure.angular_velocity;
-        float current_cmd = (float)motors[i]->out_current; 
-
-        float P_copper = K_copper * current_cmd * current_cmd;
-        float P_friction = K_friction * speed_rpm * speed_rpm;
-        float P_mech = POWER_COEF * speed_rpm * current_cmd * TORQUE_COEF;
-
-        P_dyn_req[i] = P_copper + P_friction + P_mech;
-
-        if (P_dyn_req[i] > 0.0f) {
-            initial_dynamic_power += P_dyn_req[i];
-        }
-    }
-
-    // 第二轮：超功率等比例缩放与逆解
-    if (initial_dynamic_power > total_dynamic_limit) {
-        float ratio = total_dynamic_limit / initial_dynamic_power;
->>>>>>> Stashed changes
 
         for (int i = 0; i < 4; i++) {
             if (motors[i] == NULL || motors[i]->motor_status == MOTOR_STOP) continue;
-<<<<<<< Updated upstream
             
             // 发电刹车的轮子直接放行
             if (cmd_power[i] <= 0.0f) continue;
@@ -246,36 +192,6 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4])
             if (limited_current > 16000) limited_current = 16000;
             if (limited_current < -16000) limited_current = -16000;
             motors[i]->out_current = limited_current;
-=======
-            if (P_dyn_req[i] <= 0.0f) continue;
-
-            float target_P_dyn = P_dyn_req[i] * ratio;
-            float speed_rpm = motors[i]->motor_measure.angular_velocity;
-
-            // 构建二次方程: a*I^2 + b*I + c = 0
-            float a = K_copper;
-            float b = TORQUE_COEF * POWER_COEF * speed_rpm;
-            // 注意：因为 target_P_dyn 被剥离了常数，此时在零转速下 c 必然为负，完美避开死锁！
-            float c = K_friction * speed_rpm * speed_rpm - target_P_dyn;
-
-            float discriminant = b * b - 4.0f * a * c;
-
-            if (discriminant >= 0.0f) {
-                if (motors[i]->out_current > 0) {
-                    motors[i]->out_current = (int16_t)((-b + sqrtf(discriminant)) / (2.0f * a));
-                } else {
-                    motors[i]->out_current = (int16_t)((-b - sqrtf(discriminant)) / (2.0f * a));
-                }
-            } else {
-                // 【修复4：无解时的最佳退化策略】
-                // 此时不要强行给 0，而是给二次函数的极点（最省电的电流点），保证动作平顺
-                motors[i]->out_current = (int16_t)(-b / (2.0f * a));
-            }
-            
-            // 最终限幅
-            if (motors[i]->out_current > 16000) motors[i]->out_current = 16000;
-            if (motors[i]->out_current < -16000) motors[i]->out_current = -16000;
->>>>>>> Stashed changes
         }
     }
 }
