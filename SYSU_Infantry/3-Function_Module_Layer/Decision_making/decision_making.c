@@ -75,7 +75,7 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 #define GIMBAL_RC_MOVE_RATIO_YAW   0.0002f
 #define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
-#define RC_DEADBAND 5
+#define RC_DEADBAND 1
 static float PITCH_RC_CENTER_OFFSET = 0.0f;  // 摇杆中位偏移量，上电自动校准
 
 

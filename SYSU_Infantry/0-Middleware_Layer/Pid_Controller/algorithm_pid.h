@@ -71,6 +71,7 @@ typedef struct
     float feedfoward_coefficient;
     float LPF_coefficient;
     float integral_separation_threshold; // 积分分离阈值
+    float *feedforward_source; 
 } Pid_init_t;
 
 /**

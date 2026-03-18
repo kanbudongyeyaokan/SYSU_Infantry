@@ -21,7 +21,7 @@
 #include "robot_definitions.h"
 #include "robot_task.h"
 #include "vofa.h"
-
+#include "math.h"
 #include "shell.h"
 #include "shell_port.h"
 #include <stdlib.h> 
@@ -30,6 +30,8 @@
 #include "bmi088.h"
 #include "error_handler.h"
 #include "vision_comm.h"
+
+#include "SEGGER_RTT.h"
 
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
@@ -45,7 +47,9 @@ static Gimbal_feedback_info_t gimbal_feedback;
 extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队列句柄
 
  Gimbal_cmd_send_t gimbal_cmd;
-// static Lpf_t yaw_target_lpf; // Yaw 目标值的低通滤波器实例
+
+//云台PITCH重力补偿
+static float pitch_gravity_factor = 0.0f;
 
 
 /**
@@ -119,22 +123,27 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.x),
             .angle_pid = {
-                .kp = 30,// 30
+                .kp = 35,// 30
                 .ki = 0,
-                .kd = 0,
-                .max_out = 500,
+                .kd = 0.0,
+                .max_out = 800,
                 .max_iout = 100,
-                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL,
+                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_DIFFERENTIAL_GO_FIRST,
             },
             .speed_pid = {
-                .kp = 60,// 60
-                .ki = 20.0,// 20
+                .kp = 70,// 60
+                .ki = 2.0,// 20
                 .kd = 0,
                 .deadband = 0.1f,
-                .max_out = 12000,
+                .max_out = 15000,
                 .max_iout = 3000,
-                .feedfoward_coefficient = 0.1f,
+                // .LPF_coefficient = 0.9f,
+                // 前馈参数
+                .feedforward_source = &pitch_gravity_factor, // cos 因子
+                .feedfoward_coefficient = 2907.0f,           // 需要实测
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
+                
+            
             },
 
         },
@@ -178,9 +187,13 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         //只有当IMU就绪时才可以控制云台
         //安全保护
         if(gimbal_imu_data->state != INS_STATE_READY){
-            // Uart_printf(test_uart,"IMU not ready! State: %d\r\n", gimbal_imu_data->state);
             return;
         }
+
+        //重力补偿计算
+        float pitch_rad = gimbal_imu_data->euler.pitch * (3.14159265f / 180.0f);
+        pitch_gravity_factor = cosf(pitch_rad);
+
         // 根据控制模式进行处理
         gimbal_cmd  = *cmd; 
         switch (cmd->gimbal_mode) { 
@@ -207,11 +220,15 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
                 Djimotor_set_target(yaw_motor, cmd->yaw);
                 Djimotor_set_target(pitch_motor, cmd->pitch);
+                // Djimotor_set_target(pitch_motor, 0);
                
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
 
-                // Uart_printf(test_uart,"pitch_target:%.2f,%.2f\r\n",cmd->pitch,gimbal_imu_data->euler.pitch);
+                // SEGGER_RTT_printf(0, "Pitch Angle: %d, Iout: %d\r\n", 
+                //                   (int)gimbal_imu_data->euler.pitch, 
+                //                   (int)pitch_motor->motor_pid.speed_pid.Iout);
+               // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",cmd->pitch,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
                 //云台视觉模式
             case GIMBAL_VISION_MODE:

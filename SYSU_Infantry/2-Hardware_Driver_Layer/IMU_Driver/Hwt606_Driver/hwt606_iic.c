@@ -10,6 +10,9 @@
 #include "bsp_wdg.h"
 #include "error_handler.h"
 
+#include "FreeRTOS.h"
+#include "semphr.h"
+
 // ================= 配置 =================
 // 维特智能寄存器 (Word寻址)：0x34起为 Ax, Ay, Az, Wx, Wy, Wz
 #define REG_READ_START      0x34 

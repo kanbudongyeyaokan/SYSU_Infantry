@@ -59,7 +59,7 @@ QueueHandle_t Buzzer_cmd_queue_handle;
 
 QueueHandle_t Gimbal_feedback_queue_handle;
 
-QueueHandle_t Chassis_feedback_queue_handle;\
+QueueHandle_t Chassis_feedback_queue_handle;
 
 QueueHandle_t Shoot_feedback_queue_handle;
 

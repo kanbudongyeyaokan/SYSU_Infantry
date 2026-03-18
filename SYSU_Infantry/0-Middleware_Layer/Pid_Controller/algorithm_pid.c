@@ -30,6 +30,8 @@ void Pid_init(Pid_instance_t *pid, Pid_init_t *config)
     pid->LPF_coefficient = config->LPF_coefficient;
     pid->integral_separation_threshold = config->integral_separation_threshold;
 
+    pid->feedforward_source = config->feedforward_source;
+
     // 初始化时间戳，避免第一次计算dt过大
     DWT_GetDeltaT(&pid->dwt_counter);
     pid->dt = 0.001f; // 默认给一个安全值
