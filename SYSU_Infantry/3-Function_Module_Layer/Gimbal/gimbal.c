@@ -210,7 +210,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             //云台陀螺仪反馈模式
             case GIMBAL_GYRO_MODE:
                 //使能电机
-                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
+                Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
                 // Djimotor_set_status(yaw_motor, MOTOR_STOP);
                 // Djimotor_set_status(pitch_motor, MOTOR_STOP);
@@ -225,9 +225,9 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
 
-                // SEGGER_RTT_printf(0, "Pitch Angle: %d, Iout: %d\r\n", 
-                //                   (int)gimbal_imu_data->euler.pitch, 
-                //                   (int)pitch_motor->motor_pid.speed_pid.Iout);
+                SEGGER_RTT_printf(0, "Pitch Angle: %d, Iout: %d\r\n", 
+                                  (int)gimbal_imu_data->euler.pitch, 
+                                  (int)pitch_motor->motor_pid.speed_pid.Iout);
                // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",cmd->pitch,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
                 //云台视觉模式
