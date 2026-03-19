@@ -33,6 +33,14 @@
 
 #include "SEGGER_RTT.h"
 
+// 用于控制 RTT 打印的频率
+enum {
+    GIMBAL_PITCH_RTT_HZ = 20U,
+    GIMBAL_PITCH_RTT_PERIOD_MS = 1000U / GIMBAL_PITCH_RTT_HZ,
+    GIMBAL_PITCH_VOFA_RTT_CHANNEL = 1U,
+    GIMBAL_PITCH_VOFA_RTT_BUFFER_SIZE = 1024U,
+};
+
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
 
@@ -50,6 +58,53 @@ extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队�
 
 //云台PITCH重力补偿
 static float pitch_gravity_factor = 0.0f;
+
+// 用于 Cortex-Debug 在线改 pitch 目标角 与 RTT 不同端口打印
+volatile float gimbal_pitch_gravity_test_target_deg = 0.0f;
+
+static char gimbal_pitch_vofa_rtt_buffer[GIMBAL_PITCH_VOFA_RTT_BUFFER_SIZE];
+static uint32_t gimbal_pitch_rtt_last_print_tick = 0U;
+static uint8_t gimbal_pitch_rtt_channel_ready = 0U;
+
+static void Gimbal_pitch_rtt_init(void) {
+    if (gimbal_pitch_rtt_channel_ready == 0U) {
+        SEGGER_RTT_ConfigUpBuffer(GIMBAL_PITCH_VOFA_RTT_CHANNEL,
+                                  "VOFA-PITCH",
+                                  gimbal_pitch_vofa_rtt_buffer,
+                                  sizeof(gimbal_pitch_vofa_rtt_buffer),
+                                  SEGGER_RTT_MODE_NO_BLOCK_SKIP);
+        gimbal_pitch_rtt_channel_ready = 1U;
+    }
+}
+
+static void Gimbal_pitch_rtt_vofa_print(float pitch_target_deg) {
+    if (pitch_motor == NULL || gimbal_imu_data == NULL) {
+        return;
+    }
+
+    const float pitch_measure_deg = gimbal_imu_data->euler.pitch;
+
+    Gimbal_pitch_rtt_init();
+
+    uint32_t now = HAL_GetTick();
+    if ((now - gimbal_pitch_rtt_last_print_tick) < GIMBAL_PITCH_RTT_PERIOD_MS) {
+        return;
+    }
+    gimbal_pitch_rtt_last_print_tick = now;
+
+    char rtt_line[128];
+    int len = snprintf(rtt_line, sizeof(rtt_line),
+                       "%.3f,%.3f,%.5f,%.3f,%.3f,%.3f\n",
+                       pitch_target_deg,
+                       pitch_measure_deg,
+                       pitch_gravity_factor,
+                       pitch_motor->motor_pid.speed_pid.Pout,
+                       pitch_motor->motor_pid.speed_pid.Iout,
+                       pitch_motor->motor_pid.speed_pid.Output);
+    if (len > 0) {
+        SEGGER_RTT_WriteString(GIMBAL_PITCH_VOFA_RTT_CHANNEL, rtt_line);
+    }
+}
 
 
 /**
@@ -123,24 +178,24 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.x),
             .angle_pid = {
-                .kp = 35,// 30
-                .ki = 0,
-                .kd = 0.0,
-                .max_out = 800,
-                .max_iout = 100,
+                .kp = 35.0f,
+                .ki = 0.0f,
+                .kd = 0.0f,
+                .max_out = 800.0f,
+                .max_iout = 100.0f,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_DIFFERENTIAL_GO_FIRST,
             },
             .speed_pid = {
-                .kp = 70,// 60
-                .ki = 2.0,// 20
-                .kd = 0,
+                .kp = 70.0f,
+                .ki = 20.0f,
+                .kd = 0.0f,
                 .deadband = 0.1f,
-                .max_out = 15000,
-                .max_iout = 3000,
+                .max_out = 15000.0f,
+                .max_iout = 8000.0f,
                 // .LPF_coefficient = 0.9f,
                 // 前馈参数
                 .feedforward_source = &pitch_gravity_factor, // cos 因子
-                .feedfoward_coefficient = 2907.0f,           // 需要实测
+                .feedfoward_coefficient = 3300.0f,           // 需要实测
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
                 
             
@@ -175,6 +230,7 @@ void Gimbal_task_init(void) {
 
     //初始化云台电机
     Gimbal_motor_init();
+    Gimbal_pitch_rtt_init();
 
     Vision_Comm_Init();
 }
@@ -225,10 +281,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
 
-                SEGGER_RTT_printf(0, "Pitch Angle: %d, Iout: %d\r\n", 
-                                  (int)gimbal_imu_data->euler.pitch, 
-                                  (int)pitch_motor->motor_pid.speed_pid.Iout);
-               // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",cmd->pitch,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
+                Gimbal_pitch_rtt_vofa_print(cmd->pitch);
+               // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",pitch_target_deg,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
                 //云台视觉模式
             case GIMBAL_VISION_MODE:
@@ -237,8 +291,9 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 
                 if (Is_Vision_Online()) {
                     const Infantry_Vision_Rx_Data_t* v = Get_Vision_Data();
+                    
                     Djimotor_set_target(yaw_motor, cmd->yaw + v->yaw_angle);
-                    Djimotor_set_target(pitch_motor,cmd->pitch + v->pitch_angle);
+                    Djimotor_set_target(pitch_motor, cmd->pitch + v->pitch_angle);
                 } else {
                     ERROR_CRITICAL("GIMBAL", "Vision data not available, cannot enter VISION_MODE");
                     Djimotor_set_target(yaw_motor, cmd->yaw);
@@ -247,6 +302,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
+                // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
                 break;
 
             default:
