@@ -1,6 +1,6 @@
 /**
  * @file    hwt606_iic.c
- * @brief   HWT606 驱动实现 (内置Mahony 互补滤波)
+ * @brief   HWT606 驱动实现 (内置Mahony 互补滤波，极致精简版)
  */
 
 #include "hwt606_iic.h"
@@ -12,11 +12,13 @@
 
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include "arm_math.h"
 
 // ================= 配置 =================
 // 维特智能寄存器 (Word寻址)：0x34起为 Ax, Ay, Az, Wx, Wy, Wz
 #define REG_READ_START      0x34 
-#define READ_LEN            24   
+// 【优化】只读加速度和角速度，共 6 个 short 数据，合计 12 字节！通信耗时减半！
+#define READ_LEN            12   
 
 #define DEG2SEC             (3.14159265f / 180.0f)
 #define RAD2DEG             (180.0f / 3.14159265f)
@@ -114,6 +116,7 @@ static bool HWT606_Wait_Data(void)
     uint32_t start_tick = HAL_GetTick();
     while (hwt606_dev.read_success == false) {
         if (HAL_GetTick() - start_tick > 10) return false;
+        taskYIELD(); // 必须保留，防止轮询卡死系统
     }
     Watchdog_feed(imu_wdg);
     return true;
@@ -126,7 +129,7 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
 
     uint8_t *buf = hwt606_dma_buf;
 
-    // 严格按照物理原轴读取，绝不在原始数据处互换 X/Y，保证右手坐标系！
+    // 严格按照物理原轴读取
     int16_t acc_int[3], gyro_int[3];
     acc_int[0] = (int16_t)(buf[0] | (buf[1] << 8));
     acc_int[1] = (int16_t)(buf[2] | (buf[3] << 8));
@@ -145,47 +148,47 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     float gy = gyro_int[1] * HWT_GYRO_2000_SEN * DEG2SEC;
     float gz = gyro_int[2] * HWT_GYRO_2000_SEN * DEG2SEC;
 
-    //零漂处理
-    static float gyro_z_bias = 0.0f; // 静态 Z 轴零偏记录
-    float acc_norm = sqrtf(ax*ax + ay*ay + az*az);
+    // ==========================================================
+    // 【核心修复】备份纯净数据！这是治好 YAW 轴急停摆动的神药
+    // ==========================================================
+    float pure_gx = gx;
+    float pure_gy = gy;
+    float pure_gz = gz;
 
-    // 静止检测：加速度模长接近 1g，且三轴角速度极小
+    // 零漂处理
+    static float gyro_z_bias = 0.0f; 
+    float acc_norm;
+    
+    // 【DSP 优化 1】使用 FPU 硬件指令开方，代替 sqrtf
+    arm_sqrt_f32(ax*ax + ay*ay + az*az, &acc_norm);
+
+    // 静止检测
     if (acc_norm > 9.6f && acc_norm < 10.0f && 
         fabsf(gx) < 0.02f && fabsf(gy) < 0.02f && fabsf(gz) < 0.02f) {
-        
-        // 低通滤波在线学习 Z 轴当前的温漂误差 ，学习率为0.001，可以进行修改
         gyro_z_bias += 0.001f * (gz - gyro_z_bias); 
     }
 
-    // 扣除学习到的零偏
-    // gz -= gyro_z_bias;
-
-    // 施加死区 (Deadband)：彻底滤除静止时的残余白噪声
-    // 0.0015 rad/s 约等于 0.08 deg/s，如果角速度比这个还小，直接视为云台绝对静止
-    if (fabsf(gz) < 0.0015f) {
-        gz = 0.0f; 
-    }
+    // 扣除学习到的零偏（纯净数据和将要用于融合的数据都要扣除）
+    pure_gz -= gyro_z_bias;
+    gz -= gyro_z_bias;
 
     // 动态抗干扰 Mahony 核心逻辑 
-    // float acc_norm = sqrtf(ax*ax + ay*ay + az*az);
-    float Kp = 1.0f;  // 互补滤波比例增益
-    float Ki = 0.005f;// 互补滤波积分增益 (用于消除陀螺仪静态零偏)
+    float Kp = 0.4f;  // 【优化】降低解算的 Kp，减少加速度计高频噪声干扰，提升姿态平滑度
+    float Ki = 0.005f;
 
-    // 防点头：当加速度偏离 1g (9.8) 超过 ±10% 时，说明在剧烈运动
+    // 防点头
     if (acc_norm < 8.8f || acc_norm > 10.8f) {
-        Kp = 0.0f; // 彻底屏蔽加速度计，防止方向带偏
-        Ki = 0.0f; // 停止积分更新
+        Kp = 0.0f; 
+        Ki = 0.0f; 
     }
 
     if (acc_norm > 0.1f) {
         ax /= acc_norm; ay /= acc_norm; az /= acc_norm;
 
-        // 从四元数推导出的机体系重力分量
         float vx = 2.0f * (q1*q3 - q0*q2);
         float vy = 2.0f * (q0*q1 + q2*q3);
         float vz = q0*q0 - q1*q1 - q2*q2 + q3*q3;
 
-        // 叉乘求误差
         float ex = (ay*vz - az*vy);
         float ey = (az*vx - ax*vz);
         float ez = (ax*vy - ay*vx);
@@ -206,32 +209,30 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     q2 += ( q0_last*gy - q1_last*gz + q3_last*gx) * (0.5f * dt_s);
     q3 += ( q0_last*gz + q1_last*gy - q2_last*gx) * (0.5f * dt_s);
 
-    // 四元数归一化
-    float q_norm = sqrtf(q0*q0 + q1*q1 + q2*q2 + q3*q3);
+    // 【DSP 优化 2】四元数归一化硬件加速
+    float q_norm;
+    arm_sqrt_f32(q0*q0 + q1*q1 + q2*q2 + q3*q3, &q_norm);
     q0 /= q_norm; q1 /= q_norm; q2 /= q_norm; q3 /= q_norm;
 
-    // 计算标准欧拉角 (ZYX顺序)
+    // 计算标准欧拉角
     float roll  = atan2f(2.0f*(q0*q1 + q2*q3), 1.0f - 2.0f*(q1*q1 + q2*q2)) * RAD2DEG;
     float pitch = asinf(-2.0f*(q1*q3 - q0*q2)) * RAD2DEG;
     float yaw   = atan2f(2.0f*(q0*q3 + q1*q2), 1.0f - 2.0f*(q2*q2 + q3*q3)) * RAD2DEG;
 
-    // ================= 新增：提取维特硬件 YAW 角度 =================
-    // buf[18~19]是X角, buf[20~21]是Y角, buf[22~23]是Z角(YAW)
-    int16_t hw_yaw_int = (int16_t)(buf[22] | (buf[23] << 8));
-    float hw_yaw = hw_yaw_int * (180.0f / 32768.0f);
-
-    out_data->euler.roll  = pitch;  // 若需对调，改为 pitch
-    out_data->euler.pitch = roll; // 若需对调，改为 roll
+    out_data->euler.roll  = pitch; 
+    out_data->euler.pitch = roll; 
     out_data->euler.yaw   = yaw;
-    // out_data->euler.yaw   = hw_yaw; // 直接使用维特硬件输出的 YAW 角度，单位是度
 
-    out_data->acc_body.x  = ax * acc_norm; // 恢复原始未归一化的m/s^2
+    out_data->acc_body.x  = ax * acc_norm; 
     out_data->acc_body.y  = ay * acc_norm;
     out_data->acc_body.z  = az * acc_norm;
-    out_data->gyro_body.x = gx * RAD2DEG;
-    out_data->gyro_body.y = gy * RAD2DEG;
-    out_data->gyro_body.z = gz * RAD2DEG;
-    //ERROR_INFO("HWT606", "gyro_body_z: %.2f, gz: %.2f", out_data->gyro_body.y, gy * RAD2DEG);
+    
+    // ==========================================================
+    // 【终极闭环】必须将纯净的数据喂给云台 PID 速度环！
+    // ==========================================================
+    out_data->gyro_body.x = pure_gx * RAD2DEG; 
+    out_data->gyro_body.y = pure_gy * RAD2DEG;
+    out_data->gyro_body.z = pure_gz * RAD2DEG;
 
     // 5. 连续偏航角(Yaw)多圈处理
     if (hwt606_dev.is_first_frame) {

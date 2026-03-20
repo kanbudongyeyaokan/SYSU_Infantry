@@ -25,6 +25,8 @@ void Ins_task(void const *argument)
     // 初始化 INS 层 
     Ins_init(driver);
     const Ins_data_t *data;
+
+    TickType_t xLastWakeTime = xTaskGetTickCount();
     for(;;)
     {
         Ins_update();
@@ -39,6 +41,6 @@ void Ins_task(void const *argument)
         // 反馈数据
         // Uart_printf(test_uart,"yaw_speed:%.2f,%.2f\r\n",data->gyro_body.z,data->gyro_body.x);
          // 将当前的 INS 数据发布给决策层，用于下一帧的闭环控制或逻辑判断 
-        osDelay(2); 
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
     }
 }

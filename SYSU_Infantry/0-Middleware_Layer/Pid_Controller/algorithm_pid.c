@@ -32,6 +32,8 @@ void Pid_init(Pid_instance_t *pid, Pid_init_t *config)
 
     pid->feedforward_source = config->feedforward_source;
 
+    pid->target_ff_coef = config->target_ff_coef;
+
     // 初始化时间戳，避免第一次计算dt过大
     DWT_GetDeltaT(&pid->dwt_counter);
     pid->dt = 0.001f; // 默认给一个安全值
@@ -85,7 +87,7 @@ float Pid_calculate(Pid_instance_t *pid, float measure, float target)
         // 步兵底盘通常希望死区内无力
         // pid->Pout = 0.0f;
         // 积分项是否清零视需求而定，通常不清零以保持姿态，但长时间死区应防饱和
-        pid->Output = 0.0f; // 死区内输出为0
+       
     }
 
     // 4. P项计算
@@ -144,13 +146,11 @@ float Pid_calculate(Pid_instance_t *pid, float measure, float target)
 
    // 9. 前馈控制 
     if (pid->optimization & PID_FEEDFOWARD) {
+        pid->Output += pid->target_ff_coef * pid->target; 
+        
+        // 外部源前馈 (专治重力补偿)
         if (pid->feedforward_source != NULL) {
-            // 如果提供了外部前馈源，将其乘以系数后叠加到输出上
             pid->Output += pid->feedfoward_coefficient * (*pid->feedforward_source);
-        } else {
-            // 如果没有外部前馈源，但开启了前馈，默认将目标值作为前馈项
-            // 这在速度环中通常是用来做“速度前馈” 
-            pid->Output += pid->feedfoward_coefficient * pid->target; 
         }
     }
     // 10. 输出限幅

@@ -35,7 +35,7 @@
 
 // 用于控制 RTT 打印的频率
 enum {
-    GIMBAL_PITCH_RTT_HZ = 20U,
+    GIMBAL_PITCH_RTT_HZ = 500U,
     GIMBAL_PITCH_RTT_PERIOD_MS = 1000U / GIMBAL_PITCH_RTT_HZ,
     GIMBAL_PITCH_VOFA_RTT_CHANNEL = 1U,
     GIMBAL_PITCH_VOFA_RTT_BUFFER_SIZE = 1024U,
@@ -94,7 +94,7 @@ static void Gimbal_pitch_rtt_vofa_print(float pitch_target_deg) {
 
     char rtt_line[128];
     int len = snprintf(rtt_line, sizeof(rtt_line),
-                       "%.3f,%.3f,%.5f,%.3f,%.3f,%.3f\n",
+                       "%.3f,%.3f,%.5f,%.3f,%.3f,%.3f\r\n",
                        pitch_target_deg,
                        pitch_measure_deg,
                        pitch_gravity_factor,
@@ -146,7 +146,8 @@ static void Gimbal_motor_init(void) {
                 .deadband = 0.0f,
                 .max_out = 25000,
                 .max_iout = 8000,
-                .feedfoward_coefficient = 0.05f,
+                // .feedfoward_coefficient = 0.05f,
+                .target_ff_coef = 0.1f, // 目标值前馈系数 (实测调整)
                 .LPF_coefficient = 0.0f,
                 .integral_separation_threshold = 0.0f,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD|PID_OUTPUT_FILTER,
@@ -186,19 +187,19 @@ static void Gimbal_motor_init(void) {
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_DIFFERENTIAL_GO_FIRST,
             },
             .speed_pid = {
-                .kp = 70.0f,
+                .kp = 80.0f,
                 .ki = 20.0f,
                 .kd = 0.0f,
                 .deadband = 0.1f,
-                .max_out = 15000.0f,
+                .max_out = 20000.0f,
                 .max_iout = 8000.0f,
                 // .LPF_coefficient = 0.9f,
                 // 前馈参数
+                .target_ff_coef = 0.1f, // 目标值前馈系数 (实测调整)
                 .feedforward_source = &pitch_gravity_factor, // cos 因子
                 .feedfoward_coefficient = 3300.0f,           // 需要实测
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
                 
-            
             },
 
         },
