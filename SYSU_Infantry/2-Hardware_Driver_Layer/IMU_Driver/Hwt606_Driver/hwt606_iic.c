@@ -28,6 +28,8 @@
 
 static Watchdog_device_t *imu_wdg;
 
+static SemaphoreHandle_t hwt606_dma_sem = NULL;
+
 // ================= 私有对象结构体 =================
 typedef struct
 {
@@ -66,6 +68,10 @@ static void IMU_Offline_Callback(void *arg)
 static bool HWT606_Init(void)
 {
     if (hwt606_dev.hi2c == NULL) return false;
+
+    if (hwt606_dma_sem == NULL) {
+        hwt606_dma_sem = xSemaphoreCreateBinary();
+    }
 
     HAL_Delay(200);
 
@@ -109,17 +115,30 @@ void HWT606_RxCpltCallback(I2C_HandleTypeDef *hi2c)
     if (hwt606_dev.hi2c != NULL && hi2c == hwt606_dev.hi2c) {
         hwt606_dev.read_success = true;
     }
+
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        if (hwt606_dma_sem != NULL) {
+            xSemaphoreGiveFromISR(hwt606_dma_sem, &xHigherPriorityTaskWoken);
+            // 如果唤醒的任务优先级比当前打断的任务高，则立即进行上下文切换
+            portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
+        }
 }
 
 static bool HWT606_Wait_Data(void)
 {
-    uint32_t start_tick = HAL_GetTick();
-    while (hwt606_dev.read_success == false) {
-        if (HAL_GetTick() - start_tick > 10) return false;
-        taskYIELD(); // 必须保留，防止轮询卡死系统
+   if (hwt606_dma_sem == NULL) return false;
+
+    // 死等信号量！
+    // 任务在这里挂起，完全不消耗 CPU。最多等 10 毫秒（pdMS_TO_TICKS(10)）。
+    // 如果 DMA 中断释放了信号量，这个函数会立刻返回 pdTRUE。
+    if (xSemaphoreTake(hwt606_dma_sem, pdMS_TO_TICKS(10)) == pdTRUE) {
+        Watchdog_feed(imu_wdg);
+        return true;
+    } else {
+        // 等了 10ms 还没拿到，说明 I2C 死了或者线断了
+        hwt606_dev.read_success = false;
+        return false;
     }
-    Watchdog_feed(imu_wdg);
-    return true;
 }
 
 // 核心解算：解析数据 + 自适应 Mahony 滤波
@@ -173,7 +192,7 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     gz -= gyro_z_bias;
 
     // 动态抗干扰 Mahony 核心逻辑 
-    float Kp = 0.4f;  // 【优化】降低解算的 Kp，减少加速度计高频噪声干扰，提升姿态平滑度
+    float Kp = 0.4f;  // 降低解算的 Kp，减少加速度计高频噪声干扰，提升姿态平滑度
     float Ki = 0.005f;
 
     // 防点头

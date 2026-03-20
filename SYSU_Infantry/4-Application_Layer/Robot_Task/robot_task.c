@@ -118,7 +118,7 @@ void Robot_task_init(void)
 
   ERROR_INFO("SYS", "Init");
 
-  osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 1024);
+  osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 2048);
   ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
     //看门狗任务
    osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityHigh, 0, 512);
