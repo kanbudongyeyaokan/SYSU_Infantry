@@ -67,8 +67,9 @@ typedef struct
     float imu_yaw_rate;
     //IMU输出的Pitch绝对角（度）
     float imu_pitch_angle;
-    //云台应用层当前真正执行的目标，用于模式切换时同步手动目标
+    //云台应用层当前真正执行的目标，用于决策层做无扰切换同步
     float active_yaw_target;
+    //与 active_yaw_target 成对使用，退出视觉时一起回写到手动目标
     float active_pitch_target;
     //IMU状态
     // Imu_state_e imu_state;

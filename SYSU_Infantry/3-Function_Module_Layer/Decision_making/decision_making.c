@@ -136,12 +136,14 @@ void Send_command_to_all_task()
 /**
  * @brief 让决策层维护的手动目标跟随云台当前真正执行的 active_ref
  * @note  视觉模式下持续同步；退出视觉的第一拍也同步一次，避免切回手动时跳回旧目标
+ * @note  last_gimbal_mode 用来覆盖“刚退出视觉但本拍已经改成手动模式”的瞬间
  */
 static void Decision_sync_gimbal_manual_target(void)
 {
     if ((gimbal_cmd_send.gimbal_mode == GIMBAL_VISION_MODE) ||
         (last_gimbal_mode == GIMBAL_VISION_MODE))
     {
+        // 手动目标直接追随当前 active_ref，保证模式切回手动时 setpoint 连续
         gimbal_cmd_send.yaw = gimbal_feedback_recv.active_yaw_target;
         gimbal_cmd_send.pitch = gimbal_feedback_recv.active_pitch_target;
     }
@@ -299,7 +301,8 @@ void RC_ctrl_set()
     chassis_cmd_send.vx = -2.0f * (float)sbus_data[CURRENT].rc.Ch4;
     
     // ==================== 云台目标值同步逻辑 ====================
-    // 当云台从归中状态切换到就绪状态时，需要同步目标值
+    // READY 首拍直接继承云台应用层当前执行的 active_ref，
+    // 避免决策层还拿着初始化旧值，导致一使能就追错目标。
     Gimbal_state_e gimbal_state = Gimbal_get_state();
     if (gimbal_state == GIMBAL_STATE_READY && !gimbal_yaw_initialized) {
         gimbal_cmd_send.yaw = gimbal_feedback_recv.active_yaw_target;
@@ -507,13 +510,13 @@ void RC_ctrl_set()
 }
 
 /**
-/**
  * @brief 控制输入为键鼠时的模式和控制量设置
  *
  */
 void Keyboard_ctrl_set()
 {
-    // 键鼠控制固定回到手动 IMU 模式，并先同步手动目标
+    // 键鼠控制固定回到手动 IMU 模式，并先同步手动目标。
+    // 这样即使上一拍还在视觉模式，这一拍开始累加的也是当前 active_ref，而不是历史旧值。
     gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
     Decision_sync_gimbal_manual_target();
 #if USE_SBUS_RECEIVER == 1
@@ -554,7 +557,8 @@ void Keyboard_ctrl_set()
         shoot_cmd_send.loader_mode = LOAD_STOP;
     }
     
-    //急停模式
+    // 急停逻辑可能会把云台切到 ZERO_FORCE，这里紧跟一次同步，
+    // 防止急停期间手动目标继续积累，恢复后产生额外跳变。
     Emergency_stop();
     Decision_sync_gimbal_manual_target();
 #elif USE_SBUS_RECEIVER == 2
