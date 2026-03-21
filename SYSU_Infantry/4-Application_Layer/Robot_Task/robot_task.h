@@ -17,6 +17,7 @@ extern osThreadId referee_task_handle; //裁判系统通信任务
 extern osThreadId others_task_handle; //处理其他任务，比如与视觉通信，电量读取等琐碎任务，后续根据实际进行修改
 extern osThreadId watchdog_task_handle;
 extern osThreadId buzzer_alarm_task_handle;
+extern osThreadId ui_task_handle;
 
 extern osThreadId bmi088_test_task_handle; //bmi088测试任务
 extern osThreadId can_motors_test_task_handle; // can电机测试任务

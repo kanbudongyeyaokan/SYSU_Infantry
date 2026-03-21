@@ -32,6 +32,10 @@ enable_language(C ASM)
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
+file(GLOB UI_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/UI/*.c"
+)
+
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
         1-Hardware_Layer/bsp_dwt/bsp_dwt.h
@@ -65,6 +69,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Execution/Shoot_Task/shoot_task.h
         4-Application_Layer/Execution/Motor_Task/motor_task.c
         4-Application_Layer/Execution/Motor_Task/motor_task.h
+        4-Application_Layer/Execution/UI_Task/ui_task.c
+        4-Application_Layer/Execution/UI_Task/ui_task.h
         4-Application_Layer/Execution/Watchdog_Task/watchdog_task.h
         4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c
 
@@ -210,6 +216,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ${UI_SOURCES}
         # Add user sources here
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task/robot_task.c
         ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c
@@ -233,6 +240,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Math_lib
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Error_System/inc
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Crc
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/UI
 
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/letter-shell-master/src
 
@@ -264,6 +272,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Gimbal_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Motor_Task
+        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/UI_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Ins_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Referee_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
