@@ -65,6 +65,11 @@ typedef struct
     float imu_yaw_total_angle;
     //IMU输出的Yaw角速度（度/秒）
     float imu_yaw_rate;
+    //IMU输出的Pitch绝对角（度）
+    float imu_pitch_angle;
+    //云台应用层当前真正执行的目标，用于模式切换时同步手动目标
+    float active_yaw_target;
+    float active_pitch_target;
     //IMU状态
     // Imu_state_e imu_state;
 }Gimbal_feedback_info_t;
