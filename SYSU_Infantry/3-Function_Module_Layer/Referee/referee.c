@@ -3,6 +3,7 @@
 #include "crc_referee.h"
 #include "ui_default.h"
 #include "ui_interface.h"
+#include "SEGGER_RTT.h"
 
 // 全局变量
 static Referee_Data_t referee_data;
@@ -83,6 +84,9 @@ static void Referee_Unpack(uint8_t *data, uint16_t len)
 static void Referee_Rx_Callback(void)
 {
     if (referee_uart == NULL) return;
+    SEGGER_RTT_printf(0, "Ref RX Len: %d, Head: %02X\r\n", 
+                      referee_uart->rx_data_len, 
+                      referee_uart->rx_buffer[0]);
     Referee_Unpack(referee_uart->rx_buffer, referee_uart->rx_data_len);
 }
 
@@ -97,15 +101,39 @@ Referee_Data_t* Referee_Get_Data(UART_HandleTypeDef *huart)
 void Referee_Send_UI_Test(void)
 {
     if (referee_uart == NULL) return;
-    ui_interface_init();
-    ui_init_default();
+      uint8_t tx_buf[128];
+    frame_header_t *pHeader = (frame_header_t *)tx_buf;
+    uint16_t *pCmdID = (uint16_t *)&tx_buf[5];
+    ext_student_interactive_header_data_t *pInterHeader = (ext_student_interactive_header_data_t *)&tx_buf[7];
+    graphic_data_struct_t *pGraphic = (graphic_data_struct_t *)&tx_buf[7 + sizeof(ext_student_interactive_header_data_t)];
+    pInterHeader->data_cmd_id = 0x0101;
+    uint8_t robot_id = referee_data.robot_status.robot_id;
+    pInterHeader->sender_id = robot_id;
+    pInterHeader->receiver_id = (robot_id == 0) ? (1 | 0x0100) : (robot_id | 0x0100);
 
-    for (;;)
-    {
-        osDelay(100);
-        ui_update_default();
-    }
-    // Uart_sendData(referee_uart, tx_buf, total_len);
+    pGraphic->graphic_name[0] = 'T';
+    pGraphic->graphic_name[1] = 'S';
+    pGraphic->graphic_name[2] = 'T';
+    pGraphic->operate_tpye = 1;
+    pGraphic->graphic_tpye = 0;
+    pGraphic->layer = 0;
+    pGraphic->color = 1;
+    pGraphic->start_x = 500;
+    pGraphic->start_y = 500;
+    pGraphic->end_x = 900;
+    pGraphic->end_y = 900;
+    pGraphic->width = 5;
+
+    uint16_t data_len = sizeof(ext_student_interactive_header_data_t) + sizeof(graphic_data_struct_t);
+    pHeader->SOF = REF_SOF;
+    pHeader->data_length = data_len;
+    pHeader->seq = 0;
+
+    Append_CRC8_Check_Sum(tx_buf, REF_HEADER_LEN - 1);
+    *pCmdID = INTERACTIVE_DATA_CMD_ID;
+    uint16_t total_len = REF_HEADER_LEN + REF_CMD_LEN + data_len + REF_CRC16_LEN;
+    Append_CRC16_Check_Sum(tx_buf, total_len - 2);
+    Uart_sendData(referee_uart, tx_buf, total_len);
 }
 
 uint16_t ChassisPower_GetMaxLimit(void)

@@ -21,7 +21,7 @@ ui_7_frame_t _ui_7_frame;
 void ui_interface_init(void)
 {
     if (ui_uart == NULL) {
-        ui_uart = Uart_register(&huart6, NULL);
+        // ui_uart = Uart_register(&huart6, NULL);
     }
 }
 
