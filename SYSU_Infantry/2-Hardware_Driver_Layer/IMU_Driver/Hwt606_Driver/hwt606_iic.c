@@ -1,6 +1,6 @@
 /**
  * @file    hwt606_iic.c
- * @brief   HWT606 驱动实现 (内置Mahony 互补滤波，极致精简版)
+ * @brief   HWT606 驱动实现 (极致精简版 + 三轴上电静止校准 + 动态温漂追踪 + 6轴Yaw防漂移)
  */
 
 #include "hwt606_iic.h"
@@ -27,7 +27,6 @@
 #define HWT_GYRO_2000_SEN   (2000.0f / 32768.0f)
 
 static Watchdog_device_t *imu_wdg;
-
 static SemaphoreHandle_t hwt606_dma_sem = NULL;
 
 // ================= 私有对象结构体 =================
@@ -51,6 +50,11 @@ static uint8_t hwt606_dma_buf[READ_LEN];
 // Mahony 滤波全局状态
 static float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;
 static float exInt = 0.0f, eyInt = 0.0f, ezInt = 0.0f;
+
+// ================= 静态校准全局变量 =================
+static float gyro_bias[3] = {0.0f, 0.0f, 0.0f};
+static uint16_t cali_count = 0;
+#define CALI_FRAMES 1000 // 假设运行在1000Hz，上电前1秒钟强制静止收集零偏
 
 // ================= 内部辅助函数 =================
 static void HWT606_Reset_I2C(void)
@@ -96,6 +100,15 @@ static bool HWT606_Init(void)
 
     hwt606_dev.is_first_frame = true;
     hwt606_dev.round_count = 0;
+    
+    // 初始化时重置校准状态与四元数，防止热重启时带入旧误差
+    cali_count = 0;
+    gyro_bias[0] = 0.0f;
+    gyro_bias[1] = 0.0f;
+    gyro_bias[2] = 0.0f;
+    q0 = 1.0f; q1 = 0.0f; q2 = 0.0f; q3 = 0.0f;
+    exInt = 0.0f; eyInt = 0.0f; ezInt = 0.0f;
+
     hwt606_dev.is_ready = true;
     return true;
 }
@@ -117,25 +130,20 @@ void HWT606_RxCpltCallback(I2C_HandleTypeDef *hi2c)
     }
 
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        if (hwt606_dma_sem != NULL) {
-            xSemaphoreGiveFromISR(hwt606_dma_sem, &xHigherPriorityTaskWoken);
-            // 如果唤醒的任务优先级比当前打断的任务高，则立即进行上下文切换
-            portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
-        }
+    if (hwt606_dma_sem != NULL) {
+        xSemaphoreGiveFromISR(hwt606_dma_sem, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken); 
+    }
 }
 
 static bool HWT606_Wait_Data(void)
 {
    if (hwt606_dma_sem == NULL) return false;
 
-    // 死等信号量！
-    // 任务在这里挂起，完全不消耗 CPU。最多等 10 毫秒（pdMS_TO_TICKS(10)）。
-    // 如果 DMA 中断释放了信号量，这个函数会立刻返回 pdTRUE。
     if (xSemaphoreTake(hwt606_dma_sem, pdMS_TO_TICKS(10)) == pdTRUE) {
         Watchdog_feed(imu_wdg);
         return true;
     } else {
-        // 等了 10ms 还没拿到，说明 I2C 死了或者线断了
         hwt606_dev.read_success = false;
         return false;
     }
@@ -168,34 +176,63 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     float gz = gyro_int[2] * HWT_GYRO_2000_SEN * DEG2SEC;
 
     // ==========================================================
-    // 【核心修复】备份纯净数据！这是治好 YAW 轴急停摆动的神药
+    // 【静态校准层】：上电锁定绝对零偏
+    // ==========================================================
+    if (cali_count < CALI_FRAMES) {
+        gyro_bias[0] += gx;
+        gyro_bias[1] += gy;
+        gyro_bias[2] += gz;
+        cali_count++;
+        
+        if (cali_count == CALI_FRAMES) {
+            gyro_bias[0] /= CALI_FRAMES;
+            gyro_bias[1] /= CALI_FRAMES;
+            gyro_bias[2] /= CALI_FRAMES;
+        }
+        
+        // 校准期间挂起状态，阻止云台运动，防止失控
+        out_data->state = INS_STATE_INIT;
+        return; 
+    }
+
+    // 扣除开机时的绝对零偏
+    gx -= gyro_bias[0];
+    gy -= gyro_bias[1];
+    gz -= gyro_bias[2];
+
+    // ==========================================================
+    // 【动态温漂追踪层 (ZUPT)】：专治 6轴 Yaw 温漂
+    // ==========================================================
+    static float dynamic_gz_bias = 0.0f;
+    float acc_norm;
+    arm_sqrt_f32(ax*ax + ay*ay + az*az, &acc_norm);
+
+    // 严苛的静止检测条件：
+    // 1. 加速度模长接近 1G (没受到撞击或加减速)
+    // 2. X和Y轴陀螺仪极小 (云台没有在抬头或翻滚)
+    // 3. Z轴有极其缓慢的漂移 (不超过 0.05 rad/s，即温漂范围内)
+    if (acc_norm > 9.6f && acc_norm < 10.0f && 
+        fabsf(gx) < 0.01f && fabsf(gy) < 0.01f && fabsf(gz) < 0.05f) {
+        
+        // 极低通滤波，偷偷把微小的温漂吃掉
+        dynamic_gz_bias += 0.0005f * (gz - dynamic_gz_bias); 
+    }
+    
+    // 再次扣除动态温漂 (专门给 Z 轴开小灶)
+    gz -= dynamic_gz_bias;
+
+    // ==========================================================
+    // 【纯净反馈层】：用于喂给速度环 PID
     // ==========================================================
     float pure_gx = gx;
     float pure_gy = gy;
     float pure_gz = gz;
 
-    // 零漂处理
-    static float gyro_z_bias = 0.0f; 
-    float acc_norm;
-    
-    // 【DSP 优化 1】使用 FPU 硬件指令开方，代替 sqrtf
-    arm_sqrt_f32(ax*ax + ay*ay + az*az, &acc_norm);
-
-    // 静止检测
-    if (acc_norm > 9.6f && acc_norm < 10.0f && 
-        fabsf(gx) < 0.02f && fabsf(gy) < 0.02f && fabsf(gz) < 0.02f) {
-        gyro_z_bias += 0.001f * (gz - gyro_z_bias); 
-    }
-
-    // 扣除学习到的零偏（纯净数据和将要用于融合的数据都要扣除）
-    pure_gz -= gyro_z_bias;
-    gz -= gyro_z_bias;
-
     // 动态抗干扰 Mahony 核心逻辑 
-    float Kp = 0.4f;  // 降低解算的 Kp，减少加速度计高频噪声干扰，提升姿态平滑度
-    float Ki = 0.005f;
+    float Kp = 0.4f;  
+    float Ki = 0.005f; 
 
-    // 防点头
+    // 防点头：检测到剧烈加速度干扰时，关闭重力修正
     if (acc_norm < 8.8f || acc_norm > 10.8f) {
         Kp = 0.0f; 
         Ki = 0.0f; 
@@ -210,7 +247,10 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
 
         float ex = (ay*vz - az*vy);
         float ey = (az*vx - ax*vz);
-        float ez = (ax*vy - ay*vx);
+        
+        // 【核心修复】：6轴 IMU 的重力绝对无法修正 Yaw 轴！
+        // 必须强行把 ez 设为 0，防止加速度计的平移横向噪声污染 Yaw 轴陀螺仪！
+        float ez = 0.0f; 
 
         exInt += ex * Ki * dt_s;
         eyInt += ey * Ki * dt_s;
@@ -228,14 +268,19 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     q2 += ( q0_last*gy - q1_last*gz + q3_last*gx) * (0.5f * dt_s);
     q3 += ( q0_last*gz + q1_last*gy - q2_last*gx) * (0.5f * dt_s);
 
-    // 【DSP 优化 2】四元数归一化硬件加速
+    // 四元数归一化
     float q_norm;
     arm_sqrt_f32(q0*q0 + q1*q1 + q2*q2 + q3*q3, &q_norm);
     q0 /= q_norm; q1 /= q_norm; q2 /= q_norm; q3 /= q_norm;
 
-    // 计算标准欧拉角
+    // 计算标准欧拉角 (含防 NaN 限幅护盾)
     float roll  = atan2f(2.0f*(q0*q1 + q2*q3), 1.0f - 2.0f*(q1*q1 + q2*q2)) * RAD2DEG;
-    float pitch = asinf(-2.0f*(q1*q3 - q0*q2)) * RAD2DEG;
+    
+    float sinp = -2.0f * (q1*q3 - q0*q2);
+    if (sinp > 1.0f) sinp = 1.0f;
+    if (sinp < -1.0f) sinp = -1.0f;
+    float pitch = asinf(sinp) * RAD2DEG;
+    
     float yaw   = atan2f(2.0f*(q0*q3 + q1*q2), 1.0f - 2.0f*(q2*q2 + q3*q3)) * RAD2DEG;
 
     out_data->euler.roll  = pitch; 
@@ -246,14 +291,12 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     out_data->acc_body.y  = ay * acc_norm;
     out_data->acc_body.z  = az * acc_norm;
     
-    // ==========================================================
-    // 【终极闭环】必须将纯净的数据喂给云台 PID 速度环！
-    // ==========================================================
+    // 纯净角速度反馈
     out_data->gyro_body.x = pure_gx * RAD2DEG; 
     out_data->gyro_body.y = pure_gy * RAD2DEG;
     out_data->gyro_body.z = pure_gz * RAD2DEG;
 
-    // 5. 连续偏航角(Yaw)多圈处理
+    // 连续偏航角(Yaw)多圈处理
     if (hwt606_dev.is_first_frame) {
         hwt606_dev.last_yaw = yaw;
         hwt606_dev.is_first_frame = false;

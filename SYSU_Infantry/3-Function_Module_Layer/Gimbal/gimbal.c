@@ -316,17 +316,17 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->total_yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
-                .kp = 30,
+                .kp = 35,
                 .ki = 0,
                 .kd = 0,
                 .deadband = 0.0f,
-                .max_out = 300,
+                .max_out = 1500,
                 .max_iout = 100,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL, // 角度环输出限幅 + 梯形积分
             },
             .speed_pid = {
-                .kp = 70,
-                .ki = 8.0,
+                .kp = 80,
+                .ki = 15.0,
                 .kd = 0.0,
                 .deadband = 0.0f,
                 .max_out = 25000,
