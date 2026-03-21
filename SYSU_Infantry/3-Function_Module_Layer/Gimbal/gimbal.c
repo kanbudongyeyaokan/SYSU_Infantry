@@ -40,6 +40,10 @@ enum {
     GIMBAL_PITCH_RTT_PERIOD_MS = 1000U / GIMBAL_PITCH_RTT_HZ,
     GIMBAL_PITCH_VOFA_RTT_CHANNEL = 1U,
     GIMBAL_PITCH_VOFA_RTT_BUFFER_SIZE = 1024U,
+    GIMBAL_YAW_RTT_HZ = 500U,
+    GIMBAL_YAW_RTT_PERIOD_MS = 1000U / GIMBAL_YAW_RTT_HZ,
+    GIMBAL_YAW_VOFA_RTT_CHANNEL = GIMBAL_PITCH_VOFA_RTT_CHANNEL,
+    GIMBAL_YAW_VOFA_RTT_BUFFER_SIZE = 1024U,
 };
 
 //云台电机
@@ -145,6 +149,17 @@ static void Gimbal_pitch_rtt_init(void) {
                                   sizeof(gimbal_pitch_vofa_rtt_buffer),
                                   SEGGER_RTT_MODE_NO_BLOCK_SKIP);
         gimbal_pitch_rtt_channel_ready = 1U;
+    }
+}
+
+static void Gimbal_yaw_rtt_init(void) {
+    if (gimbal_yaw_rtt_channel_ready == 0U) {
+        SEGGER_RTT_ConfigUpBuffer(GIMBAL_YAW_VOFA_RTT_CHANNEL,
+                                  "VOFA-PITCH",
+                                  gimbal_yaw_vofa_rtt_buffer,
+                                  sizeof(gimbal_yaw_vofa_rtt_buffer),
+                                  SEGGER_RTT_MODE_NO_BLOCK_SKIP);
+        gimbal_yaw_rtt_channel_ready = 1U;
     }
 }
 
@@ -316,23 +331,23 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->total_yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
-                .kp = 35,
+                .kp = 40,
                 .ki = 0,
-                .kd = 0,
+                .kd = 0.1,
                 .deadband = 0.0f,
-                .max_out = 1500,
+                .max_out = 800,
                 .max_iout = 100,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL, // 角度环输出限幅 + 梯形积分
             },
             .speed_pid = {
-                .kp = 80,
-                .ki = 15.0,
+                .kp = 90,
+                .ki = 8.0,
                 .kd = 0.0,
                 .deadband = 0.0f,
                 .max_out = 25000,
-                .max_iout = 8000,
-                // .feedfoward_coefficient = 0.05f,
-                .target_ff_coef = 0.1f, // 目标值前馈系数 (实测调整)
+                .max_iout = 10000,
+                .feedfoward_coefficient = 0.5f,
+                .target_ff_coef = 0.2f, // 目标值前馈系数 (实测调整)
                 .LPF_coefficient = 0.0f,
                 .integral_separation_threshold = 0.0f,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD|PID_OUTPUT_FILTER,
@@ -364,25 +379,25 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.x),
             .angle_pid = {
-                .kp = 35.0f,
+                .kp = 40.0f,
                 .ki = 0.0f,
                 .kd = 0.0f,
-                .max_out = 800.0f,
+                .max_out = 900.0f,
                 .max_iout = 100.0f,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_DIFFERENTIAL_GO_FIRST,
             },
             .speed_pid = {
-                .kp = 80.0f,
-                .ki = 20.0f,
+                .kp = 100.0f,
+                .ki = 22.0f,
                 .kd = 0.0f,
                 .deadband = 0.1f,
                 .max_out = 20000.0f,
                 .max_iout = 8000.0f,
                 // .LPF_coefficient = 0.9f,
                 // 前馈参数
-                .target_ff_coef = 0.1f, // 目标值前馈系数 (实测调整)
+                .target_ff_coef = 0.25f, // 目标值前馈系数 (实测调整)
                 .feedforward_source = &pitch_gravity_factor, // cos 因子
-                .feedfoward_coefficient = 3300.0f,           // 需要实测
+                .feedfoward_coefficient = 5500.0f,           // 需要实测
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
                 
             },
@@ -417,6 +432,7 @@ void Gimbal_task_init(void) {
     //初始化云台电机
     Gimbal_motor_init();
     Gimbal_pitch_rtt_init();
+    Gimbal_yaw_rtt_init();
 
     Vision_Comm_Init();
 }
@@ -506,7 +522,8 @@ static void Gimbal_handle_command_legacy(Gimbal_cmd_send_t *cmd) {
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
 
-                Gimbal_pitch_rtt_vofa_print(cmd->pitch);
+                // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
+                Gimbal_yaw_rtt_vofa_print(cmd->yaw);
                // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",pitch_target_deg,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
                 //云台视觉模式

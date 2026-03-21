@@ -22,6 +22,7 @@
 #include "video_link.h"
 #include "error_handler.h"
 #include "vision_comm.h"
+#include "referee.h"
 /**********************发出决策信息***************************/
 //存储遥控器数据，CURRENT-当前数据,LAST-上一次数据
 #if USE_SBUS_RECEIVER == 1
@@ -73,10 +74,341 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 // 定义灵敏度系数
 // 之前是 0.0018 (200Hz)，现在是 1000Hz，理论上应该除以 5
 // 建议改小到 0.0003 ~ 0.0005 之间，手感会比较细腻
-#define GIMBAL_RC_MOVE_RATIO_YAW   0.0002f
+#define GIMBAL_RC_MOVE_RATIO_YAW   0.00035f
 #define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
 #define RC_DEADBAND 1
+
+#define SHOOT_DIAL_FRICTION_THRESHOLD       150
+#define SHOOT_DIAL_BURST_THRESHOLD          450
+#define SHOOT_FRICTION_WARMUP_MS            250u
+#define SHOOT_FRICTION_HOLD_MS              120u
+#define SHOOT_SINGLE_HOLD_MS                220u
+#define SHOOT_SINGLE_INTERVAL_MS            220u
+#define SHOOT_AUTO_SINGLE_INTERVAL_MS       260u
+#define SHOOT_AUTO_FIRE_STABLE_TICKS        25u
+#define SHOOT_AUTO_FIRE_LOST_HOLD_TICKS     50u
+#define SHOOT_HEAT_LOCK_MARGIN              8u
+#define SHOOT_HEAT_RECOVER_MARGIN           20u
+#define SHOOT_HEAT_SINGLE_MARGIN            18u
+#define SHOOT_HEAT_BURST_MARGIN             45u
+
+// 上层输入给发射逻辑的“意图”，不直接等价于底层电机最终输出。
+typedef enum
+{
+    SHOOT_REQUEST_NONE = 0,
+    SHOOT_REQUEST_SINGLE,
+    SHOOT_REQUEST_BURST,
+} Shoot_request_mode_e;
+
+// 把上层输入整理成统一的发射请求，交给后面的去抖/限热逻辑处理。
+typedef struct
+{
+    bool friction_request;
+    bool single_edge_request;
+    bool burst_request;
+    uint8_t burst_rate;
+} Shoot_request_t;
+
+// 发射链路内部运行时状态，用来做预热、保持、间隔限制和热量锁。
+typedef struct
+{
+    bool friction_active;
+    bool heat_locked;
+    uint32_t friction_ready_tick;
+    uint32_t friction_hold_until_tick;
+    uint32_t single_hold_until_tick;
+    uint32_t single_rearm_tick;
+    uint32_t auto_single_next_tick;
+} Shoot_runtime_t;
+
+static Shoot_runtime_t shoot_runtime = {0};
+static const Referee_Data_t *referee_data_view = NULL;
+
+#if USE_SBUS_RECEIVER == 2
+// 图传遥控下的视觉射击状态机：
+// MANUAL 纯手动；AIM 进入视觉但仅瞄准；PREPARE 等待预热/热量/目标稳定；
+// FIRE_SINGLE/FIRE_BURST 表示状态机已经允许自动触发单发或连发。
+typedef enum
+{
+    VRC_VISION_STATE_MANUAL = 0,
+    VRC_VISION_STATE_AIM,
+    VRC_VISION_STATE_PREPARE,
+    VRC_VISION_STATE_FIRE_SINGLE,
+    VRC_VISION_STATE_FIRE_BURST,
+} Vrc_vision_state_e;
+
+static Vrc_vision_state_e vrc_vision_state = VRC_VISION_STATE_MANUAL;
+static bool vrc_auto_fire_enabled = false;
+static uint16_t vrc_auto_fire_detect_ticks = 0u;
+static uint16_t vrc_auto_fire_lost_ticks = 0u;
+#endif
+
+static bool Decision_Time_Reached(uint32_t now, uint32_t target_tick)
+{
+    return ((int32_t)(now - target_tick) >= 0);
+}
+
+static uint16_t Decision_Get_Heat_Remaining(void)
+{
+    if ((referee_data_view == NULL) ||
+        (referee_data_view->is_online == 0u) ||
+        (referee_data_view->robot_status.shooter_barrel_heat_limit == 0u))
+    {
+        return UINT16_MAX;
+    }
+
+    const uint16_t heat_limit = referee_data_view->robot_status.shooter_barrel_heat_limit;
+    const uint16_t current_heat = referee_data_view->power_heat_data.shooter_17mm_1_barrel_heat;
+    return (current_heat >= heat_limit) ? 0u : (uint16_t)(heat_limit - current_heat);
+}
+
+static bool Decision_Has_Projectile_Allowance(void)
+{
+    if ((referee_data_view == NULL) || (referee_data_view->is_online == 0u))
+    {
+        return true;
+    }
+
+    return (referee_data_view->projectile_allowance.projectile_allowance_17mm > 0u);
+}
+
+static bool Decision_Heat_Allows_Request(Shoot_request_mode_e request_mode)
+{
+    const uint16_t heat_remaining = Decision_Get_Heat_Remaining();
+    if (heat_remaining == UINT16_MAX)
+    {
+        shoot_runtime.heat_locked = false;
+        return true;
+    }
+
+    if (!Decision_Has_Projectile_Allowance())
+    {
+        return false;
+    }
+
+    // 用锁定/恢复双阈值避免热量在临界点附近反复抖动。
+    if ((!shoot_runtime.heat_locked) && (heat_remaining <= SHOOT_HEAT_LOCK_MARGIN))
+    {
+        shoot_runtime.heat_locked = true;
+    }
+    else if (shoot_runtime.heat_locked && (heat_remaining >= SHOOT_HEAT_RECOVER_MARGIN))
+    {
+        shoot_runtime.heat_locked = false;
+    }
+
+    if (shoot_runtime.heat_locked)
+    {
+        return false;
+    }
+
+    const uint16_t required_margin =
+        (request_mode == SHOOT_REQUEST_BURST) ? SHOOT_HEAT_BURST_MARGIN : SHOOT_HEAT_SINGLE_MARGIN;
+    return (heat_remaining >= required_margin);
+}
+
+static bool Decision_Friction_Is_Requested_Held(bool friction_request, uint32_t now)
+{
+    if (friction_request)
+    {
+        return true;
+    }
+
+    // 输入刚松开时继续保持一小段时间，避免状态机切边时摩擦轮瞬间断开。
+    return !Decision_Time_Reached(now, shoot_runtime.friction_hold_until_tick);
+}
+
+static bool Decision_Friction_Is_Ready(bool friction_request, uint32_t now)
+{
+    if (!Decision_Friction_Is_Requested_Held(friction_request, now))
+    {
+        return false;
+    }
+
+    return shoot_runtime.friction_active && Decision_Time_Reached(now, shoot_runtime.friction_ready_tick);
+}
+
+static bool Decision_Should_Emit_Auto_Single(bool auto_single_request, uint32_t now)
+{
+    if (!auto_single_request)
+    {
+        shoot_runtime.auto_single_next_tick = 0u;
+        return false;
+    }
+
+    if ((shoot_runtime.auto_single_next_tick == 0u) ||
+        Decision_Time_Reached(now, shoot_runtime.auto_single_next_tick))
+    {
+        shoot_runtime.auto_single_next_tick = now + SHOOT_AUTO_SINGLE_INTERVAL_MS;
+        return true;
+    }
+
+    return false;
+}
+
+static void Decision_Apply_Shoot_Request(const Shoot_request_t *request)
+{
+    // 图传拨轮映射：
+    // 150 以上仅开摩擦轮，150~450 进入单发区，450 以上进入连发区。
+    const uint32_t now = HAL_GetTick();
+    bool friction_request = request->friction_request;
+
+    if (friction_request)
+    {
+        shoot_runtime.friction_hold_until_tick = now + SHOOT_FRICTION_HOLD_MS;
+    }
+
+    const bool friction_effective = Decision_Friction_Is_Requested_Held(friction_request, now);
+    if (friction_effective)
+    {
+        if (!shoot_runtime.friction_active)
+        {
+            // 摩擦轮从停转到允许拨弹之间留出预热时间。
+            shoot_runtime.friction_ready_tick = now + SHOOT_FRICTION_WARMUP_MS;
+        }
+
+        shoot_runtime.friction_active = true;
+        shoot_cmd_send.shoot_mode = SHOOT_ON;
+    }
+    else
+    {
+        shoot_runtime.friction_active = false;
+        shoot_runtime.friction_ready_tick = 0u;
+        shoot_runtime.single_hold_until_tick = 0u;
+        shoot_runtime.single_rearm_tick = 0u;
+        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+        shoot_cmd_send.loader_mode = LOAD_STOP;
+        shoot_cmd_send.shoot_rate = 0;
+        return;
+    }
+
+    shoot_cmd_send.loader_mode = LOAD_STOP;
+    shoot_cmd_send.shoot_rate = 0;
+
+    // 摩擦轮未就绪前只开轮，不允许拨弹。
+    if (!Decision_Friction_Is_Ready(friction_request, now))
+    {
+        return;
+    }
+
+    // 单发命令发出后保持一小段时间，保证下层稳定收到这一发。
+    if (!Decision_Time_Reached(now, shoot_runtime.single_hold_until_tick))
+    {
+        shoot_cmd_send.loader_mode = LOAD_1_BULLET;
+        return;
+    }
+
+    if (request->burst_request && Decision_Heat_Allows_Request(SHOOT_REQUEST_BURST))
+    {
+        shoot_runtime.single_hold_until_tick = 0u;
+        shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
+        shoot_cmd_send.shoot_rate = request->burst_rate;
+        return;
+    }
+
+    if (request->single_edge_request &&
+        Decision_Time_Reached(now, shoot_runtime.single_rearm_tick) &&
+        Decision_Heat_Allows_Request(SHOOT_REQUEST_SINGLE))
+    {
+        shoot_runtime.single_hold_until_tick = now + SHOOT_SINGLE_HOLD_MS;
+        shoot_runtime.single_rearm_tick = now + SHOOT_SINGLE_INTERVAL_MS;
+        shoot_cmd_send.loader_mode = LOAD_1_BULLET;
+    }
+}
+
+#if USE_SBUS_RECEIVER == 2
+static bool Decision_Vision_Target_Fireable(void)
+{
+    if (!Is_Vision_Online())
+    {
+        return false;
+    }
+
+    const Infantry_Vision_Rx_Data_t *vision_data = Get_Vision_Data();
+    if (vision_data == NULL)
+    {
+        return false;
+    }
+
+    const uint8_t flags = vision_data->vision_flags;
+    // 只有“已发现 + 正在跟踪 + 允许开火”同时满足才认为视觉端给出了可射击目标。
+    return ((flags & VISION_FLAG_DETECTED) != 0u) &&
+           ((flags & VISION_FLAG_TRACKING) != 0u) &&
+           ((flags & VISION_FLAG_FIRE) != 0u);
+}
+
+static bool Decision_Vision_Target_Confirmed(void)
+{
+    if (Decision_Vision_Target_Fireable())
+    {
+        if (vrc_auto_fire_detect_ticks < 0xFFFFu)
+        {
+            vrc_auto_fire_detect_ticks++;
+        }
+        vrc_auto_fire_lost_ticks = 0u;
+        // 连续稳定若干个周期后再允许自动开火，抑制视觉瞬时毛刺。
+        return (vrc_auto_fire_detect_ticks >= SHOOT_AUTO_FIRE_STABLE_TICKS);
+    }
+
+    if ((vrc_auto_fire_detect_ticks >= SHOOT_AUTO_FIRE_STABLE_TICKS) &&
+        (vrc_auto_fire_lost_ticks < SHOOT_AUTO_FIRE_LOST_HOLD_TICKS))
+    {
+        vrc_auto_fire_lost_ticks++;
+        // 已锁定目标后短暂丢帧仍保持 fireable，避免状态机频繁来回切换。
+        return true;
+    }
+
+    vrc_auto_fire_detect_ticks = 0u;
+    vrc_auto_fire_lost_ticks = 0u;
+    return false;
+}
+
+static void Decision_Reset_Vrc_Vision_Runtime(void)
+{
+    vrc_auto_fire_detect_ticks = 0u;
+    vrc_auto_fire_lost_ticks = 0u;
+    shoot_runtime.auto_single_next_tick = 0u;
+}
+
+static void Decision_Update_Vrc_Vision_State(bool auto_burst_request, bool friction_request)
+{
+    if ((vrc_data[CURRENT].rc.btn_right != 0u) && (vrc_data[LAST].rc.btn_right == 0u))
+    {
+        // 右键边沿切换“视觉自动开火开关”，避免长按时重复翻转。
+        vrc_auto_fire_enabled = !vrc_auto_fire_enabled;
+    }
+
+    if (vrc_data[CURRENT].rc.trigger == 0u)
+    {
+        vrc_vision_state = VRC_VISION_STATE_MANUAL;
+        Decision_Reset_Vrc_Vision_Runtime();
+        return;
+    }
+
+    if (!vrc_auto_fire_enabled)
+    {
+        vrc_vision_state = VRC_VISION_STATE_AIM;
+        Decision_Reset_Vrc_Vision_Runtime();
+        return;
+    }
+
+    const uint32_t now = HAL_GetTick();
+    const bool friction_ready = Decision_Friction_Is_Ready(friction_request, now);
+    const bool heat_ready = Decision_Heat_Allows_Request(
+        auto_burst_request ? SHOOT_REQUEST_BURST : SHOOT_REQUEST_SINGLE);
+    const bool vision_target_confirmed = Decision_Vision_Target_Confirmed();
+
+    // 视觉模式下先进入 PREPARE，等摩擦轮、热量和目标稳定三个条件都满足后再进 FIRE。
+    if (!friction_ready || !heat_ready || !vision_target_confirmed)
+    {
+        vrc_vision_state = VRC_VISION_STATE_PREPARE;
+        return;
+    }
+
+    vrc_vision_state = auto_burst_request ?
+        VRC_VISION_STATE_FIRE_BURST : VRC_VISION_STATE_FIRE_SINGLE;
+}
+#endif
 static float PITCH_RC_CENTER_OFFSET = 0.0f;  // 摇杆中位偏移量，上电自动校准
 
 
@@ -101,7 +433,11 @@ void Decision_making_task_init()
 
     //机器人开始工作 - 关键！缺少此初始化会导致控制无响应
     robot_state = ROBOT_ON;
+    referee_data_view = Referee_Peek_Data();
     ERROR_INFO("DECISION", "Init: robot_state=ON, default chassis_mode=%d", CHASSIS_NO_FOLLOW);
+    shoot_cmd_send.shoot_mode = SHOOT_OFF;
+    shoot_cmd_send.loader_mode = LOAD_STOP;
+    shoot_cmd_send.shoot_rate = 0;
 
     // 初始化默认模式
     gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;  // 默认使能云台控制
@@ -193,7 +529,7 @@ void Robot_set_command()
     static bool ctrl_mode = 0; // 0=遥控器控制, 1=键鼠控制
     if (ctrl_mode == 0){
         //遥控器检测切换（自定义左键控制切换）
-        if(vrc_data[CURRENT].rc.btn_left){
+        if ((vrc_data[CURRENT].rc.btn_left != 0u) && (vrc_data[LAST].rc.btn_left == 0u)){
 
             ctrl_mode = 1;
 
@@ -202,7 +538,8 @@ void Robot_set_command()
         RC_ctrl_set();
     }else{
         //键鼠检测切换（ctrl键控制切换）
-        if(vrc_data[CURRENT].keyboard & 0x0020){
+        if (((vrc_data[CURRENT].keyboard & 0x0020u) != 0u) &&
+            ((vrc_data[LAST].keyboard & 0x0020u) == 0u)){
 
             ctrl_mode = 0;
 
@@ -342,7 +679,20 @@ void RC_ctrl_set()
     {
         chassis_cmd_send.chassis_mode = CHASSIS_NO_FOLLOW;
     }
-    if (vrc_data[CURRENT].rc.trigger == 1)
+    const uint32_t now = HAL_GetTick();
+    const bool manual_friction_request = (vrc_data[CURRENT].rc.dial > SHOOT_DIAL_FRICTION_THRESHOLD);
+    const bool manual_single_zone =
+        (vrc_data[CURRENT].rc.dial > SHOOT_DIAL_FRICTION_THRESHOLD) &&
+        (vrc_data[CURRENT].rc.dial <= SHOOT_DIAL_BURST_THRESHOLD);
+    const bool manual_single_last_zone =
+        (vrc_data[LAST].rc.dial > SHOOT_DIAL_FRICTION_THRESHOLD) &&
+        (vrc_data[LAST].rc.dial <= SHOOT_DIAL_BURST_THRESHOLD);
+    const bool manual_single_edge = manual_single_zone && (!manual_single_last_zone);
+    const bool manual_burst_request = (vrc_data[CURRENT].rc.dial > SHOOT_DIAL_BURST_THRESHOLD);
+    const bool vision_friction_request = (vrc_data[CURRENT].rc.trigger != 0u);
+    Decision_Update_Vrc_Vision_State(manual_burst_request, manual_friction_request || vision_friction_request);
+    const bool vision_mode_active = (vrc_vision_state != VRC_VISION_STATE_MANUAL);
+    if (vision_mode_active)
     {
         gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
     }
@@ -352,18 +702,22 @@ void RC_ctrl_set()
     }
 
     //设置发射模式
-    if(vrc_data[CURRENT].rc.dial >300)
+    // 手动输入和视觉状态机都先汇总成统一 Shoot_request，再由同一套去抖逻辑下发。
+    Shoot_request_t shoot_request = {
+        .friction_request = manual_friction_request || vision_mode_active,
+        .single_edge_request = manual_single_edge,
+        .burst_request = manual_burst_request,
+        .burst_rate = 6u,
+    };
+
+    shoot_request.single_edge_request |= Decision_Should_Emit_Auto_Single(
+        vrc_vision_state == VRC_VISION_STATE_FIRE_SINGLE, now);
+    if (vrc_vision_state == VRC_VISION_STATE_FIRE_BURST)
     {
-        shoot_cmd_send.shoot_mode = SHOOT_ON;
-        shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
-        shoot_cmd_send.shoot_rate = 6;
+        shoot_request.burst_request = true;
     }
-    else
-    {
-        shoot_cmd_send.shoot_mode = SHOOT_OFF;
-        shoot_cmd_send.loader_mode = LOAD_STOP;
-        shoot_cmd_send.shoot_rate = 0;
-    }
+
+    Decision_Apply_Shoot_Request(&shoot_request);
 
     // shoot_cmd_send.shoot_mode = vrc_data[CURRENT].rc.trigger ? SHOOT_ON : SHOOT_OFF;
     // shoot_cmd_send.loader_mode = vrc_data[CURRENT].rc.trigger ? LOAD_1_BULLET : LOAD_STOP;
@@ -611,16 +965,21 @@ void Keyboard_ctrl_set()
      * vrc_friction == 1 → SHOOT_ON（开启摩擦轮）
      * vrc_friction == 0 → SHOOT_OFF（关闭摩擦轮)
      ***/
-    shoot_cmd_send.shoot_mode  = vrc_friction ? SHOOT_ON : SHOOT_OFF;
+    const bool vrc_mouse_left_edge =
+        (vrc_data[CURRENT].mouse.press_l != 0u) && (vrc_data[LAST].mouse.press_l == 0u);
 
     /*
     *根据鼠标左键状态设置子弹发射模式
     *mouse.press_l == 1（左键按下）→根据 vrc_burst 决定单发还是连发
     *mouse.press_l == 0（左键未按）→ LOAD_STOP（停止发射）
     */
-    shoot_cmd_send.loader_mode = vrc_data[CURRENT].mouse.press_l ?
-        (vrc_burst ? LOAD_BURSTFIRE : LOAD_1_BULLET) : LOAD_STOP;
-    if (vrc_burst) shoot_cmd_send.shoot_rate = 8;
+    Shoot_request_t shoot_request = {
+        .friction_request = (vrc_friction != 0u),
+        .single_edge_request = vrc_mouse_left_edge && (vrc_burst == 0u),
+        .burst_request = (vrc_data[CURRENT].mouse.press_l != 0u) && (vrc_burst != 0u),
+        .burst_rate = 8u,
+    };
+    Decision_Apply_Shoot_Request(&shoot_request);
 
     Uart_printf(test_uart, "Vx:%.2f,Vy:%.2f,Wz:%.2f,offset,chassis:%d\r\n",
     chassis_cmd_send.vx, 
@@ -655,10 +1014,16 @@ void Keyboard_ctrl_set()
     }
 
     // F: 摩擦轮开关, E: 切换射击模式, 鼠标左键: 发射
-    shoot_cmd_send.shoot_mode  = kb_friction ? SHOOT_ON : SHOOT_OFF;
-    shoot_cmd_send.loader_mode = rc_data[CURRENT].mouse.press_l ?
-        (kb_burst ? LOAD_BURSTFIRE : LOAD_1_BULLET) : LOAD_STOP;
-    if (kb_burst) shoot_cmd_send.shoot_rate = 8;
+    const bool kb_mouse_left_edge =
+        (rc_data[CURRENT].mouse.press_l != 0u) && (rc_data[LAST].mouse.press_l == 0u);
+    // 键鼠和图传遥控共用同一套发射出口，保证单发/连发/预热行为一致。
+    Shoot_request_t shoot_request = {
+        .friction_request = (kb_friction != 0u),
+        .single_edge_request = kb_mouse_left_edge && (kb_burst == 0u),
+        .burst_request = (rc_data[CURRENT].mouse.press_l != 0u) && (kb_burst != 0u),
+        .burst_rate = 8u,
+    };
+    Decision_Apply_Shoot_Request(&shoot_request);
 #endif
 }
 

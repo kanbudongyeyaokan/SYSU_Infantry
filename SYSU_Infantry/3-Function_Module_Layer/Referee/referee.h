@@ -212,6 +212,8 @@ typedef struct {
 // ---------------------------------------------------------
 
 Referee_Data_t* Referee_Get_Data(UART_HandleTypeDef *huart);
+// 只读查看当前裁判系统缓存，供决策层查询热量、弹量等信息。
+const Referee_Data_t* Referee_Peek_Data(void);
 void Referee_Send_UI_Test(void);
 
 

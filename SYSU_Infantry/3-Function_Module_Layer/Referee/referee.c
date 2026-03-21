@@ -140,3 +140,9 @@ uint16_t ChassisPower_GetBuffer(void)
 {
     return referee_data.power_heat_data.buffer_energy;
 }
+
+const Referee_Data_t* Referee_Peek_Data(void)
+{
+    // 不重新注册串口回调，直接暴露当前缓存的只读视图。
+    return &referee_data;
+}
