@@ -58,8 +58,6 @@ unsigned char calc_crc8(unsigned char *pchMessage, unsigned int dwLength) {
         ucCRC8 = CRC8_TAB[ucIndex];
     }
     return (ucCRC8);
-}
-
 const uint16_t wCRC_Table[256] = {
     0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
     0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
