@@ -30,6 +30,7 @@
 #include "bmi088.h"
 #include "error_handler.h"
 #include "vision_comm.h"
+#include "bsp_dwt.h"   // 用于获取微秒时间戳 DWT_GetTimeline_s()
 
 #include "SEGGER_RTT.h"
 
@@ -111,11 +112,6 @@ static void Gimbal_pitch_rtt_vofa_print(float pitch_target_deg) {
  * @brief 云台初始化
  */
 static void Gimbal_motor_init(void) {
-
-    //初始化YAW低通滤波器
-    // LPF_Init(&yaw_target_lpf,0.001f,10.0f,0.0f); // 1000Hz控制频率，10Hz截止频率，初始值0
-
-
 
     //YAW电机
     Djimotor_init_config_t yaw_config = {   
@@ -246,7 +242,32 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         if(gimbal_imu_data->state != INS_STATE_READY){
             return;
         }
+        // =========================================================
+    // 1. 视觉通信层：无脑收发 (在物理控制前执行，确保目标最新)
+    // =========================================================
+    
+    // A. 极速解析 NUC 发来的最新预测指令 (非阻塞)
+    Vision_Comm_Parse_Task();
 
+    // B. 分频发送当前绝对位姿 (1000Hz 降频到 500Hz 发送，防串口阻塞)
+    static uint8_t vision_tx_divider = 0;
+    if (++vision_tx_divider >= 2) { 
+        vision_tx_divider = 0;
+        
+        uint32_t current_us = (uint32_t)(DWT_GetTimeline_s() * 1000000.0f);
+        
+        // 疯狂发报：送出绝对时间戳、连续 Yaw 角、纯净角速度
+        Vision_Send_Pose(current_us, 
+                         gimbal_imu_data->euler.pitch, 
+                         gimbal_imu_data->total_yaw,   // 必须是累加的多圈 Yaw
+                         gimbal_imu_data->euler.roll,
+                         gimbal_imu_data->gyro_body.y, // Pitch 轴纯净角速度
+                         gimbal_imu_data->gyro_body.z); // Yaw 轴纯净角速度
+    }
+
+    // =========================================================
+    // 2. 云台物理控制层
+    // =========================================================
         //重力补偿计算
         float pitch_rad = gimbal_imu_data->euler.pitch * (3.14159265f / 180.0f);
         pitch_gravity_factor = cosf(pitch_rad);
@@ -289,21 +310,35 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             case GIMBAL_VISION_MODE:
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
-                
+            
                 if (Is_Vision_Online()) {
-                    const Infantry_Vision_Rx_Data_t* v = Get_Vision_Data();
+                    // 获取 NUC 的预测数据
+                    const Vision_Ctrl_Data_t* v_cmd = Get_Vision_Ctrl_Data();
                     
-                    Djimotor_set_target(yaw_motor, cmd->yaw + v->yaw_angle);
-                    Djimotor_set_target(pitch_motor, cmd->pitch + v->pitch_angle);
-                } else {
-                    ERROR_CRITICAL("GIMBAL", "Vision data not available, cannot enter VISION_MODE");
-                    Djimotor_set_target(yaw_motor, cmd->yaw);
-                    Djimotor_set_target(pitch_motor, cmd->pitch);
-                }
+                    // 绝对坐标系追踪：直接把预测的世界坐标扔给 PID
+                    Djimotor_set_target(yaw_motor, v_cmd->target_yaw);
+                    Djimotor_set_target(pitch_motor, v_cmd->target_pitch);
+                    
+                    // 计算基础 PID 输出 (包含 PITCH 重力补偿)
+                    Djimotor_Calc_Output(yaw_motor);
+                    Djimotor_Calc_Output(pitch_motor);
+                    
+                    // 在电流层直接叠加上视觉速度前馈！
+                    // 你的 Pitch 已经占用了 feedforward_source 做重力补偿，
+                    // 最优雅的解法是算完 PID 后，手动在底层电流上加一把推力。
+                    // 这里的系数(比如 30.0f) 需要实车调参，越高对敌方移动的响应越暴力
+                    yaw_motor->out_current += (int16_t)(30.0f * v_cmd->target_yaw_v);
+                    pitch_motor->out_current += (int16_t)(30.0f * v_cmd->target_pitch_v);
                 
-                Djimotor_Calc_Output(yaw_motor);
-                Djimotor_Calc_Output(pitch_motor);
-                // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
+                } else {
+                    //视觉掉线，云台瞬间停止在当前绝对角度
+                    // ERROR_WARN("GIMBAL", "Vision Offline! Hold position.");
+                    Djimotor_set_target(yaw_motor, gimbal_imu_data->total_yaw);
+                    Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.pitch);
+                    
+                    Djimotor_Calc_Output(yaw_motor);
+                    Djimotor_Calc_Output(pitch_motor);
+                }
                 break;
 
             default:
