@@ -28,7 +28,6 @@
 #include "buzzer_alarm.h"
 #include "Referee_task.h"
 #include "error_handler.h"
-#include "ui_task.h"
 
   /**任务句柄声明**/
 osThreadId chassis_task_handle;//底盘任务
@@ -40,7 +39,6 @@ osThreadId referee_task_handle;//裁判系统通信任务
 osThreadId others_task_handle; //处理其他任务，比如与视觉通信，电量读取等琐碎任务，后续根据实际进行修改
 osThreadId watchdog_task_handle; //看门狗任务
 osThreadId buzzer_alarm_task_handle;
-osThreadId ui_task_handle;
 /*Shell任务句柄*/
 osThreadId shell_task_handle;
 
@@ -147,8 +145,6 @@ void Robot_task_init(void)
     osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
      shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
-    osThreadDef(ui_task, Ui_task, osPriorityNormal, 0, 512);
-    ui_task_handle = osThreadCreate(osThread(ui_task), NULL);
 
 }
 

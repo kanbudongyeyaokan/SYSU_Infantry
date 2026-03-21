@@ -69,8 +69,6 @@ add_executable(${CMAKE_PROJECT_NAME}
         4-Application_Layer/Execution/Shoot_Task/shoot_task.h
         4-Application_Layer/Execution/Motor_Task/motor_task.c
         4-Application_Layer/Execution/Motor_Task/motor_task.h
-        4-Application_Layer/Execution/UI_Task/ui_task.c
-        4-Application_Layer/Execution/UI_Task/ui_task.h
         4-Application_Layer/Execution/Watchdog_Task/watchdog_task.h
         4-Application_Layer/Execution/Watchdog_Task/watchdog_task.c
 
@@ -272,7 +270,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Gimbal_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Motor_Task
-        ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/UI_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Ins_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Perception/Referee_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Remote_Control
