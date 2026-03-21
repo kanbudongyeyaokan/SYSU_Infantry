@@ -6,9 +6,10 @@
 #include <string.h>
 #include <stdio.h>
 #include "ui_interface.h"
+#include "referee.h"
 
 uint8_t seq = 0;
-int ui_self_id = 1;
+int ui_self_id = 3;
 Uart_instance_t *ui_uart = NULL;
 
 ui_string_frame_t _ui_string_frame;
