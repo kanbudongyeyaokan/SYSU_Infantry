@@ -16,6 +16,10 @@
 // ==========================================
 // 数据结构定义 (严格1字节对齐)
 // ==========================================
+#define VISION_FLAG_DETECTED (1u << 0)
+#define VISION_FLAG_TRACKING (1u << 1)
+#define VISION_FLAG_FIRE     (1u << 2)
+
 #pragma pack(push, 1)
 
 // 帧头结构体 (5字节)
