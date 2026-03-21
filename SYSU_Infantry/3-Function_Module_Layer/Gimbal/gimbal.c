@@ -261,7 +261,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                          gimbal_imu_data->euler.pitch, 
                          gimbal_imu_data->total_yaw,   // 必须是累加的多圈 Yaw
                          gimbal_imu_data->euler.roll,
-                         gimbal_imu_data->gyro_body.y, // Pitch 轴纯净角速度
+                         gimbal_imu_data->gyro_body.x, // Pitch 轴纯净角速度
                          gimbal_imu_data->gyro_body.z); // Yaw 轴纯净角速度
     }
 
