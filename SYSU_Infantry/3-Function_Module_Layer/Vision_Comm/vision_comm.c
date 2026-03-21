@@ -1,40 +1,33 @@
 #include "vision_comm.h"
-// ========== USB 方式（测试完成后切换回来） ==========
-// #include "bsp_usb.h"
-
-// ========== 串口方式（测试用） ==========
 #include "bsp_usart.h"
 #include "usart.h"
-#include "crc_referee.h"
 #include "cmsis_os.h"
 #include "string.h"
 #include "error_handler.h"
+
+// 引入大疆官方的 CRC 计算库
+extern uint16_t Get_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength, uint16_t wCRC);
+extern uint32_t Verify_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
+extern void Append_CRC16_Check_Sum(uint8_t * pchMessage, uint32_t dwLength);
+
 // ==========================================
 // 内部变量
 // ==========================================
-// 接收环形缓冲区
 static uint8_t rx_fifo[VISION_RX_FIFO_SIZE];
 static uint16_t rx_head = 0;
 static uint16_t rx_tail = 0;
 
-// 存储最新解析出的有效数据
-static Infantry_Vision_Rx_Data_t latest_vision_data;
-
-// 记录最后一次收到有效数据的时间 (用于掉线检测)
+// 存储最新解析出的视觉控制指令
+static Vision_Ctrl_Data_t latest_vision_ctrl_data;
 static uint32_t last_valid_time = 0; 
 
-// ========== 串口方式（测试用） ==========
+// 串口实例
 static Uart_instance_t *vision_uart = NULL; 
 
 // ==========================================
 // 内部函数声明
 // ==========================================
-// ========== USB 方式 ==========
-// static void Vision_Rx_Callback(uint8_t* buf, uint32_t len);
-
-// ========== 串口方式（测试用） ==========
 static void Vision_Rx_Callback(void);
-
 static uint16_t Get_FIFO_Data_Len(void);
 static void Read_FIFO_Data(uint8_t* dest, uint16_t len, uint16_t offset);
 
@@ -43,12 +36,9 @@ static void Read_FIFO_Data(uint8_t* dest, uint16_t len, uint16_t offset);
 // ==========================================
 
 void Vision_Comm_Init(void) {
-    memset(&latest_vision_data, 0, sizeof(Infantry_Vision_Rx_Data_t));
+    memset(&latest_vision_ctrl_data, 0, sizeof(Vision_Ctrl_Data_t));
     
-    // ========== USB 方式（测试完成后切换回来） ==========
-    // Usb_Init(Vision_Rx_Callback);
-    
-    // ========== 串口方式（测试用） ==========
+    // 注册串口 6，绑定底层的空闲中断/DMA 回调
     vision_uart = Uart_register(&huart6, Vision_Rx_Callback);
     
     if (vision_uart != NULL) {
@@ -58,27 +48,9 @@ void Vision_Comm_Init(void) {
     }
 }
 
-// ========== USB 方式 ==========
-// USB 接收回调函数 (由 bsp_usb.c 在中断中触发)
-// static void Vision_Rx_Callback(uint8_t* buf, uint32_t len) {
-//     if (buf == NULL || len == 0) return;
-//     
-//     // 极速将收到的数据推入 FIFO，绝不阻塞！
-//     for (uint32_t i = 0; i < len; i++) {
-//         rx_fifo[rx_head] = buf[i];
-//         rx_head++;
-//         if (rx_head >= VISION_RX_FIFO_SIZE) {
-//             rx_head = 0;
-//         }
-//     }
-// }
-
-// ========== 串口方式（测试用） ==========
+// 串口接收回调 (将数据推入 FIFO)
 static void Vision_Rx_Callback(void) {
-    if (vision_uart == NULL) {
-        ERROR_WARN("VISION", "Rx callback called but UART not registered");
-        return;
-    }
+    if (vision_uart == NULL) return;
     
     uint8_t *buf = vision_uart->rx_buffer;
     uint32_t len = vision_uart->rx_data_len;
@@ -88,111 +60,110 @@ static void Vision_Rx_Callback(void) {
     for (uint32_t i = 0; i < len; i++) {
         rx_fifo[rx_head] = buf[i];
         rx_head++;
-        if (rx_head >= VISION_RX_FIFO_SIZE) {
-            rx_head = 0;
-        }
+        if (rx_head >= VISION_RX_FIFO_SIZE) rx_head = 0;
     }
 }
 
-// 计算 FIFO 中现存的数据量
 static uint16_t Get_FIFO_Data_Len(void) {
-    if (rx_head >= rx_tail) {
-        return rx_head - rx_tail;
-    } else {
-        return VISION_RX_FIFO_SIZE - rx_tail + rx_head;
-    }
+    if (rx_head >= rx_tail) return rx_head - rx_tail;
+    else return VISION_RX_FIFO_SIZE - rx_tail + rx_head;
 }
 
-// 从 FIFO 中读取数据但不移动 tail 指针 (用于预览/校验)
 static void Read_FIFO_Data(uint8_t* dest, uint16_t len, uint16_t offset) {
     uint16_t read_idx = (rx_tail + offset) % VISION_RX_FIFO_SIZE;
     for (uint16_t i = 0; i < len; i++) {
         dest[i] = rx_fifo[read_idx];
         read_idx++;
-        if (read_idx >= VISION_RX_FIFO_SIZE) {
-            read_idx = 0;
-        }
+        if (read_idx >= VISION_RX_FIFO_SIZE) read_idx = 0;
     }
 }
 
-// 核心解析任务 (滑动窗口法，极度鲁棒)
+// 核心解析任务 (滑动窗口法)
 void Vision_Comm_Parse_Task(void) {
-    uint8_t header_buf[5];
-    uint8_t frame_buf[128]; // 足够容纳一帧最大长度即可
+    uint8_t header_buf[4]; // 预览: sof(1) + len(2) + cmd_id(1) = 4字节
+    uint8_t frame_buf[128]; 
     
-    while (Get_FIFO_Data_Len() >= 5) { // 至少要够一个帧头的大小
+    while (Get_FIFO_Data_Len() >= 4) { 
         
-        // 1. 寻找帧头 SOF
+        // 寻找接收帧头 SOF (0x5A)
         Read_FIFO_Data(header_buf, 1, 0);
-        if (header_buf[0] != VISION_SOF) {
-            // 滑动窗口：如果不是帧头，丢弃一个字节，继续找
+        if (header_buf[0] != VISION_SOF_RX) {
             rx_tail = (rx_tail + 1) % VISION_RX_FIFO_SIZE;
             continue;
         }
         
-        // 2. 预览完整帧头并校验 CRC8
-        Read_FIFO_Data(header_buf, 5, 0);
-        // 使用大疆官方的 CRC8 校验函数 (长度传 5)
-        if (Verify_CRC8_Check_Sum(header_buf, 5) == 0) {
-            // 帧头校验失败，说明是伪造的 SOF 或者错位了，丢弃 SOF 继续找
-            rx_tail = (rx_tail + 1) % VISION_RX_FIFO_SIZE;
-            ERROR_WARN("VISION","CRC8 fail, discarding byte");
-            continue;
-        }
+        // 解析长度
+        Read_FIFO_Data(header_buf, 4, 0);
+        uint16_t data_len = (header_buf[2] << 8) | header_buf[1]; // 小端模式解析
+        uint8_t cmd_id = header_buf[3];
         
-        // 3. 帧头合法，解析数据长度
-        Vision_Frame_Header_t* p_header = (Vision_Frame_Header_t*)header_buf;
-        uint16_t data_len = p_header->data_length;
-        uint16_t frame_total_len = 5 + 2 + data_len + 2; // 帧头(5) + CMD_ID(2) + 数据段 + CRC16(2)
+        uint16_t frame_total_len = 4 + data_len + 2; // 头(4) + 数据段 + CRC16(2)
         
-        // 保护机制：如果解析出的长度超大(例如错包)，直接丢弃帧头
+        // 保护机制：过滤超长错包
         if (frame_total_len > 128) {
             rx_tail = (rx_tail + 1) % VISION_RX_FIFO_SIZE;
-            ERROR_WARN("VISION","Frame too long (%d), discarding byte", frame_total_len);
-
             continue;
         }
         
-        // 4. 检查 FIFO 中是否有完整的一帧数据
+        // 等待整帧数据接收完毕
         if (Get_FIFO_Data_Len() < frame_total_len) {
-            // 数据还没收全（可能 USB 刚传一半），退出 while 等待下一次处理
             break; 
         }
         
-        // 5. 提取整帧数据并校验 CRC16
+        // 提取整帧数据并校验 CRC16
         Read_FIFO_Data(frame_buf, frame_total_len, 0);
-        // 使用大疆官方的 CRC16 校验函数
+        
         if (Verify_CRC16_Check_Sum(frame_buf, frame_total_len) == 1) {
-            // ==========================================
-            // 校验完全通过，提取 Payload！
-            // ==========================================
-            uint16_t cmd_id = (frame_buf[6] << 8) | frame_buf[5];
-            
-            // 匹配步兵指令 ID 和数据长度
-            if (cmd_id == CMD_ID_INFANTRY && data_len == sizeof(Infantry_Vision_Rx_Data_t)) {
-                // 进入临界区，防止读写冲突
+            // 校验通过，匹配控制指令
+            if (cmd_id == CMD_ID_CTRL_RX && data_len == sizeof(Vision_Ctrl_Data_t)) {
+                
+                // 进入临界区，安全拷贝最新数据
                 taskENTER_CRITICAL();
-                memcpy(&latest_vision_data, &frame_buf[7], sizeof(Infantry_Vision_Rx_Data_t));
-                last_valid_time = osKernelSysTick(); // 更新有效时间戳
+                memcpy(&latest_vision_ctrl_data, &frame_buf[4], sizeof(Vision_Ctrl_Data_t));
+                last_valid_time = osKernelSysTick(); // 更新心跳包时间
                 taskEXIT_CRITICAL();
             }
             
-            // 成功解析一帧，滑动指针跳过这整帧数据
+            // 成功解析一帧，滑动跳过这整帧数据
             rx_tail = (rx_tail + frame_total_len) % VISION_RX_FIFO_SIZE;
         } else {
-            // CRC16 错误，说明数据中途损坏，仅丢弃 SOF 继续找
+            // CRC16 错误，仅丢弃 SOF 继续找
             rx_tail = (rx_tail + 1) % VISION_RX_FIFO_SIZE;
-            ERROR_WARN("VISION","CRC16 fail, discarding byte");
         }
     }
 }
 
-// 获取数据的 Getter，供云台控制调用
-const Infantry_Vision_Rx_Data_t* Get_Vision_Data(void) {
-    return &latest_vision_data;
+// 高频发送姿态包 
+void Vision_Send_Pose(uint32_t time_us, float pitch, float yaw, float roll, float pitch_v, float yaw_v) {
+    if (vision_uart == NULL) return;
+    
+    EC2Vision_Pose_t tx_frame;
+    
+    // 填充协议头
+    tx_frame.sof = VISION_SOF_TX;
+    tx_frame.data_length = sizeof(EC2Vision_Pose_t) - 6; // 减去 sof, len, cmd_id, crc16
+    tx_frame.cmd_id = CMD_ID_POSE_TX;
+    
+    // 填充核心数据
+    tx_frame.timestamp_us = time_us;
+    tx_frame.pitch_angle  = pitch;
+    tx_frame.yaw_angle    = yaw;
+    tx_frame.roll_angle   = roll;
+    tx_frame.pitch_speed  = pitch_v;
+    tx_frame.yaw_speed    = yaw_v;
+    
+    // 追加 CRC16 校验 
+    Append_CRC16_Check_Sum((uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t));
+    
+    // 调用底层非阻塞发送
+    Uart_sendData(vision_uart, (uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t));
 }
 
-// 掉线检测 (比如 500ms 没收到有效数据判定为离线)
+const Vision_Ctrl_Data_t* Get_Vision_Ctrl_Data(void) {
+    return &latest_vision_ctrl_data;
+}
+
 bool Is_Vision_Online(void) {
-    return (osKernelSysTick() - last_valid_time) < 500; 
+    // 100ms 没收到控制包，判定为掉线
+    return (osKernelSysTick() - last_valid_time) < 100; 
 }

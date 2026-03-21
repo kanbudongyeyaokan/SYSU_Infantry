@@ -36,6 +36,17 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "MinSizeRel"
             }
+        },
+        {
+            "name": "stm32",
+            "inherits": "default",
+            "displayName": "STM32 Debug (GCC ARM)",
+            "description": "使用 gcc-arm-none-eabi 工具链进行 Debug 配置",
+            "binaryDir": "${sourceDir}/build/stm32",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+            }
         }
     ],
     "buildPresets": [
@@ -54,6 +65,10 @@
         {
             "name": "MinSizeRel",
             "configurePreset": "MinSizeRel"
+        },
+        {
+            "name": "stm32",
+            "configurePreset": "stm32"
         }
     ]
 }
