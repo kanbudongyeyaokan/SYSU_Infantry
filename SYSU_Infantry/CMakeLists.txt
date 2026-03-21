@@ -148,6 +148,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Ins/ins.h
         3-Function_Module_Layer/Referee/referee.c
         3-Function_Module_Layer/Referee/referee.h
+        3-Function_Module_Layer/Referee/referee_ui.h
+        3-Function_Module_Layer/Referee/referee_ui.c
+
         3-Function_Module_Layer/Shoot/shoot.c
         3-Function_Module_Layer/Shoot/shoot.h
         3-Function_Module_Layer/Super_Capacitor/supercap_comm.c

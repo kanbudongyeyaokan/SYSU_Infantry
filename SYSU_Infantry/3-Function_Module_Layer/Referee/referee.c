@@ -7,7 +7,7 @@
 
 // 全局变量
 static Referee_Data_t referee_data;
-static Uart_instance_t *referee_uart = NULL;
+Uart_instance_t *referee_uart = NULL;
 
 static void Referee_Unpack(uint8_t *data, uint16_t len)
 {
@@ -144,4 +144,11 @@ uint16_t ChassisPower_GetMaxLimit(void)
 uint16_t ChassisPower_GetBuffer(void)
 {
     return referee_data.power_heat_data.buffer_energy;
+}
+
+// 修改 referee.c 末尾
+uint8_t Get_Robot_ID(void)
+{
+
+    return referee_data.robot_status.robot_id;
 }
