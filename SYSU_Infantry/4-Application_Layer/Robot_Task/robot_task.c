@@ -147,8 +147,8 @@ void Robot_task_init(void)
     osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
      shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
-    osThreadDef(ui_task, Ui_task, osPriorityNormal, 0, 512);
-    ui_task_handle = osThreadCreate(osThread(ui_task), NULL);
+    osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
+    referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
 
 }
 

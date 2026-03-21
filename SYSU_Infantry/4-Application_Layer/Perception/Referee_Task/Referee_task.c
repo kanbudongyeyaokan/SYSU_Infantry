@@ -42,7 +42,7 @@ void Referee_task(void const * argument)
         //             referee_data->is_online,
         //             referee_data->robot_status.current_hp);
 
-        // Referee_Send_UI_Test();
+        Referee_Send_UI_Test();
 
         osDelay(200);
     }
