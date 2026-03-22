@@ -6,7 +6,7 @@
 #include "ins.h"
 
 #ifndef GIMBAL_USE_OPTIMIZED_CONTROL
-#define GIMBAL_USE_OPTIMIZED_CONTROL 1
+#define GIMBAL_USE_OPTIMIZED_CONTROL 0
 #endif
 
 /**************决策*****************/

@@ -352,7 +352,7 @@ void RC_ctrl_set()
     }
     else
     {
-        gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
     }
 
     //设置发射模式

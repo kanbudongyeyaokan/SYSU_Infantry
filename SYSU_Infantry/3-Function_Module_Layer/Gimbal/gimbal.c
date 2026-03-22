@@ -152,6 +152,7 @@ static void Gimbal_pitch_rtt_init(void) {
     }
 }
 
+/*
 static void Gimbal_pitch_rtt_vofa_print(float pitch_target_deg) {
     if (pitch_motor == NULL || gimbal_imu_data == NULL) {
         return;
@@ -176,6 +177,39 @@ static void Gimbal_pitch_rtt_vofa_print(float pitch_target_deg) {
                        pitch_motor->motor_pid.speed_pid.Pout,
                        pitch_motor->motor_pid.speed_pid.Iout,
                        pitch_motor->motor_pid.speed_pid.Output);
+    if (len > 0) {
+        SEGGER_RTT_WriteString(GIMBAL_PITCH_VOFA_RTT_CHANNEL, rtt_line);
+    }
+}
+*/
+
+static void Gimbal_vision_rtt_print(const Vision_Ctrl_Data_t *v_cmd) {
+    if (v_cmd == NULL) {
+        return;
+    }
+
+    Gimbal_pitch_rtt_init();
+
+    uint32_t now = HAL_GetTick();
+    if ((now - gimbal_pitch_rtt_last_print_tick) < GIMBAL_PITCH_RTT_PERIOD_MS) {
+        return;
+    }
+    gimbal_pitch_rtt_last_print_tick = now;
+
+    char rtt_line[256];
+    int len = snprintf(rtt_line, sizeof(rtt_line),
+                       "tracking=%u,target_pitch=%.3f,target_yaw=%.3f,"
+                       "target_pitch_v=%.3f,target_yaw_v=%.3f,"
+                       "linear_x=%.3f,linear_y=%.3f,linear_z=%.3f,angular_x=%.3f\r\n",
+                       (unsigned int)v_cmd->tracking_state,
+                       v_cmd->target_pitch,
+                       v_cmd->target_yaw,
+                       v_cmd->target_pitch_v,
+                       v_cmd->target_yaw_v,
+                       v_cmd->linear_x,
+                       v_cmd->linear_y,
+                       v_cmd->linear_z,
+                       v_cmd->angular_x);
     if (len > 0) {
         SEGGER_RTT_WriteString(GIMBAL_PITCH_VOFA_RTT_CHANNEL, rtt_line);
     }
@@ -486,8 +520,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             case GIMBAL_ZERO_FORCE:
                 Djimotor_set_status(yaw_motor, MOTOR_STOP);
                 Djimotor_set_status(pitch_motor, MOTOR_STOP);
-                Djimotor_set_target(yaw_motor, 0);
-                Djimotor_set_target(pitch_motor, 0);    
+            /*    Djimotor_set_target(yaw_motor, 0);
+                Djimotor_set_target(pitch_motor, 0);   */ 
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
                 break;
@@ -503,14 +537,14 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
             
                 // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
-                Djimotor_set_target(yaw_motor, cmd->yaw);
-                Djimotor_set_target(pitch_motor, cmd->pitch);
+                /*Djimotor_set_target(yaw_motor, cmd->yaw);
+                Djimotor_set_target(pitch_motor, cmd->pitch);*/
                 // Djimotor_set_target(pitch_motor, 0);
                
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
 
-                Gimbal_pitch_rtt_vofa_print(cmd->pitch);
+                // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
                // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",pitch_target_deg,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
                 //云台视觉模式
@@ -518,13 +552,13 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
             
-                if (Is_Vision_Online()) {
+                // if (Is_Vision_Online()) {
                     // 获取 NUC 的预测数据
                     const Vision_Ctrl_Data_t* v_cmd = Get_Vision_Ctrl_Data();
                     
                     // 绝对坐标系追踪：直接把预测的世界坐标扔给 PID
-                    Djimotor_set_target(yaw_motor, v_cmd->target_yaw);
-                    Djimotor_set_target(pitch_motor, v_cmd->target_pitch);
+                    /*Djimotor_set_target(yaw_motor, v_cmd->target_yaw);
+                    Djimotor_set_target(pitch_motor, v_cmd->target_pitch);*/
                     
                     // 计算基础 PID 输出 (包含 PITCH 重力补偿)
                     Djimotor_Calc_Output(yaw_motor);
@@ -536,16 +570,17 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                     // 这里的系数(比如 30.0f) 需要实车调参，越高对敌方移动的响应越暴力
                     yaw_motor->out_current += (int16_t)(30.0f * v_cmd->target_yaw_v);
                     pitch_motor->out_current += (int16_t)(30.0f * v_cmd->target_pitch_v);
+                    Gimbal_vision_rtt_print(v_cmd);
                 
-                } else {
-                    //视觉掉线，云台瞬间停止在当前绝对角度
-                    // ERROR_WARN("GIMBAL", "Vision Offline! Hold position.");
-                    Djimotor_set_target(yaw_motor, gimbal_imu_data->total_yaw);
-                    Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.pitch);
+                // } else {
+                //     //视觉掉线，云台瞬间停止在当前绝对角度
+                //     // ERROR_WARN("GIMBAL", "Vision Offline! Hold position.");
+                //    /*Djimotor_set_target(yaw_motor, gimbal_imu_data->total_yaw);
+                //     Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.pitch);*/
                     
-                    Djimotor_Calc_Output(yaw_motor);
-                    Djimotor_Calc_Output(pitch_motor);
-                }
+                //     Djimotor_Calc_Output(yaw_motor);
+                //     Djimotor_Calc_Output(pitch_motor);
+                // }
                 break;
 
             default:
@@ -670,6 +705,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 desired_pitch = gimbal_bumpless_state.vision_filtered_pitch;
                 gimbal_bumpless_state.last_vision_yaw_rate = v_cmd->target_yaw_v;
                 gimbal_bumpless_state.last_vision_pitch_rate = v_cmd->target_pitch_v;
+                Gimbal_vision_rtt_print(v_cmd);
             } else {
                 gimbal_bumpless_state.vision_filter_initialized = false;
             }
@@ -760,7 +796,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
             gimbal_cmd.yaw = gimbal_bumpless_state.active_yaw_target;
             gimbal_cmd.pitch = gimbal_bumpless_state.active_pitch_target;
-            Gimbal_pitch_rtt_vofa_print(gimbal_bumpless_state.active_pitch_target);
+            // Gimbal_pitch_rtt_vofa_print(gimbal_bumpless_state.active_pitch_target);
         }
 
         gimbal_bumpless_state.last_mode = cmd->gimbal_mode;
