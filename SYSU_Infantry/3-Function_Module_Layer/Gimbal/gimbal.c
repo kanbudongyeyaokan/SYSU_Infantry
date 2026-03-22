@@ -67,6 +67,10 @@ static char gimbal_pitch_vofa_rtt_buffer[GIMBAL_PITCH_VOFA_RTT_BUFFER_SIZE];
 static uint32_t gimbal_pitch_rtt_last_print_tick = 0U;
 static uint8_t gimbal_pitch_rtt_channel_ready = 0U;
 
+static float pitch_gimbal;
+static float pitch_speed;
+
+
 // 无扰切换核心时间参数：
 // 1. blend   决定 active_ref 从旧目标过渡到新目标的总时间
 // 2. ff blend 决定视觉速度前馈的渐入/渐出时间
@@ -316,7 +320,7 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->total_yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
-                .kp = 30,
+                .kp = 20,
                 .ki = 0,
                 .kd = 0,
                 .deadband = 0.0f,
@@ -325,12 +329,12 @@ static void Gimbal_motor_init(void) {
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL, // 角度环输出限幅 + 梯形积分
             },
             .speed_pid = {
-                .kp = 70,
-                .ki = 8.0,
+                .kp = 60,
+                .ki = 2.0,
                 .kd = 0.0,
                 .deadband = 0.0f,
-                .max_out = 25000,
-                .max_iout = 8000,
+                .max_out = 15000,
+                .max_iout = 2000,
                 // .feedfoward_coefficient = 0.05f,
                 .target_ff_coef = 0.1f, // 目标值前馈系数 (实测调整)
                 .LPF_coefficient = 0.0f,
@@ -361,10 +365,10 @@ static void Gimbal_motor_init(void) {
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
             //使用ins模块姿态数据作为反馈
-            .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
+            .other_angle_feedback_ptr = &(gimbal_imu_data->euler.roll),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.x),
             .angle_pid = {
-                .kp = 35.0f,
+                .kp = 15.0f,
                 .ki = 0.0f,
                 .kd = 0.0f,
                 .max_out = 800.0f,
@@ -372,17 +376,17 @@ static void Gimbal_motor_init(void) {
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_DIFFERENTIAL_GO_FIRST,
             },
             .speed_pid = {
-                .kp = 80.0f,
-                .ki = 20.0f,
+                .kp = 40.0f,
+                .ki = 2.0f,
                 .kd = 0.0f,
                 .deadband = 0.1f,
-                .max_out = 20000.0f,
-                .max_iout = 8000.0f,
+                .max_out = 15000.0f,
+                .max_iout = 2000.0f,
                 // .LPF_coefficient = 0.9f,
                 // 前馈参数
-                .target_ff_coef = 0.1f, // 目标值前馈系数 (实测调整)
-                .feedforward_source = &pitch_gravity_factor, // cos 因子
-                .feedfoward_coefficient = 3300.0f,           // 需要实测
+                .target_ff_coef = 0.2f, // 目标值前馈系数 (实测调整)
+                // .feedforward_source = &pitch_gravity_factor, // cos 因子
+                // .feedfoward_coefficient = 3300.0f,           // 需要实测
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
                 
             },
@@ -418,7 +422,7 @@ void Gimbal_task_init(void) {
     Gimbal_motor_init();
     Gimbal_pitch_rtt_init();
 
-    Vision_Comm_Init();
+    // Vision_Comm_Init();
 }
 
 Gimbal_state_e Gimbal_get_state(void)
@@ -572,6 +576,9 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         if (gimbal_imu_data->state != INS_STATE_READY) {
             return;
         }
+
+        pitch_gimbal = gimbal_imu_data->euler.pitch;
+        pitch_speed = gimbal_imu_data->gyro_body.x;
 
         Vision_Comm_Parse_Task();
 

@@ -1,7 +1,6 @@
 /**
- * @Author         : SYSU电控组
- * @Date           : 2025-09-29
- * @Note           : 适配QuaternionEKF移植版
+ * @Author         : 优化版 EKF 
+ * @Note           : 6状态扩展卡尔曼滤波 (4四元数 + 2零偏)
  */
 #pragma once
 
@@ -31,9 +30,9 @@ typedef struct {
  * @brief EKF配置参数结构体
  */
 typedef struct {
-    float process_noise_q;      /*!< 四元数过程噪声 (Q1) */
-    float measurement_noise_r;  /*!< 加速度计测量噪声 (R) */
-    float gyro_bias_noise;      /*!< 陀螺仪零偏过程噪声 (Q2) */
+    float process_noise_q;      /*!< 四元数过程噪声协方差 (Q1) */
+    float measurement_noise_r;  /*!< 加速度计测量噪声协方差 (R) */
+    float gyro_bias_noise;      /*!< 陀螺仪零偏过程噪声协方差 (Q2) */
     float dt;
     bool enable_bias_correction;
     float static_threshold;
@@ -53,11 +52,11 @@ typedef struct {
 typedef struct {
     Quaternion_t quaternion;
     Euler_angles_t euler;
-    float gyro_bias[3];          /*!< 陀螺仪零偏 [x,y,z]，z轴恒为0 */
+    float gyro_bias[3];          /*!< 陀螺仪零偏 [x,y,z]，z轴利用低通估计 */
 
-    float P[36];                 /*!< 协方差矩阵 6x6 */
+    float P[36];                 /*!< 误差协方差矩阵 6x6 */
 
-    // 参数存储
+    // 统计参数存储
     float Q1;                    /*!< 四元数过程噪声 */
     float Q2;                    /*!< 零偏过程噪声 */
     float R_val;                 /*!< 测量噪声 */
@@ -70,7 +69,7 @@ typedef struct {
     bool stable_flag;            /*!< 稳定标志 (acc/gyro range check) */
     uint32_t error_count;        /*!< 错误计数 */
     uint32_t update_count;
-    float chi_square;            /*!< 卡方值 */
+    float chi_square;            /*!< 卡方检验值 */
 
     // z轴零偏估计辅助量
     float z_bias_err_lp;         /*!< z轴误差的一阶低通值 (rad/s) */
@@ -95,6 +94,6 @@ bool Ekf_detect_static_state(Ekf_state_t* ekf_state, const float acc[3], const f
 void Ekf_quaternion_to_euler(Quaternion_t* q, Euler_angles_t* euler);
 void Ekf_update_yaw_continuity(Ekf_state_t* ekf_state);
 
-// 兼容性接口（新算法不需要外部温度补偿）
+// 兼容性接口
 void Ekf_set_temperature(Ekf_state_t* ekf_state, float current_temp);
 void Ekf_calculate_temp_compensation(const Ekf_state_t* ekf_state, float temp_compensation[3]);

@@ -2,11 +2,11 @@
  * @brief          : BMI088相关寄存器表
  * @Author         : SYSU电控组
  * @Note           :
- * @Copyright(c)   : Minghang Li Copyright
  */
 #pragma once
-
-#define BMI088_ACCEL_3G_SEN 0.0008974358974f
+// 将灵敏度定义恢复为标准单位 g/LSB 
+// 算法: 3g / 32768 = 0.000091552734375f
+#define BMI088_ACCEL_3G_SEN     0.000091552734f
 #define DEG2SEC 0.0174532925f
 #define SEC2DEG 57.295779578f
 #define PI 3.14159265f

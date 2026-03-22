@@ -25,7 +25,7 @@ void Vision_Comm_Init(void) {
     memset(&latest_vision_ctrl_data, 0, sizeof(Vision_Ctrl_Data_t));
     
     // 注册串口 1 (根据你的代码维持不变)
-    vision_uart = Uart_register(&huart1, Vision_Rx_Callback);
+    vision_uart = Uart_register(&huart6, Vision_Rx_Callback);
     
     if (vision_uart != NULL) {
         ERROR_INFO("VISION", "Init OK, UART1 registered");

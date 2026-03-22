@@ -208,6 +208,26 @@ add_executable(${CMAKE_PROJECT_NAME}
 
 
 # Add STM32CubeMX generated sources
+# =========================================================================
+# 👇👇👇 暴力解封 C板 (STM32F407) 算力与硬件浮点 👇👇👇
+# =========================================================================
+
+# # 1. 强制添加编译选项：开启 O2 优化，启用 Cortex-M4 硬浮点指令集
+# target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
+#         -O2
+#         -mfloat-abi=hard
+#         -mfpu=fpv4-sp-d16
+# )
+
+# # 2. 强制添加链接选项：告诉链接器使用硬浮点，防止报错
+# target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
+#         -mfloat-abi=hard
+#         -mfpu=fpv4-sp-d16
+# )
+
+# # =========================================================================
+# # 👆👆👆 插入结束 👆👆👆
+# # =========================================================================
 add_subdirectory(cmake/stm32cubemx)
 
 # Link directories setup
