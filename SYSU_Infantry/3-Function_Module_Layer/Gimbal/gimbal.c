@@ -443,7 +443,6 @@ Gimbal_state_e Gimbal_get_state(void)
 /**
  * @brief 处理云台控制指令
  */
-#if !GIMBAL_USE_OPTIMIZED_CONTROL
 void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         //只有当IMU就绪时才可以控制云台
         //安全保护
@@ -498,15 +497,12 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 //使能电机
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
-                // Djimotor_set_status(yaw_motor, MOTOR_STOP);
-                // Djimotor_set_status(pitch_motor, MOTOR_STOP);
-                //设置电机目标值
 
-            
+                //设置电机目标值
                 // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
+                
                 Djimotor_set_target(yaw_motor, cmd->yaw);
                 Djimotor_set_target(pitch_motor, cmd->pitch);
-                // Djimotor_set_target(pitch_motor, 0);
                
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
@@ -532,15 +528,11 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                     Djimotor_Calc_Output(pitch_motor);
                     
                     // 在电流层直接叠加上视觉速度前馈！
-                    // 你的 Pitch 已经占用了 feedforward_source 做重力补偿，
-                    // 最优雅的解法是算完 PID 后，手动在底层电流上加一把推力。
-                    // 这里的系数(比如 30.0f) 需要实车调参，越高对敌方移动的响应越暴力
                     yaw_motor->out_current += (int16_t)(30.0f * v_cmd->target_yaw_v);
                     pitch_motor->out_current += (int16_t)(30.0f * v_cmd->target_pitch_v);
                 
                 } else {
                     //视觉掉线，云台瞬间停止在当前绝对角度
-                    // ERROR_WARN("GIMBAL", "Vision Offline! Hold position.");
                     Djimotor_set_target(yaw_motor, gimbal_imu_data->total_yaw);
                     Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.pitch);
                     
@@ -552,286 +544,9 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             default:
                 break;
         }
-
-        //Uart_printf(test_uart,"yaw_speed:%.2f,pitch_speed:%.2f\r\n",gimbal_imu_data->gyro_body.z,gimbal_imu_data->gyro_body.y);
-
-        //Uart_printf(test_uart, "pitch:%.2f,%.2f,%.2f\r\n", pitch_motor->motor_pid.pid_target, *(pitch_motor->motor_pid.other_angle_feedback_ptr),pitch_motor->motor_pid.speed_pid.Output);
-    /***************************************测试SHELL改云台电机参数********************/
-    // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f,%d,%f\r\n",cmd->yaw,yaw_motor->motor_measure.total_angle
-    //     ,yaw_motor->out_current,yaw_motor->motor_pid.speed_pid.kp);
-   // VOFA_Send(test_uart,cmd->yaw,yaw_motor->motor_measure.total_angle,yaw_motor->out_current);
         //反馈数据
         gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
-        //ERROR_INFO("GIMBAL", "Yaw single round angle: %.2f", gimbal_feedback.yaw_motor_single_round_angle);
-        //推送消息
-        // 将当前的电机状态（编码器数据）发布给决策层，用于下一帧的闭环控制或逻辑判断
-        // Pub_push_message(gimbal_pub, (void *) &gimbal_feedback);
         xQueueOverwrite(Gimbal_feedback_queue_handle, &gimbal_feedback);
 }
-#else
-void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
-        if ((cmd == NULL) || (gimbal_imu_data == NULL)) {
-            return;
-        }
 
-        if (gimbal_imu_data->state != INS_STATE_READY) {
-            return;
-        }
-
-        Rtt_Printf(0,"HELLO:%.2f\r\n",gimbal_imu_data->euler.roll);
-
-        Vision_Comm_Parse_Task();
-
-        static uint8_t vision_tx_divider = 0;
-        if (++vision_tx_divider >= 2) {
-            vision_tx_divider = 0;
-
-            uint32_t current_us = (uint32_t)(DWT_GetTimeline_s() * 1000000.0f);
-            Vision_Send_Pose(current_us,
-                             gimbal_imu_data->euler.pitch,
-                             gimbal_imu_data->total_yaw,
-                             gimbal_imu_data->euler.roll,
-                             gimbal_imu_data->gyro_body.x,
-                             gimbal_imu_data->gyro_body.z);
-        }
-
-        float dt = DWT_GetDeltaT(&gimbal_bumpless_state.dwt_counter);
-        dt = Gimbal_clampf(dt, GIMBAL_CONTROL_DT_MIN_S, GIMBAL_CONTROL_DT_MAX_S);
-
-        const float measured_yaw = gimbal_imu_data->total_yaw;
-        const float measured_pitch = gimbal_imu_data->euler.pitch;
-
-        if (!gimbal_bumpless_state.initialized) {
-            Gimbal_init_bumpless_state(measured_yaw, measured_pitch);
-        }
-
-        float pitch_rad = measured_pitch * (3.14159265f / 180.0f);
-        pitch_gravity_factor = cosf(pitch_rad);
-
-        gimbal_cmd = *cmd;
-
-        if (cmd->gimbal_mode == GIMBAL_ZERO_FORCE) {
-            // 进入失能时把 active_ref 收回当前实测姿态，防止恢复时追旧目标
-            Gimbal_set_integral_hold(false);
-
-            gimbal_bumpless_state.active_yaw_target = measured_yaw;
-            gimbal_bumpless_state.active_pitch_target = measured_pitch;
-            gimbal_bumpless_state.transition_active = false;
-            gimbal_bumpless_state.vision_source_active = false;
-            gimbal_bumpless_state.vision_filter_initialized = false;
-            gimbal_bumpless_state.vision_ff_blend = 0.0f;
-            gimbal_bumpless_state.integral_hold_time_s = 0.0f;
-            gimbal_bumpless_state.last_vision_yaw_rate = 0.0f;
-            gimbal_bumpless_state.last_vision_pitch_rate = 0.0f;
-
-            Djimotor_set_status(yaw_motor, MOTOR_STOP);
-            Djimotor_set_status(pitch_motor, MOTOR_STOP);
-            Djimotor_set_target(yaw_motor, 0.0f);
-            Djimotor_set_target(pitch_motor, 0.0f);
-            Djimotor_Calc_Output(yaw_motor);
-            Djimotor_Calc_Output(pitch_motor);
-        } else {
-            const bool leaving_zero_force = (gimbal_bumpless_state.last_mode == GIMBAL_ZERO_FORCE);
-            const bool vision_online = Is_Vision_Online();
-            const bool want_vision_source = (cmd->gimbal_mode == GIMBAL_VISION_MODE) && vision_online;
-            const Vision_Ctrl_Data_t *v_cmd = want_vision_source ? Get_Vision_Ctrl_Data() : NULL;
-
-            // desired_* 是当前模式希望追踪的“源目标”，
-            // active_* 则是过渡器处理后真正下发给 PID 的“执行目标”。
-            float desired_yaw = cmd->yaw;
-            float desired_pitch = cmd->pitch;
-
-            if (want_vision_source && (v_cmd != NULL)) {
-                // 视觉绝对角先做参考系补差，再对齐到当前多圈 yaw 附近，
-                // 最后再进入低通滤波，这样能同时压住坐标失配和单圈角跳变。
-                float raw_yaw = Gimbal_unwrap_to_nearest(
-                    v_cmd->target_yaw + gimbal_vision_yaw_bias_deg,
-                    gimbal_bumpless_state.active_yaw_target);
-                float raw_pitch = v_cmd->target_pitch + gimbal_vision_pitch_bias_deg;
-
-                if (!gimbal_bumpless_state.vision_filter_initialized) {
-                    gimbal_bumpless_state.vision_filtered_yaw = raw_yaw;
-                    gimbal_bumpless_state.vision_filtered_pitch = raw_pitch;
-                    gimbal_bumpless_state.vision_filter_initialized = true;
-                } else {
-                    gimbal_bumpless_state.vision_filtered_yaw = Gimbal_lpf_step(
-                        gimbal_bumpless_state.vision_filtered_yaw,
-                        raw_yaw,
-                        GIMBAL_VISION_REF_FILTER_TAU_S,
-                        dt);
-                    gimbal_bumpless_state.vision_filtered_pitch = Gimbal_lpf_step(
-                        gimbal_bumpless_state.vision_filtered_pitch,
-                        raw_pitch,
-                        GIMBAL_VISION_REF_FILTER_TAU_S,
-                        dt);
-                }
-
-                desired_yaw = gimbal_bumpless_state.vision_filtered_yaw;
-                desired_pitch = gimbal_bumpless_state.vision_filtered_pitch;
-                gimbal_bumpless_state.last_vision_yaw_rate = v_cmd->target_yaw_v;
-                gimbal_bumpless_state.last_vision_pitch_rate = v_cmd->target_pitch_v;
-            } else {
-                gimbal_bumpless_state.vision_filter_initialized = false;
-            }
-
-            if (leaving_zero_force) {
-                // 失能恢复时把目标重新收回到当前姿态，防止恢复使能的第一拍追旧目标
-                gimbal_bumpless_state.active_yaw_target = measured_yaw;
-                gimbal_bumpless_state.active_pitch_target = measured_pitch;
-                gimbal_bumpless_state.transition_active = false;
-                gimbal_bumpless_state.vision_source_active = false;
-            }
-
-            if ((want_vision_source != gimbal_bumpless_state.vision_source_active) || leaving_zero_force) {
-                // 进入视觉、退出视觉、或者从失能恢复，都按“目标源变化”处理：
-                // 先启动 S 曲线过渡，再短时冻结积分，避免 Setpoint 和控制力矩同时跳变。
-                gimbal_bumpless_state.vision_source_active = want_vision_source;
-                Gimbal_start_transition(desired_yaw, desired_pitch);
-                gimbal_bumpless_state.integral_hold_time_s = GIMBAL_I_HOLD_TIME_S;
-            }
-
-            if (gimbal_bumpless_state.transition_active) {
-                // 过渡期间允许终点持续跟踪最新视觉点，避免 blend 结束后再补一拍大追踪
-                gimbal_bumpless_state.transition_to_yaw = desired_yaw;
-                gimbal_bumpless_state.transition_to_pitch = desired_pitch;
-                gimbal_bumpless_state.transition_elapsed_s += dt;
-
-                float blend = Gimbal_smoothstep01(
-                    gimbal_bumpless_state.transition_elapsed_s / GIMBAL_MODE_BLEND_TIME_S);
-
-                gimbal_bumpless_state.active_yaw_target =
-                    gimbal_bumpless_state.transition_from_yaw +
-                    (gimbal_bumpless_state.transition_to_yaw - gimbal_bumpless_state.transition_from_yaw) * blend;
-                gimbal_bumpless_state.active_pitch_target =
-                    gimbal_bumpless_state.transition_from_pitch +
-                    (gimbal_bumpless_state.transition_to_pitch - gimbal_bumpless_state.transition_from_pitch) * blend;
-
-                if (blend >= 1.0f) {
-                    gimbal_bumpless_state.transition_active = false;
-                }
-            } else {
-                gimbal_bumpless_state.active_yaw_target = desired_yaw;
-                gimbal_bumpless_state.active_pitch_target = desired_pitch;
-            }
-
-            // 视觉速度前馈单独渐入渐出，避免切换瞬间电流突变
-            {
-                const float ff_target = want_vision_source ? 1.0f : 0.0f;
-                const float ff_step = (GIMBAL_VISION_FF_BLEND_TIME_S > 0.0f) ?
-                    (dt / GIMBAL_VISION_FF_BLEND_TIME_S) : 1.0f;
-
-                if (ff_target > gimbal_bumpless_state.vision_ff_blend) {
-                    gimbal_bumpless_state.vision_ff_blend = Gimbal_clampf(
-                        gimbal_bumpless_state.vision_ff_blend + ff_step, 0.0f, 1.0f);
-                } else {
-                    gimbal_bumpless_state.vision_ff_blend = Gimbal_clampf(
-                        gimbal_bumpless_state.vision_ff_blend - ff_step, 0.0f, 1.0f);
-                }
-            }
-
-            if (gimbal_bumpless_state.integral_hold_time_s > 0.0f) {
-                // 切换初期只冻结 Ki，不改 Iout，本质上是“保留偏置力矩、暂停继续积分”
-                gimbal_bumpless_state.integral_hold_time_s -= dt;
-                Gimbal_set_integral_hold(true);
-            } else {
-                Gimbal_set_integral_hold(false);
-            }
-
-            Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
-            Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
-            Djimotor_set_target(yaw_motor, gimbal_bumpless_state.active_yaw_target);
-            Djimotor_set_target(pitch_motor, gimbal_bumpless_state.active_pitch_target);
-            Djimotor_Calc_Output(yaw_motor);
-            Djimotor_Calc_Output(pitch_motor);
-
-            if (gimbal_bumpless_state.vision_ff_blend > 0.0f) {
-                yaw_motor->out_current += (int16_t)(
-                    GIMBAL_VISION_YAW_FF_GAIN *
-                    gimbal_bumpless_state.vision_ff_blend *
-                    gimbal_bumpless_state.last_vision_yaw_rate);
-                pitch_motor->out_current += (int16_t)(
-                    GIMBAL_VISION_PITCH_FF_GAIN *
-                    gimbal_bumpless_state.vision_ff_blend *
-                    gimbal_bumpless_state.last_vision_pitch_rate);
-            } else if (!want_vision_source) {
-                gimbal_bumpless_state.last_vision_yaw_rate = 0.0f;
-                gimbal_bumpless_state.last_vision_pitch_rate = 0.0f;
-            }
-
-            gimbal_cmd.yaw = gimbal_bumpless_state.active_yaw_target;
-            gimbal_cmd.pitch = gimbal_bumpless_state.active_pitch_target;
-            Gimbal_pitch_rtt_vofa_print(gimbal_bumpless_state.active_pitch_target);
-        }
-
-        gimbal_bumpless_state.last_mode = cmd->gimbal_mode;
-
-        // 把当前真正执行的 active_ref 回传给决策层。
-        // 决策层在视觉期间持续回写这个值，退出视觉时手动目标才能无缝接管。
-        gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
-        gimbal_feedback.yaw_motor_total_angle = yaw_motor->motor_measure.total_angle;
-        gimbal_feedback.imu_yaw_total_angle = measured_yaw;
-        gimbal_feedback.imu_yaw_rate = gimbal_imu_data->gyro_body.z;
-        gimbal_feedback.imu_pitch_angle = measured_pitch;
-        gimbal_feedback.active_yaw_target = gimbal_bumpless_state.active_yaw_target;
-        gimbal_feedback.active_pitch_target = gimbal_bumpless_state.active_pitch_target;
-        xQueueOverwrite(Gimbal_feedback_queue_handle, &gimbal_feedback);
-}
-#endif
-int set_yaw_pid_cmd(int argc, char *argv[])
-{
-    // 安全检查
-    if (yaw_motor == NULL) {
-        shellPrint(&shell, "Error: Yaw motor is NULL!\r\n");
-        return -1;
-    }
-
-    // 参数数量检查
-    if (argc < 5) {
-        shellPrint(&shell, "Usage: yaw_pid -s(speed)/-a(angle) <kp> <ki> <kd> [max_out] [max_iout]\r\n");
-        return -1;
-    }
-
-    Pid_instance_t *target_pid = NULL;
-
-    char *mode_str = argv[1];
-    char *type_name = "";
-
-    // 4. 根据输入决定指针指向谁
-    if (strcmp(mode_str, "-s") == 0) {
-        // 指向速度环 PID
-        target_pid = &(yaw_motor->motor_pid.speed_pid);
-        type_name = "Speed";
-    }
-    else if (strcmp(mode_str, "-a") == 0) {
-        // 指向角度环 PID
-        target_pid = &(yaw_motor->motor_pid.angle_pid);
-        type_name = "Angle";
-    }
-    else {
-        shellPrint(&shell, "Error: Unknown mode '%s'. Use -s or -a\r\n", mode_str);
-        return -1;
-    }
-
-    // 5. 修改参数 (通过指针操作)
-    target_pid->kp = (float)atof(argv[2]);
-    target_pid->ki = (float)atof(argv[3]);
-    target_pid->kd = (float)atof(argv[4]);
-
-    // 6. 修改限幅 (如果有输入的话)
-    if (argc >= 6) target_pid->max_out  = (float)atof(argv[5]);
-    if (argc >= 7) target_pid->max_iout = (float)atof(argv[6]);
-
-    // 7. 打印反馈
-    shellPrint(&shell, "[Gimbal] Set Yaw %s PID Success!\r\n", type_name);
-    shellPrint(&shell, "  Kp: %.3f, Ki: %.3f, Kd: %.3f\r\n",
-               target_pid->kp, target_pid->ki, target_pid->kd);
-    shellPrint(&shell, "  MaxOut: %.0f, MaxIOut: %.0f\r\n",
-               target_pid->max_out, target_pid->max_iout);
-
-    return 0;
-}
-
-// 导出命令
-// 注意：虽然函数在 gimbal.c，但 Letter-Shell 会通过链接脚本自动找到它，无论它在哪里
-SHELL_EXPORT_CMD(SHELL_CMD_PERMISSION(0)|SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN), yaw_pid, set_yaw_pid_cmd, Tune Yaw PID);
 

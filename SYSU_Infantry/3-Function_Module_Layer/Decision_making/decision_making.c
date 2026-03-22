@@ -123,8 +123,6 @@ void Receive_feedback_infomation()
 
 void Send_command_to_all_task()
 {
-    //printf("HELLO\r\n");
-    // Uart_printf(test_uart,"Sending command to all tasks\r\n");
     //发送底盘控制信息
     xQueueOverwrite(Chassis_cmd_queue_handle, &chassis_cmd_send);
 
@@ -162,45 +160,11 @@ static void Decision_sync_gimbal_manual_target(void)
 void Robot_set_command()
 {
 #if USE_SBUS_RECEIVER == 1 || USE_SBUS_RECEIVER == 2
-
-    // SBUS遥控器调试输出
-    // printf("SBUS Ch1:%d Ch2:%d Ch3:%d Ch4:%d S1:%d S2:%d\r\n",
-    //        sbus_data[CURRENT].rc.Ch1, sbus_data[CURRENT].rc.Ch2,
-    //        sbus_data[CURRENT].rc.Ch3, sbus_data[CURRENT].rc.Ch4,
-    //        sbus_data[CURRENT].S1, sbus_data[CURRENT].S2);
-
-
-    //图传链路遥控调试输出
-    //调试输出: 遥控器摇杆数据
-    // ERROR_INFO("DMAKING","lx:%d,ly:%d,rx:%d,ry:%d,dial:%d\r\n",
-    //     vrc_data[CURRENT].rc.Lrocker_x,  // 左摇杆X轴
-    //     vrc_data[CURRENT].rc.Lrocker_y,// 左摇杆Y轴
-    //     vrc_data[CURRENT].rc.Rrocker_x,  // 右摇杆X轴
-    //     vrc_data[CURRENT].rc.Rrocker_y,  // 右摇杆Y轴
-    //     vrc_data[CURRENT].rc.dial);       // 拨轮值
-    // 调试输出: 遥控器按键状态
-    // Uart_printf(test_uart,"mode:%d,pause:%d,bl:%d,br:%d,trig:%d\r\n",
-    //     vrc_data[CURRENT].rc.mode_switch, // 模式开关
-    //     vrc_data[CURRENT].rc.pause,       // 暂停键
-    //     vrc_data[CURRENT].rc.btn_left,    // 左侧按键
-    //     vrc_data[CURRENT].rc.btn_right,   // 右侧按键
-    //     vrc_data[CURRENT].rc.trigger);    // 扳机键
-    // SBUS开关映射: S1左开关, S2右开关 (1=下, 2=上, 3=中)
-    // if (sbus_data[CURRENT].S1 == SBUS_SWITCH_DOWN)
-    // {
-    //     RC_ctrl_set();
-    // }
-    // else if (sbus_data[CURRENT].S1 == SBUS_SWITCH_UP)
-    // {
-    //     Keyboard_ctrl_set();
-    // }
     static bool ctrl_mode = 0; // 0=遥控器控制, 1=键鼠控制
     if (ctrl_mode == 0){
         //遥控器检测切换（自定义左键控制切换）
         if(vrc_data[CURRENT].rc.btn_left){
-
             ctrl_mode = 1;
-
             return;
         }   
         RC_ctrl_set();
@@ -380,9 +344,6 @@ void RC_ctrl_set()
     else
         chassis_cmd_send.vy = 0;
     chassis_cmd_send.vx = -2.0f * (float)vrc_data[CURRENT].rc.Lrocker_x;
-
-    // if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_x) > RC_DEADBAND)
-    //     gimbal_cmd_send.yaw -= GIMBAL_RC_MOVE_RATIO_YAW * (float)vrc_data[CURRENT].rc.Rrocker_x;
     // YAW 轴处理 (死区 + 降速)
     if (gimbal_cmd_send.gimbal_mode == GIMBAL_ZERO_FORCE)
     {
@@ -411,13 +372,6 @@ void RC_ctrl_set()
         else if (gimbal_cmd_send.pitch < PITCH_DOWN_MAX) gimbal_cmd_send.pitch = PITCH_DOWN_MAX;
     }
     
-    
-    // Uart_printf(test_uart, "Vx:%.2f,Vy:%.2f,Wz:%.2f,offset,chassis:%d\r\n",
-    // chassis_cmd_send.vx, 
-    // chassis_cmd_send.vy, 
-    // chassis_cmd_send.wz,
-
-    // chassis_cmd_send.chassis_mode);
 
 #else
     /**根据遥控器开关状态设定模式**/
