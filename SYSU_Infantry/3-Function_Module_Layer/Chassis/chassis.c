@@ -58,13 +58,8 @@ static Pid_instance_t chassis_follow_pid;
  * @brief 底盘任务初始化
  */
 void Chassis_task_init(void) {
-    //底盘模块初始化
     Chassis_init();
-    //超电初始化
-    // SuperCap_Comm_Init(&hcan2);
-
-    //底盘功率控制初始化
-    //Chassis_Power_Control_Init();
+    //SuperCap_Comm_Init(&hcan1);
 }
 
 /**

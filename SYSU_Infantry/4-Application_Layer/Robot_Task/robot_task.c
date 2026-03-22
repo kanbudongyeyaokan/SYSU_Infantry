@@ -131,19 +131,19 @@ void Robot_task_init(void)
   osDelay(100);
 
   //   //决策任务
-  osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
-  decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
-
-    // === 启动底盘与电机任务（必需） ===
-    // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
-    osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
-     chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
-
-     osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
-    gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
-
-    osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
-     shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+  // osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
+  // decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
+  //
+  //   // === 启动底盘与电机任务（必需） ===
+  //   // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
+     osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
+      chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
+  //
+  //    osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
+  //   gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
+  //
+  //   osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
+  //    shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
 }
 

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "error_handler.h"
 #include "referee.h"
-
+#include "supercap_comm.h"
 #define CHASSIS_POWER_WHEEL_NUM          4U
 #define CHASSIS_POWER_EPSILON            1e-6f
 #define CHASSIS_MOTOR_CURRENT_MAX        16000.0f
@@ -305,15 +305,23 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4])
         input.w_fdb[i] = motors[i]->motor_measure.angular_velocity;
     }
 
-    input.p_limit = (float)ChassisPower_GetMaxLimit();
+    input.p_limit = (float)SuperCap_Get_Power_Limit();
     input.e_buffer = (float)ChassisPower_GetBuffer();
 
     if (input.p_limit < CHASSIS_POWER_LIMIT_DEFAULT)
     {
-        input.p_limit = CHASSIS_POWER_LIMIT_DEFAULT;
-        input.e_buffer = CHASSIS_POWER_BUFFER_DEFAULT;
+        input.p_limit = (float)ChassisPower_GetMaxLimit();
+        if (input.p_limit < CHASSIS_POWER_LIMIT_DEFAULT)
+        {
+            input.p_limit = CHASSIS_POWER_LIMIT_DEFAULT;
+        }
     }
 
+    if (input.e_buffer < 0.0f)
+    {
+        input.e_buffer = CHASSIS_POWER_BUFFER_DEFAULT;
+    }
+    ERROR_INFO(CHASSIS_PWR_MODULE ,"got power limit: %.2fW buffer: %.2f%%", input.p_limit, input.e_buffer);
     Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output);
 
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
@@ -326,7 +334,3 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4])
     }
 }
 
-void Send2SuperCap(void)
-{
-    /* 预留接口：可在此处发送当前功率状态到超电模块 */
-}
