@@ -62,7 +62,9 @@ extern QueueHandle_t Chassis_feedback_queue_handle; // 声明外部底盘命令�
 extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队列句柄
 static Gimbal_feedback_info_t  gimbal_feedback_recv;    //存储云台应用层发给决策层的信息
 static bool gimbal_yaw_initialized = false;
+#if GIMBAL_USE_OPTIMIZED_CONTROL
 static gimbal_mode_e last_gimbal_mode = GIMBAL_GYRO_MODE;
+#endif
 
 
 //发射机构反馈数据读取
@@ -140,6 +142,7 @@ void Send_command_to_all_task()
  */
 static void Decision_sync_gimbal_manual_target(void)
 {
+#if GIMBAL_USE_OPTIMIZED_CONTROL
     if ((gimbal_cmd_send.gimbal_mode == GIMBAL_VISION_MODE) ||
         (last_gimbal_mode == GIMBAL_VISION_MODE))
     {
@@ -149,6 +152,7 @@ static void Decision_sync_gimbal_manual_target(void)
     }
 
     last_gimbal_mode = gimbal_cmd_send.gimbal_mode;
+#endif
 }
 
 /**

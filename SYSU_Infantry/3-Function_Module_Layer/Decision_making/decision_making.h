@@ -5,6 +5,10 @@
 #include "robot_definitions.h"
 #include "ins.h"
 
+#ifndef GIMBAL_USE_OPTIMIZED_CONTROL
+#define GIMBAL_USE_OPTIMIZED_CONTROL 1
+#endif
+
 /**************决策*****************/
 
 /*机器人控制来源------键鼠/遥控器*/

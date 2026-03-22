@@ -442,8 +442,8 @@ Gimbal_state_e Gimbal_get_state(void)
 /**
  * @brief 处理云台控制指令
  */
-#if 0
-static void Gimbal_handle_command_legacy(Gimbal_cmd_send_t *cmd) {
+#if !GIMBAL_USE_OPTIMIZED_CONTROL
+void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         //只有当IMU就绪时才可以控制云台
         //安全保护
         if(gimbal_imu_data->state != INS_STATE_READY){
@@ -567,7 +567,7 @@ static void Gimbal_handle_command_legacy(Gimbal_cmd_send_t *cmd) {
         // Pub_push_message(gimbal_pub, (void *) &gimbal_feedback);
         xQueueOverwrite(Gimbal_feedback_queue_handle, &gimbal_feedback);
 }
-#endif
+#else
 void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         if ((cmd == NULL) || (gimbal_imu_data == NULL)) {
             return;
@@ -776,6 +776,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         gimbal_feedback.active_pitch_target = gimbal_bumpless_state.active_pitch_target;
         xQueueOverwrite(Gimbal_feedback_queue_handle, &gimbal_feedback);
 }
+#endif
 int set_yaw_pid_cmd(int argc, char *argv[])
 {
     // 安全检查
