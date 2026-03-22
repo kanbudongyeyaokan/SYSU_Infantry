@@ -456,7 +456,7 @@ void Gimbal_task_init(void) {
     Gimbal_motor_init();
     Gimbal_pitch_rtt_init();
 
-    // Vision_Comm_Init();
+    Vision_Comm_Init();
 }
 
 Gimbal_state_e Gimbal_get_state(void)
@@ -520,8 +520,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             case GIMBAL_ZERO_FORCE:
                 Djimotor_set_status(yaw_motor, MOTOR_STOP);
                 Djimotor_set_status(pitch_motor, MOTOR_STOP);
-            /*    Djimotor_set_target(yaw_motor, 0);
-                Djimotor_set_target(pitch_motor, 0);   */ 
+                Djimotor_set_target(yaw_motor, 0);
+                Djimotor_set_target(pitch_motor, 0);   
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
                 break;
@@ -537,8 +537,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
             
                 // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
-                /*Djimotor_set_target(yaw_motor, cmd->yaw);
-                Djimotor_set_target(pitch_motor, cmd->pitch);*/
+                Djimotor_set_target(yaw_motor, cmd->yaw);
+                Djimotor_set_target(pitch_motor, cmd->pitch);
                 // Djimotor_set_target(pitch_motor, 0);
                
                 Djimotor_Calc_Output(yaw_motor);
@@ -552,13 +552,13 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
             
-                // if (Is_Vision_Online()) {
+                if (Is_Vision_Online()) {
                     // 获取 NUC 的预测数据
                     const Vision_Ctrl_Data_t* v_cmd = Get_Vision_Ctrl_Data();
                     
                     // 绝对坐标系追踪：直接把预测的世界坐标扔给 PID
-                    /*Djimotor_set_target(yaw_motor, v_cmd->target_yaw);
-                    Djimotor_set_target(pitch_motor, v_cmd->target_pitch);*/
+                    Djimotor_set_target(yaw_motor, v_cmd->target_yaw);
+                    Djimotor_set_target(pitch_motor, v_cmd->target_pitch);
                     
                     // 计算基础 PID 输出 (包含 PITCH 重力补偿)
                     Djimotor_Calc_Output(yaw_motor);
@@ -568,26 +568,26 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                     // 你的 Pitch 已经占用了 feedforward_source 做重力补偿，
                     // 最优雅的解法是算完 PID 后，手动在底层电流上加一把推力。
                     // 这里的系数(比如 30.0f) 需要实车调参，越高对敌方移动的响应越暴力
-                    yaw_motor->out_current += (int16_t)(30.0f * v_cmd->target_yaw_v);
-                    pitch_motor->out_current += (int16_t)(30.0f * v_cmd->target_pitch_v);
+                    yaw_motor->out_current += (int16_t)(15.0f * v_cmd->target_yaw_v);
+                    pitch_motor->out_current += (int16_t)(15.0f * v_cmd->target_pitch_v);
                     Gimbal_vision_rtt_print(v_cmd);
                 
-                // } else {
-                //     //视觉掉线，云台瞬间停止在当前绝对角度
-                //     // ERROR_WARN("GIMBAL", "Vision Offline! Hold position.");
-                //    /*Djimotor_set_target(yaw_motor, gimbal_imu_data->total_yaw);
-                //     Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.pitch);*/
+                } else {
+                    //视觉掉线，云台瞬间停止在当前绝对角度
+                    // ERROR_WARN("GIMBAL", "Vision Offline! Hold position.");
+                    Djimotor_set_target(yaw_motor, gimbal_imu_data->total_yaw);
+                    Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.pitch);
                     
-                //     Djimotor_Calc_Output(yaw_motor);
-                //     Djimotor_Calc_Output(pitch_motor);
-                // }
+                    Djimotor_Calc_Output(yaw_motor);
+                    Djimotor_Calc_Output(pitch_motor);
+                }
                 break;
 
             default:
                 break;
         }
 
-        //Uart_printf(test_uart,"yaw_speed:%.2f,pitch_speed:%.2f\r\n",gimbal_imu_data->gyro_body.z,gimbal_imu_data->gyro_body.y);
+        // Uart_printf(test_uart,"yaw_speed:%.2f,pitch_speed:%.2f\r\n",gimbal_imu_data->gyro_body.z,gimbal_imu_data->gyro_body.y);
 
         //Uart_printf(test_uart, "pitch:%.2f,%.2f,%.2f\r\n", pitch_motor->motor_pid.pid_target, *(pitch_motor->motor_pid.other_angle_feedback_ptr),pitch_motor->motor_pid.speed_pid.Output);
     /***************************************测试SHELL改云台电机参数********************/
