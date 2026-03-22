@@ -22,6 +22,7 @@
 #include "supercap_comm.h"
 #include "algorithm_pid.h"
 #include "error_handler.h"
+#include "power_meter.h"
 
 #define CHASSIS_FOLLOW_YAW_GAIN 0.5f
 #define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
@@ -66,6 +67,7 @@ void Chassis_task_init(void) {
  * @brief 底盘功能模块初始化
  */
 void Chassis_init() {
+
     // 设置底盘物理参数
     chassis_params.wheel_radius = 60.0f; // 轮子半径60mm
     chassis_params.wheel_perimeter = chassis_params.wheel_radius * 2 * M_PI; //轮子周长
@@ -185,6 +187,7 @@ void Chassis_init() {
     }
     // chassis_motors[2] = DJI_Motor_Init(&cfg[2]);
     // chassis_motors[3] = DJI_Motor_Init(&cfg[3]);
+    PowerMeter_Init(&hcan1);
     Chassis_Power_Control_Init();
 }
 
@@ -302,7 +305,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
     }
 
     // 在 1kHz 控制周期末统一做动态功率控制与等比例电流限幅
-    Chassis_Power_Control(chassis_motors);
+    Chassis_Power_Control(chassis_motors, PowerMeter_GetPower());
 
     // 反馈底盘数据回决策层
     chassis_feedback.chassis_wz = cmd->wz;

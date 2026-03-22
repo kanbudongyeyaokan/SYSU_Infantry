@@ -28,7 +28,7 @@ void Chassis_control_task(void const *argument)
     Chassis_cmd_send_t cmd_recv;
     for (;;)
     {
-        Send2SuperCap();
+        //Send2SuperCap();
 
         if (xQueueReceive(Chassis_cmd_queue_handle, &cmd_recv, 100) == pdTRUE)
         {

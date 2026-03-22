@@ -148,6 +148,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Shoot/shoot.h
         3-Function_Module_Layer/Super_Capacitor/supercap_comm.c
         3-Function_Module_Layer/Super_Capacitor/supercap_comm.h
+        3-Function_Module_Layer/Power_Meter/power_meter.c
+        3-Function_Module_Layer/Power_Meter/power_meter.h
         3-Function_Module_Layer/Ins/ins.c
         3-Function_Module_Layer/Ins/ins.h
 
@@ -255,6 +257,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/For_Testing_Task
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Motor_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Super_Capacitor
+        ${CMAKE_CURRENT_SOURCE_DIR}/3-Function_Module_Layer/Power_Meter
 
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usb
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_spi

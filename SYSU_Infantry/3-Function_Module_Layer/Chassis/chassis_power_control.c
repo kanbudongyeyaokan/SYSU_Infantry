@@ -28,6 +28,7 @@ static chassis_power_ctrl_param_t g_chassis_power_param =
     .danger_energy_line = CHASSIS_POWER_DANGER_LINE_DEFAULT,
     .k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT,
     .p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT,
+    .fb_ratio = CHASSIS_POWER_FB_RATIO_DEFAULT,
 };
 
 /* 错误节流与恢复状态，防止 1kHz 日志刷屏 */
@@ -96,21 +97,25 @@ void Chassis_Power_Control_Init(void)
     g_chassis_power_param.danger_energy_line = CHASSIS_POWER_DANGER_LINE_DEFAULT;
     g_chassis_power_param.k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT;
     g_chassis_power_param.p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT;
+    g_chassis_power_param.fb_ratio = CHASSIS_POWER_FB_RATIO_DEFAULT;
 
     ERROR_INFO(CHASSIS_PWR_MODULE,
-               "init k_t=%.6f p_static=%.2f danger=%.2f kp=%.2f pmin=%.2f",
+               "init k_t=%.6f p_static=%.2f danger=%.2f kp=%.2f pmin=%.2f fb=%.2f",
                g_chassis_power_param.k_t,
                g_chassis_power_param.p_static,
                g_chassis_power_param.danger_energy_line,
                g_chassis_power_param.k_p_buffer,
-               g_chassis_power_param.p_min_allow);
+               g_chassis_power_param.p_min_allow,
+               g_chassis_power_param.fb_ratio);
 }
 
 void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
                                 const chassis_power_ctrl_param_t *param,
-                                chassis_power_ctrl_output_t *output)
+                                chassis_power_ctrl_output_t *output,
+                                float p_measured)
 {
     uint8_t i;
+    float p_estimated = 0.0f;
     float p_total = 0.0f;
     float p_max_allow;
     float p_limit;
@@ -118,6 +123,8 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
     float p_min_allow;
     float p_max_allow_raw;
     float alpha = 1.0f;
+    float fb_ratio;
+    bool p_meter_valid = (p_measured >= 0.0f);
 
     if ((input == NULL) || (param == NULL) || (output == NULL))
     {
@@ -135,6 +142,7 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
     p_limit = input->p_limit;
     e_buffer = input->e_buffer;
     p_min_allow = param->p_min_allow;
+    fb_ratio = param->fb_ratio;
 
     if (p_min_allow <= CHASSIS_POWER_EPSILON)
     {
@@ -182,17 +190,36 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
         g_ref_buffer_abnormal_active = false;
     }
 
+    /* 步骤1：前馈估算 - 单轮功率估算 P_esti = K_t * abs(I_cmd * w_fdb) + P_static */
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
     {
-        /* 步骤1：单轮功率估算 P_esti = K_t * abs(I_cmd * w_fdb) + P_static */
         float i_mul_w = input->i_cmd[i] * input->w_fdb[i];
         float p_wheel = param->k_t * chassis_absf(i_mul_w) + param->p_static;
         output->p_wheel_esti[i] = p_wheel;
-
-        /* 步骤2：四轮功率求和 */
-        p_total += p_wheel;
+        p_estimated += p_wheel;
     }
 
+    output->p_estimated = p_estimated;
+
+    /* 步骤2：闭环反馈 - 混合实测功率与估算功率 */
+    if (p_meter_valid)
+    {
+        /* 功率计有效：混合前馈与反馈
+         * p_total = fb_ratio * p_measured + (1 - fb_ratio) * p_estimated
+         * fb_ratio 越大越信任实测值
+         */
+        if (fb_ratio < 0.0f) fb_ratio = 0.0f;
+        if (fb_ratio > 1.0f) fb_ratio = 1.0f;
+        
+        p_total = fb_ratio * p_measured + (1.0f - fb_ratio) * p_estimated;
+    }
+    else
+    {
+        /* 功率计无效：纯前馈估算 */
+        p_total = p_estimated;
+    }
+
+    output->p_measured = p_measured;
     output->p_total = p_total;
 
     /* 步骤3：缓冲能量防线动态限功 */
@@ -238,7 +265,6 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
     /* 步骤4：超功率时做等比例电流缩放 */
     if ((p_total > p_max_allow) && (p_total > CHASSIS_POWER_EPSILON))
     {
-        /* 除零保护：仅在 p_total 足够大时进行除法 */
         alpha = p_max_allow / p_total;
         if (alpha < 0.0f)
         {
@@ -262,7 +288,7 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
     }
 }
 
-void Chassis_Power_Control(Djimotor_device_t *motors[4])
+void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
 {
     uint8_t i;
     chassis_power_ctrl_input_t input;
@@ -321,8 +347,12 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4])
     {
         input.e_buffer = CHASSIS_POWER_BUFFER_DEFAULT;
     }
-    ERROR_INFO(CHASSIS_PWR_MODULE ,"got power limit: %.2fW buffer: %.2f%%", input.p_limit, input.e_buffer);
-    Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output);
+
+    Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output, p_measured);
+
+    ERROR_INFO(CHASSIS_PWR_MODULE,
+               "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",
+               input.p_limit, input.e_buffer, output.p_measured, output.p_estimated, output.alpha);
 
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
     {
