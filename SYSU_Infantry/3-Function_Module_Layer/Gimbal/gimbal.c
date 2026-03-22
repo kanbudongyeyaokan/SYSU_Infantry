@@ -157,7 +157,7 @@ static void Gimbal_pitch_rtt_vofa_print(float pitch_target_deg) {
         return;
     }
 
-    const float pitch_measure_deg = gimbal_imu_data->euler.pitch;
+    const float pitch_measure_deg = gimbal_imu_data->euler.roll;
 
     Gimbal_pitch_rtt_init();
 
@@ -320,23 +320,23 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->total_yaw),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.z),
             .angle_pid = {
-                .kp = 20,
+                .kp = 30,
                 .ki = 0,
                 .kd = 0,
-                .deadband = 0.0f,
-                .max_out = 300,
+                .deadband = 0.2f,
+                .max_out = 800,
                 .max_iout = 100,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL, // 角度环输出限幅 + 梯形积分
             },
             .speed_pid = {
                 .kp = 60,
-                .ki = 2.0,
+                .ki = 10.0,
                 .kd = 0.0,
-                .deadband = 0.0f,
-                .max_out = 15000,
+                .deadband = 0.2f,
+                .max_out = 20000,
                 .max_iout = 2000,
                 // .feedfoward_coefficient = 0.05f,
-                .target_ff_coef = 0.1f, // 目标值前馈系数 (实测调整)
+                .target_ff_coef = 0.0f, // 目标值前馈系数 (实测调整)
                 .LPF_coefficient = 0.0f,
                 .integral_separation_threshold = 0.0f,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD|PID_OUTPUT_FILTER,
@@ -368,25 +368,25 @@ static void Gimbal_motor_init(void) {
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.roll),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.x),
             .angle_pid = {
-                .kp = 15.0f,
+                .kp = 40.0f,
                 .ki = 0.0f,
                 .kd = 0.0f,
-                .max_out = 800.0f,
+                .max_out = 1000.0f,
                 .max_iout = 100.0f,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_DIFFERENTIAL_GO_FIRST,
             },
             .speed_pid = {
-                .kp = 40.0f,
-                .ki = 2.0f,
+                .kp = 100.0f,
+                .ki = 20.0f,
                 .kd = 0.0f,
-                .deadband = 0.1f,
+                .deadband = 0.0f,
                 .max_out = 15000.0f,
                 .max_iout = 2000.0f,
                 // .LPF_coefficient = 0.9f,
                 // 前馈参数
                 .target_ff_coef = 0.2f, // 目标值前馈系数 (实测调整)
                 // .feedforward_source = &pitch_gravity_factor, // cos 因子
-                // .feedfoward_coefficient = 3300.0f,           // 需要实测
+                .feedfoward_coefficient = 5500.0f,           // 需要实测
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
                 
             },

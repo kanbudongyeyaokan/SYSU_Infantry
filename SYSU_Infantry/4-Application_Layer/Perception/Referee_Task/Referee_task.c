@@ -7,7 +7,7 @@
 #include "referee.h"
 #include "referee_ui.h"
 #include "cmsis_os.h"  
-
+#include "stdlib.h"
 extern UART_HandleTypeDef huart6;
 static Referee_Data_t* ref_data_ptr;
 
