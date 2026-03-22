@@ -423,7 +423,7 @@ void Gimbal_task_init(void) {
     Gimbal_motor_init();
     Gimbal_pitch_rtt_init();
 
-    // Vision_Comm_Init();
+    Vision_Comm_Init();
 }
 
 Gimbal_state_e Gimbal_get_state(void)
@@ -450,27 +450,26 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             return;
         }
         // =========================================================
-    // 1. 视觉通信层：无脑收发 (在物理控制前执行，确保目标最新)
+    // 视觉通信层：无脑收发 (在物理控制前执行，确保目标最新)
     // =========================================================
     
-    // A. 极速解析 NUC 发来的最新预测指令 (非阻塞)
+    // 极速解析 NUC 发来的最新预测指令 (非阻塞)
     Vision_Comm_Parse_Task();
-
-    // B. 分频发送当前绝对位姿 (1000Hz 降频到 500Hz 发送，防串口阻塞)
-    static uint8_t vision_tx_divider = 0;
-    if (++vision_tx_divider >= 2) { 
-        vision_tx_divider = 0;
         
-        uint32_t current_us = (uint32_t)(DWT_GetTimeline_s() * 1000000.0f);
+    uint32_t current_us = (uint32_t)(DWT_GetTimeline_s() * 1000000.0f);
         
-        // 疯狂发报：送出绝对时间戳、连续 Yaw 角、纯净角速度
-        Vision_Send_Pose(current_us, 
-                         gimbal_imu_data->euler.pitch, 
-                         gimbal_imu_data->total_yaw,   // 必须是累加的多圈 Yaw
-                         gimbal_imu_data->euler.roll,
-                         gimbal_imu_data->gyro_body.x, // Pitch 轴纯净角速度
-                         gimbal_imu_data->gyro_body.z); // Yaw 轴纯净角速度
-    }
+        // 疯狂发报：送出绝对时间戳、连续 Yaw 角、纯净角速度、以及当前血量
+        // TODO: 如果你已经接入了裁判系统，把这里的 600 替换成真正的裁判系统全局变量！
+    Vision_Send_Pose(current_us, 
+                         gimbal_imu_data->euler.roll, 
+                         gimbal_imu_data->total_yaw,   
+                         gimbal_imu_data->gyro_body.x, 
+                         gimbal_imu_data->gyro_body.z,
+                         600,  // 测试用 Current HP
+                         600); // 测试用 Maximum HP
+    
+    Rtt_Printf(1,"pitch:%.2f,yaw:%.2f,pitch_speed:%.2f,yaw_speed:%.2f\r\n",gimbal_imu_data->euler.roll,
+    gimbal_imu_data->euler.yaw,gimbal_imu_data->gyro_body.x,gimbal_imu_data->gyro_body.z);
 
     // =========================================================
     // 2. 云台物理控制层
@@ -507,7 +506,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
 
-                Gimbal_pitch_rtt_vofa_print(cmd->pitch);
+                // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
                // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",pitch_target_deg,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
                 //云台视觉模式
