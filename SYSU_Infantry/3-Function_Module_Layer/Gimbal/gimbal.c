@@ -33,6 +33,7 @@
 #include "bsp_dwt.h"   // 用于获取微秒时间戳 DWT_GetTimeline_s()
 
 #include "SEGGER_RTT.h"
+#include "bsp_rtt.h"
 
 // 用于控制 RTT 打印的频率
 enum {
@@ -577,8 +578,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             return;
         }
 
-        pitch_gimbal = gimbal_imu_data->euler.pitch;
-        pitch_speed = gimbal_imu_data->gyro_body.x;
+        Rtt_Printf(0,"HELLO:%.2f\r\n",gimbal_imu_data->euler.roll);
 
         Vision_Comm_Parse_Task();
 

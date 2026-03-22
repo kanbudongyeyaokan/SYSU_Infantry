@@ -48,6 +48,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Remote_Control/video_link.c
         1-Hardware_Layer/bsp_usart/bsp_usart.c
         1-Hardware_Layer/bsp_usart/bsp_usart.h
+        1-Hardware_Layer/bsp_rtt/bsp_rtt.h
+        1-Hardware_Layer/bsp_rtt/bsp_rtt.c
         0-Middleware_Layer/Message_Center/message_center.c
         0-Middleware_Layer/Message_Center/message_center.h
         0-Middleware_Layer/Math_lib/math_lib.h
@@ -288,6 +290,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usb
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_spi
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_iic
+        ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_rtt
+
 
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Buzzer_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis_Task
