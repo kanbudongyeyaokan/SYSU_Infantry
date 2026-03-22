@@ -25,6 +25,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Error_System/inc
 #include "bsp_usart.h"
 
 // 假设 uart_handle 是 Uart_instance_t* 类型的 UART 句柄
+传入打印的串口句柄，也可以用RTT打印
 error_system_init(uart_handle);  // 传入 UART 句柄，可为 NULL
 ```
 

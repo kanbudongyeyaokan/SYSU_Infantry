@@ -110,8 +110,8 @@ void Robot_task_init(void)
 
 
   // 创建蜂鸣器报警任务（提前启动，确保能处理错误报警）
-  // osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
-  // buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
+  osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
+  buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
 
   // error_system_init(test_uart);
 
@@ -121,8 +121,8 @@ void Robot_task_init(void)
   osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 2048);
   ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
     //看门狗任务
-  //  osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityHigh, 0, 512);
-  // watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
+   osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityHigh, 0, 512);
+  watchdog_task_handle = osThreadCreate(osThread(watchdog_control_task), NULL);
   //   // 电机控制任务：1000Hz，聚合并通过 CAN 发送目标值
   osThreadDef(motor_control_task, Motor_control_task, osPriorityNormal, 0, 512);
   motor_task_handle = osThreadCreate(osThread(motor_control_task), NULL);

@@ -221,7 +221,7 @@ uint8_t Can_send_data(Can_controller_t* Can_controller, uint8_t *tx_buff)
         if (Can_Should_Report(&can_last_mailbox_full_tick, CAN_ERROR_REPORT_INTERVAL_MS))
         {
             ERROR_WARN("CAN", "CAN TX mailbox full can_id=%lu tsr=0x%lx esr=0x%lx free_level=%lu",
-                       Can_controller->can_id,
+                       Can_controller->tx_id,
                        (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->TSR : 0u,
                        (Can_controller->can_handle->Instance != NULL) ? Can_controller->can_handle->Instance->ESR : 0u,
                        free_level);
