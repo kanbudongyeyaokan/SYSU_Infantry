@@ -40,7 +40,7 @@ static bool is_ekf_init = false;   // 滤波器初始化标志
 static Ekf_state_t imu_ekf;
 static Ekf_config_t imu_ekf_cfg = {
     .process_noise_q = 10.0f,          // 状态转移过程噪声方差
-    .measurement_noise_r = 20000000.0f, // 观测噪声方差
+    .measurement_noise_r = 50000000.0f, // 观测噪声方差
     .gyro_bias_noise = 0.001f,         // 零偏游走噪声方差
     .fading_factor = 0.9996f           // 渐减因子
 };
