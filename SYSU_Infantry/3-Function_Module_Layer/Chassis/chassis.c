@@ -22,12 +22,18 @@
 #include "supercap_comm.h"
 #include "algorithm_pid.h"
 #include "error_handler.h"
+#include "chassis_ramp.h"
+
 
 #define CHASSIS_FOLLOW_YAW_GAIN 0.5f
 #define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
 #define CHASSIS_ROTATE_WZ 500.0f
 #define CHASSIS_MOTOR_PID_MAX_OUT 15000.0f
 #define CHASSIS_FORWARD_ANGLE 45.0f
+
+//底盘斜坡规划步长
+#define CHASSIS_RAMP_STEP 6.0f // 斜坡步长，越大越猛，越小越顺滑
+
 
 
 /****************发送给决策层的底盘反馈信息******************/
@@ -52,7 +58,8 @@ Chassis_cmd_send_t test_cmd;
 //底盘跟随云台，用于计算WZ控制量
 static Pid_instance_t chassis_follow_pid;
 
-#define abs(x) ((x > 0) ? x : -x)
+// 声明底盘斜坡控制器实例
+
 
 /*********************************底盘方法接口**************************************/
 /**
@@ -61,6 +68,8 @@ static Pid_instance_t chassis_follow_pid;
 void Chassis_task_init(void) {
     //底盘模块初始化
     Chassis_init();
+
+    Chassis_Ramp_Init(&chassis_ramp, CHASSIS_RAMP_STEP);
     //超电初始化
     // SuperCap_Comm_Init(&hcan2);
 
@@ -189,8 +198,6 @@ void Chassis_init() {
     for (int i = 0; i < 4; i++) {
         chassis_motors[i] = DJI_Motor_Init(&cfg[i]);
     }
-    // chassis_motors[2] = DJI_Motor_Init(&cfg[2]);
-    // chassis_motors[3] = DJI_Motor_Init(&cfg[3]);
 }
 
 /**
@@ -199,28 +206,33 @@ void Chassis_init() {
  */
 void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
 {
-    //testing
-    //printf("vx: %f,vy:%f\r\n", cmd->vx,cmd->vy);
-    //  Uart_printf(test_uart,"vx: %f,vy:%f,mode %d\r\n", cmd->vx,cmd->vy,cmd->chassis_mode);
-    // Uart_printf(test_uart,"offset_angle: %.2f\r\n", cmd->offset_angle);
-    // printf("chassis_mode: %d\r\n", cmd->chassis_mode);
+    test_cmd = *cmd;
 
-   test_cmd = *cmd;
-   // 刚切入跟随模式时，重置 PID 防止突变
+    // 刚切入跟随模式时，重置 PID 防止突变
     static chassis_mode_e last_chassis_mode = CHASSIS_ZERO_FORCE;
     if (cmd->chassis_mode == CHASSIS_FOLLOW_GIMBAL && last_chassis_mode != CHASSIS_FOLLOW_GIMBAL) {
         Pid_reset(&chassis_follow_pid); // 刚切入跟随模式时，重置 PID 防止突变
     }
     last_chassis_mode = cmd->chassis_mode;
 
-    // 使用传入的 'cmd' 指针代替原来的全局变量
-    switch (cmd->chassis_mode) // [注意] 这里把 . 改成了 ->
+    // 底盘斜坡规划：
+    Chassis_cmd_send_t cmd_solved = *cmd;
+    if (cmd->chassis_mode == CHASSIS_ZERO_FORCE) {
+        // 失能时复位斜坡控制器，防止重使能时车子突然窜出去
+        Chassis_Ramp_Reset(&chassis_ramp);
+        cmd_solved.vx = 0.0f;
+        cmd_solved.vy = 0.0f;
+    } else {
+        // 调用库函数进行平滑处理，直接将结果写入 cmd_solved 的 vx 和 vy
+        Chassis_Ramp_Update(&chassis_ramp, cmd->vx, cmd->vy, &cmd_solved.vx, &cmd_solved.vy);
+    }
+
+    switch (cmd_solved.chassis_mode) 
     {
         case CHASSIS_ZERO_FORCE:
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_status(chassis_motors[i], MOTOR_STOP);
                 Djimotor_set_target(chassis_motors[i], 0);
-                //计算PID
                 Djimotor_Calc_Output(chassis_motors[i]);
             }
             break;
@@ -230,12 +242,11 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
                 Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
             }
 
-            Chassis_kinematics_solve(cmd, &chassis_output);
-            // Chassis_Power_Control(&chassis_output, chassis_motors);
+            // 传入处理过斜坡的 cmd_solved
+            Chassis_kinematics_solve(&cmd_solved, &chassis_output);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
-                //计算PID
                 Djimotor_Calc_Output(chassis_motors[i]);
             }
             break;
@@ -247,72 +258,65 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
                 Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
             }
 
-            Chassis_cmd_send_t cmd_solved = *cmd;
-
-            // cmd_solved.wz = 0.5 * cmd->offset_angle * abs(cmd->offset_angle); 
-            // cmd_solved.wz = Pid_calculate(&chassis_follow_pid, 0.0f, cmd->offset_angle); // 以 offset_angle 作为误差输入 PID，输出作为 Wz 控制量
-            // PID 依然负责消除静差
-            float pid_out = Pid_calculate(&chassis_follow_pid, 0.0f, cmd->offset_angle); 
-            // 前馈
+            // 删掉重复的结构体定义，直接用外部的 cmd_solved
+            float pid_out = Pid_calculate(&chassis_follow_pid, 0.0f, cmd_solved.offset_angle); 
             float K_ff = 1200.0f; 
-            // 最终控制量 = (指令预测速度) + (误差补偿速度)
-            cmd_solved.wz = (cmd->cmd_yaw * K_ff) + pid_out;
+            cmd_solved.wz = (cmd_solved.cmd_yaw * K_ff) + pid_out;
             
-
-            // 矢量变换逻辑
-            //这里对齐45度变换
-            float theta = (-cmd->offset_angle -45.0f) * (M_PI / 180.0f);
+            // 矢量变换逻辑 (全部改用 cmd_solved)
+            float theta = (-cmd_solved.offset_angle - 45.0f) * (M_PI / 180.0f);
             float cos_theta = arm_cos_f32(theta);
             float sin_theta = arm_sin_f32(theta);
 
-            cmd_solved.vx = cmd->vx * cos_theta - cmd->vy * sin_theta;
-            cmd_solved.vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
+            // 必须使用临时变量，否则算出新的 vx 会污染后续 vy 的计算
+            float temp_vx = cmd_solved.vx * cos_theta - cmd_solved.vy * sin_theta;
+            float temp_vy = cmd_solved.vx * sin_theta + cmd_solved.vy * cos_theta;
+            cmd_solved.vx = temp_vx;
+            cmd_solved.vy = temp_vy;
 
+            // 传入处理好的 cmd_solved
             Chassis_kinematics_solve(&cmd_solved, &chassis_output);
-            //Chassis_Power_Control(&chassis_output, chassis_motors);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
-                //计算PID
                 Djimotor_Calc_Output(chassis_motors[i]);
             }
             break;
         }
 
         case CHASSIS_ROTATE:
+        {
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
             }
 
-            Chassis_cmd_send_t rotate_cmd = *cmd;
+            // 直接操作 cmd_solved
+            cmd_solved.wz = CHASSIS_ROTATE_WZ;
 
-            rotate_cmd.wz = CHASSIS_ROTATE_WZ;
-
-            float angle_error = cmd->offset_angle;
+            float angle_error = cmd_solved.offset_angle;
             float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);
             float sin_theta = arm_sin_f32(angle_error * MATH_DEG2RAD);
 
-            rotate_cmd.vx = cmd->vx * cos_theta - cmd->vy * sin_theta;
-            rotate_cmd.vy = cmd->vx * sin_theta + cmd->vy * cos_theta;
+            float temp_vx = cmd_solved.vx * cos_theta - cmd_solved.vy * sin_theta;
+            float temp_vy = cmd_solved.vx * sin_theta + cmd_solved.vy * cos_theta;
+            cmd_solved.vx = temp_vx;
+            cmd_solved.vy = temp_vy;
 
-            // 传入副本的地址
-            Chassis_kinematics_solve(&rotate_cmd, &chassis_output);
-            //Chassis_Power_Control(&chassis_output, chassis_motors);
+            Chassis_kinematics_solve(&cmd_solved, &chassis_output);
 
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_target(chassis_motors[i], chassis_output.motor_speed[i]);
-                //计算PID
                 Djimotor_Calc_Output(chassis_motors[i]);
             }
             break;
+        }
         default:
             break;
     }
 
     // 反馈底盘数据回决策层
-    chassis_feedback.chassis_wz = cmd->wz;
-    xQueueOverwrite(Chassis_feedback_queue_handle, &chassis_feedback); // 使用队列发送反馈信息
-    
+    chassis_feedback.chassis_wz = cmd_solved.wz;
+    xQueueOverwrite(Chassis_feedback_queue_handle, &chassis_feedback); 
 }
 
 /**
