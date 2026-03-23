@@ -59,6 +59,7 @@ Chassis_cmd_send_t test_cmd;
 static Pid_instance_t chassis_follow_pid;
 
 // 声明底盘斜坡控制器实例
+static Chassis_Ramp_t chassis_ramp;
 
 
 /*********************************底盘方法接口**************************************/
@@ -93,10 +94,10 @@ void Chassis_init() {
 
     // 跟随云台速度 PID
     Pid_init_t follow_pid_config = {
-        .kp = 10.0f,     // 比例系数，如果跟车太慢就加大，太快发抖就减小
+        .kp = 18.0f,     // 比例系数，如果跟车太慢就加大，太快发抖就减小
         .ki = 0.0f,     // 通常底盘跟随不需要积分，给 0 即可
         .kd = 0.1f,     // 微分系数，极其重要！给一点 D 项可以提供阻尼，防止底盘到位时来回摆动
-        .max_out = 800.0f,  // 对应原来的 CHASSIS_FOLLOW_WZ_LIMIT
+        .max_out = 1200.0f,  // 对应原来的 CHASSIS_FOLLOW_WZ_LIMIT
         .max_iout = 200.0f,   // 没用到 I 就不管
         .deadband = 0.7f,   // 死区，误差绝对值小于这个值时不输出，防止底盘一直微调
         .optimization = PID_OUTPUT_LIMIT|PID_FEEDFOWARD, // 开启输出限幅
@@ -293,7 +294,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             // 直接操作 cmd_solved
             cmd_solved.wz = CHASSIS_ROTATE_WZ;
 
-            float angle_error = cmd_solved.offset_angle;
+            float angle_error = (cmd_solved.offset_angle - CHASSIS_FORWARD_ANGLE);
             float cos_theta = arm_cos_f32(angle_error * MATH_DEG2RAD);
             float sin_theta = arm_sin_f32(angle_error * MATH_DEG2RAD);
 
