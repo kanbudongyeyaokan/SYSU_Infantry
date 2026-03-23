@@ -8,6 +8,8 @@ static uint8_t tx_seq = 0;
 static Video_RC_ctrl_t vrc_data[2];
 static Uart_instance_t *vrc_uart = NULL;
 
+#define VIDEO_RC_FRAME_LEN 21u
+
 // void Video_Link_Init(UART_HandleTypeDef *huart) {
 //     video_uart = Uart_register(huart, NULL);
 // }
@@ -52,13 +54,38 @@ void Video_Link_SendCustomData(uint8_t *data, uint16_t length) {
 //     Uart_sendData(video_uart, (uint8_t *)&frame, 10);
 // }
 
-static void video_rc_parse(volatile const uint8_t *buf)
+static const uint8_t *video_rc_find_frame(volatile const uint8_t *buf, uint16_t len)
 {
-    if (buf[0] != 0xA9 || buf[1] != 0x53) return;
-    // if (crc_16_ccitt_false((uint8_t *)buf, 19) != (uint16_t)(buf[19] | buf[20] << 8)) return;
+    if (buf == NULL || len < VIDEO_RC_FRAME_LEN)
+    {
+        return NULL;
+    }
+
+    for (uint16_t i = 0; i + VIDEO_RC_FRAME_LEN <= len; ++i)
+    {
+        uint8_t *frame = (uint8_t *)&buf[i];
+
+        if (frame[0] != 0xA9 || frame[1] != 0x53)
+        {
+            continue;
+        }
+
+        if (Verify_CRC16_Check_Sum(frame, VIDEO_RC_FRAME_LEN))
+        {
+            return frame;
+        }
+    }
+
+    return NULL;
+}
+
+static void video_rc_parse(volatile const uint8_t *buf, uint16_t len)
+{
+    const uint8_t *frame = video_rc_find_frame(buf, len);
+    if (frame == NULL) return;
 
     vrc_data[LAST] = vrc_data[CURRENT];
-    const uint8_t *d = &buf[2];
+    const uint8_t *d = &frame[2];
 
 #define CH(raw) ((int16_t)((int16_t)(raw) - 1024))
     vrc_data[CURRENT].rc.Rrocker_x  = CH((d[0] | d[1]<<8) & 0x7FF);
@@ -83,7 +110,12 @@ static void video_rc_parse(volatile const uint8_t *buf)
 
 static void video_rc_callback(void)
 {
-    video_rc_parse(vrc_uart->rx_buffer);
+    if (vrc_uart == NULL)
+    {
+        return;
+    }
+
+    video_rc_parse(vrc_uart->rx_buffer, vrc_uart->rx_data_len);
 }
 
 Video_RC_ctrl_t *Video_RC_Data_Get(UART_HandleTypeDef *huart)

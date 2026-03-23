@@ -132,8 +132,8 @@ typedef union
     {
         uint16_t w : 1;
         uint16_t s : 1;
-        uint16_t d : 1;
         uint16_t a : 1;
+        uint16_t d : 1;
         uint16_t shift : 1;
         uint16_t ctrl : 1;
         uint16_t q : 1;
