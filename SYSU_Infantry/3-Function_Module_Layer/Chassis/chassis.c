@@ -305,7 +305,17 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
     }
 
     // 在 1kHz 控制周期末统一做动态功率控制与等比例电流限幅
-    Chassis_Power_Control(chassis_motors, PowerMeter_GetPower());
+    float power = PowerMeter_GetPower();
+    //float power = SuperCap_Get_Chassis_Power();
+    //从超级电容模块获取当前功率
+    //去除注释时记得去chassis_init那里初始化supercap
+    if (power) {
+        Chassis_Power_Control(chassis_motors, power);
+    } else {
+        Chassis_Power_Control(chassis_motors, -1);
+        //-1 代表功率计无效
+    }
+
 
     // 反馈底盘数据回决策层
     chassis_feedback.chassis_wz = cmd->wz;
