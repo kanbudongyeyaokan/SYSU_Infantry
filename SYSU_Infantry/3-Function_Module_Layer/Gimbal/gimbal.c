@@ -330,9 +330,9 @@ static void Gimbal_motor_init(void) {
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL, // 角度环输出限幅 + 梯形积分
             },
             .speed_pid = {
-                .kp = 60,
+                .kp = 90,//60
                 .ki = 10.0,
-                .kd = 0.0,
+                .kd = 0.01,
                 .deadband = 0.2f,
                 .max_out = 20000,
                 .max_iout = 2000,

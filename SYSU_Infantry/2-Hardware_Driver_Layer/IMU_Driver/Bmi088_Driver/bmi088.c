@@ -14,6 +14,8 @@
 #include "bsp_wdg.h"
 #include "bmi088_temp.h"
 
+#include "arm_math.h"
+
 #define DEG2SEC             (3.14159265f / 180.0f)
 #define RAD2DEG             (180.0f / 3.14159265f)
 
@@ -195,6 +197,20 @@ static void BMI088_Interface_Process(Ins_data_t *out_data, float dt_s)
         out_data->temp = current_temp;
         out_data->state = INS_STATE_INIT;
         return; 
+    }
+
+  // 【新增护盾】：平移加速度屏蔽 (防急停甩头)
+    float acc_norm;
+    arm_sqrt_f32(acc_mzs[0]*acc_mzs[0] + acc_mzs[1]*acc_mzs[1] + acc_mzs[2]*acc_mzs[2], &acc_norm);
+
+    // 正常重力是 9.8。如果低于 8.5 或高于 11.0，说明底盘在剧烈加减速或撞击！
+    if (acc_norm < 8.5f || acc_norm > 11.0f) {
+        // 发生急停！强行捏造一个完美的垂直向下重力
+        // 这样 EKF 就不会用错误的倾斜加速度去污染 Yaw 轴了
+        // 这段时间内，姿态将 100% 依赖陀螺仪的积分硬撑
+        acc_mzs[0] = 0.0f;
+        acc_mzs[1] = 0.0f;
+        acc_mzs[2] = 9.80665f; 
     }
 
     // --- 6. EKF 最优估计更新 ---
