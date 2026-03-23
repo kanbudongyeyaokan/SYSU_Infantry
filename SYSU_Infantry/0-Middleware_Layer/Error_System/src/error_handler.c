@@ -11,7 +11,6 @@
 #include <string.h>
 #include <stdio.h>
 #include "cmsis_gcc.h"
-#include "SEGGER_RTT.h"
 
 /* ================= 私有宏定义 ================= */
 
@@ -42,8 +41,6 @@ static void error_buffer_push(const error_record_t* record);
 
 void error_system_init(void* uart_handle)
 {
-    SEGGER_RTT_Init();
-    
     memset(error_buffer, 0, sizeof(error_buffer));
     error_head = 0u;
     error_count = 0u;
