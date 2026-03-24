@@ -142,6 +142,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Robot_Definitions/robot_definitions.h
         3-Function_Module_Layer/Chassis/chassis.c
         3-Function_Module_Layer/Chassis/chassis.h
+        3-Function_Module_Layer/Chassis/chassis_ramp.h
+        3-Function_Module_Layer/Chassis/chassis_ramp.c
+
         3-Function_Module_Layer/Chassis/chassis_power_control.c
         3-Function_Module_Layer/Chassis/chassis_power_control.h
         3-Function_Module_Layer/Gimbal/gimbal.c
@@ -187,6 +190,7 @@ add_executable(${CMAKE_PROJECT_NAME}
 
         0-Middleware_Layer/Crc/crc_referee.c
         0-Middleware_Layer/Crc/crc_referee.h
+
 
         0-Middleware_Layer/Ramp_Controller/ramp_controller.c
         0-Middleware_Layer/Ramp_Controller/ramp_controller.h

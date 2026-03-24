@@ -137,32 +137,35 @@ void Vision_Comm_Parse_Task(void) {
 }
 
 // 高频发送姿态包 
-void Vision_Send_Pose(uint32_t time_us, float pitch, float yaw, float roll, float pitch_v, float yaw_v) {
+// 修改了函数签名，去掉了废弃的 roll，加入了血量参数，方便你在 NUC 端直接监控
+void Vision_Send_Pose(uint32_t time_us, float pitch, float yaw, float pitch_v, float yaw_v, uint16_t current_hp, uint16_t max_hp) {
     if (vision_uart == NULL) return;
     
     EC2Vision_Pose_t tx_frame;
     
-    // 【关键】将全包清零，这样裁判系统未写数据的预留位都会安全归零！
+    // 【极其关键】必须将整个帧清零！否则 NUC 收到的 HP、进度等预留字段全是内存垃圾数据
     memset(&tx_frame, 0, sizeof(EC2Vision_Pose_t)); 
     
-    // 填充协议头
+    // 1. 填充协议头
     tx_frame.sof = VISION_SOF_TX;
-    tx_frame.data_length = sizeof(Vision_Tx_Payload_t); 
+    tx_frame.data_length = sizeof(Vision_Tx_Payload_t); // 直接填入 Payload 的准确大小
     tx_frame.cmd_id = CMD_ID_POSE_TX;
     
-    // 填充核心位姿数据
+    // 2. 填充核心位姿数据 (注意要带上 .data.)
     tx_frame.data.timestamp_us = time_us;
-    tx_frame.data.angular_y = pitch;
-    tx_frame.data.angular_z = yaw;
+    tx_frame.data.angular_y = pitch;         // 对应 Python 中的 state.angular_y
+    tx_frame.data.angular_z = yaw;           // 对应 Python 中的 state.angular_z
     tx_frame.data.angular_y_speed = pitch_v;
     tx_frame.data.angular_z_speed = yaw_v;
     
-    // 注意: Roll 角在新协议里被丢弃了，我们不用管它。裁判系统的其余字段因 memset 而全部为 0。
-
-    // 追加 CRC16 校验 
-    Append_CRC16_Check_Sum((uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t));
+    // 3. 填充裁判系统血量数据 (供 NUC 端显示)
+    tx_frame.data.current_HP = current_hp;
+    tx_frame.data.maximum_HP = max_hp;
     
-    // 调用底层非阻塞发送
+    // 4. 追加 CRC16 校验 
+    Append_CRC16_Check_Sum((uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t) - 2);
+    
+    // 5. 调用底层非阻塞发送
     Uart_sendData(vision_uart, (uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t));
 }
 
