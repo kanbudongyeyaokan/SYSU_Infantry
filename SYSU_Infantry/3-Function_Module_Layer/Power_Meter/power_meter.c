@@ -19,6 +19,7 @@
 static PowerMeter_t g_power_meter = {0.0f, 0.0f, 0.0f};
 static Can_controller_t *g_power_meter_can = NULL;
 static uint32_t g_power_meter_last_rx_tick = 0U;
+static uint8_t g_power_meter_has_received = 0U;
 
 /**
  * @brief CAN 接收回调函数
@@ -34,6 +35,7 @@ static void PowerMeter_RxCallback(Can_controller_t *can_dev, void *context)
         return;
     }
     
+    g_power_meter_has_received = 1U;
     g_power_meter_last_rx_tick = HAL_GetTick();
     PowerMeter_Parse(&g_power_meter, can_dev->rx_buffer);
 }
@@ -120,5 +122,8 @@ float PowerMeter_GetPower(void)
 
 uint8_t PowerMeter_IsOnline(void)
 {
+    if (!g_power_meter_has_received) {
+        return 0U;
+    }
     return (HAL_GetTick() - g_power_meter_last_rx_tick < 500U) ? 1U : 0U;
 }
