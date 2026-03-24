@@ -18,6 +18,7 @@
 /* 内部静态实例 */
 static PowerMeter_t g_power_meter = {0.0f, 0.0f, 0.0f};
 static Can_controller_t *g_power_meter_can = NULL;
+static uint32_t g_power_meter_last_rx_tick = 0U;
 
 /**
  * @brief CAN 接收回调函数
@@ -33,6 +34,7 @@ static void PowerMeter_RxCallback(Can_controller_t *can_dev, void *context)
         return;
     }
     
+    g_power_meter_last_rx_tick = HAL_GetTick();
     PowerMeter_Parse(&g_power_meter, can_dev->rx_buffer);
 }
 
@@ -52,6 +54,7 @@ void PowerMeter_Init(CAN_HandleTypeDef *hcan)
     if (g_power_meter_can == NULL)
     {
         ERROR_CRITICAL(POWER_METER_MODULE, "Power meter CAN init failed");
+        return;
     }
     ERROR_INFO(POWER_METER_MODULE, "Power meter CAN init success");
 }
@@ -80,20 +83,42 @@ void PowerMeter_Parse(PowerMeter_t *pm, const uint8_t *can_rx_data)
 
 PowerMeter_t* PowerMeter_GetData(void)
 {
-    return &g_power_meter;
+    static PowerMeter_t copy_pm;
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    copy_pm = g_power_meter;
+    __set_PRIMASK(primask);
+    return &copy_pm;
 }
 
 float PowerMeter_GetVoltage(void)
 {
-    return g_power_meter.real_voltage;
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    float voltage = g_power_meter.real_voltage;
+    __set_PRIMASK(primask);
+    return voltage;
 }
 
 float PowerMeter_GetCurrent(void)
 {
-    return g_power_meter.real_current;
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    float current = g_power_meter.real_current;
+    __set_PRIMASK(primask);
+    return current;
 }
 
 float PowerMeter_GetPower(void)
 {
-    return g_power_meter.real_power;
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    float power = g_power_meter.real_power;
+    __set_PRIMASK(primask);
+    return power;
+}
+
+uint8_t PowerMeter_IsOnline(void)
+{
+    return (HAL_GetTick() - g_power_meter_last_rx_tick < 500U) ? 1U : 0U;
 }

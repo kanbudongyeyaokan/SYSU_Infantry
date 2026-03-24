@@ -219,7 +219,7 @@ void Referee_Send_UI_Test(void);
 
 uint16_t ChassisPower_GetMaxLimit(void);
 uint16_t ChassisPower_GetBuffer(void);
-bool referee_isonline(void);
+bool Referee_Is_Online(void);
 
 uint8_t Get_Robot_ID(void);
 

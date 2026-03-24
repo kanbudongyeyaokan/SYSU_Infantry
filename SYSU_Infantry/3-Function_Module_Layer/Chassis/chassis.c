@@ -309,7 +309,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
     //float power = SuperCap_Get_Chassis_Power();
     //从超级电容模块获取当前功率
     //去除注释时记得去chassis_init那里初始化supercap
-    if (power) {
+    if (PowerMeter_IsOnline()) {
         Chassis_Power_Control(chassis_motors, power);
     } else {
         Chassis_Power_Control(chassis_motors, -1);

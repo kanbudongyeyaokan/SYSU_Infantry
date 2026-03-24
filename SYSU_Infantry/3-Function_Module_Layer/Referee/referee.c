@@ -150,6 +150,6 @@ uint8_t Get_Robot_ID(void)
 
     return referee_data.robot_status.robot_id;
 }
-bool referee_isonline(void) {
+bool Referee_Is_Online(void) {
     return referee_data.is_online;
 }

@@ -343,7 +343,7 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
         }
     }
 
-    if (input.e_buffer < 0.0f || !referee_isonline()) {
+    if (input.e_buffer < 0.0f || !Referee_Is_Online()) {
         ERROR_WARN(CHASSIS_PWR_MODULE, "e_buffer is less than zero or referee offline, fallback to default buffer=%.2fJ", CHASSIS_POWER_BUFFER_DEFAULT);
         input.e_buffer = CHASSIS_POWER_BUFFER_DEFAULT;
     }

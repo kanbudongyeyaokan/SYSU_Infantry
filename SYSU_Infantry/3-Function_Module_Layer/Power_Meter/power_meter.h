@@ -73,4 +73,10 @@ float PowerMeter_GetCurrent(void);
  */
 float PowerMeter_GetPower(void);
 
+/**
+ * @brief 检查功率计是否在线
+ * @return uint8_t 1: 在线 (500ms内有数据), 0: 离线
+ */
+uint8_t PowerMeter_IsOnline(void);
+
 #endif /* POWER_METER_H */

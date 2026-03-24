@@ -54,6 +54,5 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
 /* 与现有电机驱动对接的包装函数，直接修改 motors[i]->out_current */
 void Chassis_Power_Control_Init(void);
 void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured);
-void Send2SuperCap(void);
 
 #endif // SYSU_INFANTRY_CHASSIS_POWER_CONTROL_H
