@@ -1,0 +1,29 @@
+name: opencode-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: read
+      issues: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: anomalyco/opencode/github@latest
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        with:
+          model: minimax-cn/MiniMax-M2.7
+          prompt: |
+            Review this pull request:
+            - Check for code quality issues
+            - Look for potential bugs
+            - Suggest improvements
+            - reply in simplified chinese
