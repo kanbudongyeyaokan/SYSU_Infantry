@@ -54,7 +54,7 @@ extern Uart_instance_t *uart_instance;
  */
 static void Motor_Offline_Callback(void *device) {
   Djimotor_device_t *motor = (Djimotor_device_t *)device;
-  ERROR_WARN("MOTOR", "motor %s offline", motor->motor_name);
+  ERROR_CRITICAL("MOTOR", "motor %s offline", motor->motor_name);
   // 清空速度和电流反馈，防止 PID 积分暴涨
   motor->motor_measure.angular_velocity = 0;
   motor->motor_measure.real_current = 0;
