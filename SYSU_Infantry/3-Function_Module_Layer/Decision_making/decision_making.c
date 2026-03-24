@@ -62,6 +62,9 @@ extern QueueHandle_t Chassis_feedback_queue_handle; // 声明外部底盘命令�
 extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队列句柄
 static Gimbal_feedback_info_t  gimbal_feedback_recv;    //存储云台应用层发给决策层的信息
 static bool gimbal_yaw_initialized = false;
+#if GIMBAL_USE_OPTIMIZED_CONTROL
+static gimbal_mode_e last_gimbal_mode = GIMBAL_GYRO_MODE;
+#endif
 
 
 //发射机构反馈数据读取
@@ -72,10 +75,10 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 // 定义灵敏度系数
 // 之前是 0.0018 (200Hz)，现在是 1000Hz，理论上应该除以 5
 // 建议改小到 0.0003 ~ 0.0005 之间，手感会比较细腻
-#define GIMBAL_RC_MOVE_RATIO_YAW   0.0002f
+#define GIMBAL_RC_MOVE_RATIO_YAW   0.0003f
 #define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
-#define RC_DEADBAND 5
+#define RC_DEADBAND 1
 static float PITCH_RC_CENTER_OFFSET = 0.0f;  // 摇杆中位偏移量，上电自动校准
 
 
@@ -120,8 +123,6 @@ void Receive_feedback_infomation()
 
 void Send_command_to_all_task()
 {
-    //printf("HELLO\r\n");
-    // Uart_printf(test_uart,"Sending command to all tasks\r\n");
     //发送底盘控制信息
     xQueueOverwrite(Chassis_cmd_queue_handle, &chassis_cmd_send);
 
@@ -133,51 +134,37 @@ void Send_command_to_all_task()
 }
 
 /**
+ * @brief 让决策层维护的手动目标跟随云台当前真正执行的 active_ref
+ * @note  视觉模式下持续同步；退出视觉的第一拍也同步一次，避免切回手动时跳回旧目标
+ * @note  last_gimbal_mode 用来覆盖“刚退出视觉但本拍已经改成手动模式”的瞬间
+ */
+static void Decision_sync_gimbal_manual_target(void)
+{
+#if GIMBAL_USE_OPTIMIZED_CONTROL
+    if ((gimbal_cmd_send.gimbal_mode == GIMBAL_VISION_MODE) ||
+        (last_gimbal_mode == GIMBAL_VISION_MODE))
+    {
+        // 手动目标直接追随当前 active_ref，保证模式切回手动时 setpoint 连续
+        gimbal_cmd_send.yaw = gimbal_feedback_recv.active_yaw_target;
+        gimbal_cmd_send.pitch = gimbal_feedback_recv.active_pitch_target;
+    }
+
+    last_gimbal_mode = gimbal_cmd_send.gimbal_mode;
+#endif
+}
+
+/**
  * @brief 根据遥控器左边开关决定机器人是键鼠控制还是遥控器控制,并且调用对应的控制函数
  *
 */
 void Robot_set_command()
 {
 #if USE_SBUS_RECEIVER == 1 || USE_SBUS_RECEIVER == 2
-
-    // SBUS遥控器调试输出
-    // printf("SBUS Ch1:%d Ch2:%d Ch3:%d Ch4:%d S1:%d S2:%d\r\n",
-    //        sbus_data[CURRENT].rc.Ch1, sbus_data[CURRENT].rc.Ch2,
-    //        sbus_data[CURRENT].rc.Ch3, sbus_data[CURRENT].rc.Ch4,
-    //        sbus_data[CURRENT].S1, sbus_data[CURRENT].S2);
-
-
-    //图传链路遥控调试输出
-    //调试输出: 遥控器摇杆数据
-    // ERROR_INFO("DMAKING","lx:%d,ly:%d,rx:%d,ry:%d,dial:%d\r\n",
-    //     vrc_data[CURRENT].rc.Lrocker_x,  // 左摇杆X轴
-    //     vrc_data[CURRENT].rc.Lrocker_y,// 左摇杆Y轴
-    //     vrc_data[CURRENT].rc.Rrocker_x,  // 右摇杆X轴
-    //     vrc_data[CURRENT].rc.Rrocker_y,  // 右摇杆Y轴
-    //     vrc_data[CURRENT].rc.dial);       // 拨轮值
-    // 调试输出: 遥控器按键状态
-    // Uart_printf(test_uart,"mode:%d,pause:%d,bl:%d,br:%d,trig:%d\r\n",
-    //     vrc_data[CURRENT].rc.mode_switch, // 模式开关
-    //     vrc_data[CURRENT].rc.pause,       // 暂停键
-    //     vrc_data[CURRENT].rc.btn_left,    // 左侧按键
-    //     vrc_data[CURRENT].rc.btn_right,   // 右侧按键
-    //     vrc_data[CURRENT].rc.trigger);    // 扳机键
-    // SBUS开关映射: S1左开关, S2右开关 (1=下, 2=上, 3=中)
-    // if (sbus_data[CURRENT].S1 == SBUS_SWITCH_DOWN)
-    // {
-    //     RC_ctrl_set();
-    // }
-    // else if (sbus_data[CURRENT].S1 == SBUS_SWITCH_UP)
-    // {
-    //     Keyboard_ctrl_set();
-    // }
     static bool ctrl_mode = 0; // 0=遥控器控制, 1=键鼠控制
     if (ctrl_mode == 0){
         //遥控器检测切换（自定义左键控制切换）
         if(vrc_data[CURRENT].rc.btn_left){
-
             ctrl_mode = 1;
-
             return;
         }   
         RC_ctrl_set();
@@ -265,6 +252,7 @@ void RC_ctrl_set()
     
     //急停模式
     Emergency_stop();
+    Decision_sync_gimbal_manual_target();
     
     /****************控制量设定*****************/
     // SBUS通道映射: Ch2=前后, Ch4=左右, Ch1=YAW, Ch3=PITCH
@@ -281,17 +269,21 @@ void RC_ctrl_set()
     chassis_cmd_send.vx = -2.0f * (float)sbus_data[CURRENT].rc.Ch4;
     
     // ==================== 云台目标值同步逻辑 ====================
-    // 当云台从归中状态切换到就绪状态时，需要同步目标值
+    // READY 首拍直接继承云台应用层当前执行的 active_ref，
+    // 避免决策层还拿着初始化旧值，导致一使能就追错目标。
     Gimbal_state_e gimbal_state = Gimbal_get_state();
     if (gimbal_state == GIMBAL_STATE_READY && !gimbal_yaw_initialized) {
-        // 首次进入 READY 状态，同步目标值为当前 IMU 读数
-        gimbal_cmd_send.yaw = gimbal_feedback_recv.imu_yaw_total_angle;
-        gimbal_cmd_send.pitch = 0;  // Pitch 从 0 开始
+        gimbal_cmd_send.yaw = gimbal_feedback_recv.active_yaw_target;
+        gimbal_cmd_send.pitch = gimbal_feedback_recv.active_pitch_target;
         gimbal_yaw_initialized = true;
     }
+    // 只有云台已经就绪且未进入 ZERO_FORCE，才继续累计手动目标
+    
+    
     
     // 云台控制量（只有在就绪状态才累加）
-    if (gimbal_state == GIMBAL_STATE_READY) {
+    if ((gimbal_state == GIMBAL_STATE_READY) &&
+        (gimbal_cmd_send.gimbal_mode != GIMBAL_ZERO_FORCE)) {
         if (sbus_data[CURRENT].rc.Ch1 > SBUS_DEADZONE || sbus_data[CURRENT].rc.Ch1 < -SBUS_DEADZONE)
             gimbal_cmd_send.yaw += 0.0018f * (float)sbus_data[CURRENT].rc.Ch1;
         
@@ -345,17 +337,19 @@ void RC_ctrl_set()
     // shoot_cmd_send.loader_mode = vrc_data[CURRENT].rc.trigger ? LOAD_1_BULLET : LOAD_STOP;
 
     Emergency_stop();
+    Decision_sync_gimbal_manual_target();
 
     if (fabsf((float)vrc_data[CURRENT].rc.Lrocker_y) > RC_DEADBAND)
         chassis_cmd_send.vy = -2.0f * (float)vrc_data[CURRENT].rc.Lrocker_y;
     else
         chassis_cmd_send.vy = 0;
     chassis_cmd_send.vx = -2.0f * (float)vrc_data[CURRENT].rc.Lrocker_x;
-
-    // if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_x) > RC_DEADBAND)
-    //     gimbal_cmd_send.yaw -= GIMBAL_RC_MOVE_RATIO_YAW * (float)vrc_data[CURRENT].rc.Rrocker_x;
     // YAW 轴处理 (死区 + 降速)
-    if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_x) > RC_DEADBAND)
+    if (gimbal_cmd_send.gimbal_mode == GIMBAL_ZERO_FORCE)
+    {
+        chassis_cmd_send.cmd_yaw = 0.0f;
+    }
+    else if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_x) > RC_DEADBAND)
     {
         // 提取出这一帧的旋转增量 (也就是目标速度)
         float yaw_step = -GIMBAL_RC_MOVE_RATIO_YAW * (float)vrc_data[CURRENT].rc.Rrocker_x; 
@@ -369,18 +363,15 @@ void RC_ctrl_set()
     }
 
 
-    if (fabsf((float)vrc_data[CURRENT].rc.Rrocker_y) > RC_DEADBAND)
+    if ((gimbal_cmd_send.gimbal_mode != GIMBAL_ZERO_FORCE) &&
+        (fabsf((float)vrc_data[CURRENT].rc.Rrocker_y) > RC_DEADBAND))
         gimbal_cmd_send.pitch += GIMBAL_RC_MOVE_RATIO_PITCH * (float)vrc_data[CURRENT].rc.Rrocker_y;
-    if (gimbal_cmd_send.pitch > PITCH_UP_MAX) gimbal_cmd_send.pitch = PITCH_UP_MAX;
-    else if (gimbal_cmd_send.pitch < PITCH_DOWN_MAX) gimbal_cmd_send.pitch = PITCH_DOWN_MAX;
+    if (gimbal_cmd_send.gimbal_mode != GIMBAL_ZERO_FORCE)
+    {
+        if (gimbal_cmd_send.pitch > PITCH_UP_MAX) gimbal_cmd_send.pitch = PITCH_UP_MAX;
+        else if (gimbal_cmd_send.pitch < PITCH_DOWN_MAX) gimbal_cmd_send.pitch = PITCH_DOWN_MAX;
+    }
     
-    
-    // Uart_printf(test_uart, "Vx:%.2f,Vy:%.2f,Wz:%.2f,offset,chassis:%d\r\n",
-    // chassis_cmd_send.vx, 
-    // chassis_cmd_send.vy, 
-    // chassis_cmd_send.wz,
-
-    // chassis_cmd_send.chassis_mode);
 
 #else
     /**根据遥控器开关状态设定模式**/
@@ -430,6 +421,7 @@ void RC_ctrl_set()
         
     //急停模式
     Emergency_stop();
+    Decision_sync_gimbal_manual_target();
 
 
     /****************控制量设定*****************/
@@ -448,35 +440,45 @@ void RC_ctrl_set()
     float pitch_input = (float)rc_data[CURRENT].rc.Rrocker_y - PITCH_RC_CENTER_OFFSET; // 减去实测的中心偏移量;
 
     // 2. YAW 轴处理 (死区 + 降速)
-    if (fabsf(yaw_input) > RC_DEADBAND)
+    if ((gimbal_cmd_send.gimbal_mode != GIMBAL_ZERO_FORCE) &&
+        (fabsf(yaw_input) > RC_DEADBAND))
     {
         // 只有超过死区才累加
         gimbal_cmd_send.yaw -= GIMBAL_RC_MOVE_RATIO_YAW * yaw_input;
     }
 
     // 3. PITCH 轴处理 (死区 + 累加: 初始0, 上拨+, 回中保持)
-       if (fabsf(pitch_input) > RC_DEADBAND)
+       if ((gimbal_cmd_send.gimbal_mode != GIMBAL_ZERO_FORCE) &&
+           (fabsf(pitch_input) > RC_DEADBAND))
     {
         gimbal_cmd_send.pitch += GIMBAL_RC_MOVE_RATIO_PITCH * pitch_input;
     }
     
     // Uart_printf(test_uart, "yaw_input:%.2f,pitch_input:%.2f\r\n", yaw_input, pitch_input); 
     // 4. 限幅保持不变
-    if (gimbal_cmd_send.pitch > 20)
-        gimbal_cmd_send.pitch = 20;
-    else if (gimbal_cmd_send.pitch < -40)
-        gimbal_cmd_send.pitch = -40;
+    if (gimbal_cmd_send.gimbal_mode != GIMBAL_ZERO_FORCE)
+    {
+        if (gimbal_cmd_send.pitch > 20)
+            gimbal_cmd_send.pitch = 20;
+        else if (gimbal_cmd_send.pitch < -40)
+            gimbal_cmd_send.pitch = -40;
+    }
 
 #endif
 }
 
 /**
- * @brief 控制输入为键鼠的模式和控制量设置
+ * @brief 控制输入为键鼠时的模式和控制量设置
  *
-*/
+ */
 void Keyboard_ctrl_set()
 {
+    // 键鼠控制固定回到手动 IMU 模式，并先同步手动目标。
+    // 这样即使上一拍还在视觉模式，这一拍开始累加的也是当前 active_ref，而不是历史旧值。
+    gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
+    Decision_sync_gimbal_manual_target();
 #if USE_SBUS_RECEIVER == 1
+    
     // Ch8三档拨杆: 下=-660, 中=0, 上=+660
     if (sbus_data[CURRENT].rc.Ch8 < SBUS_3POS_THRESHOLD_DOWN) // Ch8 下 → 跟随模式
     {
@@ -513,8 +515,10 @@ void Keyboard_ctrl_set()
         shoot_cmd_send.loader_mode = LOAD_STOP;
     }
     
-    //急停模式
+    // 急停逻辑可能会把云台切到 ZERO_FORCE，这里紧跟一次同步，
+    // 防止急停期间手动目标继续积累，恢复后产生额外跳变。
     Emergency_stop();
+    Decision_sync_gimbal_manual_target();
 #elif USE_SBUS_RECEIVER == 2
     Key_t kb  = {.keys = vrc_data[CURRENT].keyboard};
     Key_t kbl = {.keys = vrc_data[LAST].keyboard};
@@ -545,16 +549,19 @@ void Keyboard_ctrl_set()
  * -= — 鼠标右移时Yaw 目标值减小（云台向右转）
 ***/
 
-    gimbal_cmd_send.yaw   -= KEY_SENSITIVITY * vrc_data[CURRENT].mouse.x;
-    gimbal_cmd_send.pitch += KEY_SENSITIVITY * vrc_data[CURRENT].mouse.y;
+    if (gimbal_cmd_send.gimbal_mode != GIMBAL_ZERO_FORCE)
+    {
+        gimbal_cmd_send.yaw   -= KEY_SENSITIVITY * vrc_data[CURRENT].mouse.x;
+        gimbal_cmd_send.pitch += KEY_SENSITIVITY * vrc_data[CURRENT].mouse.y;
 
  /***
   * 对Pitch 目标角度做限幅
   * -超过 30° → 强制钳位到 30°（最大仰角）
   * 低于 -30° → 强制钳位到 -30°（最大俯角
 ****/
-    if (gimbal_cmd_send.pitch > 30)       gimbal_cmd_send.pitch = 30;
-    else if (gimbal_cmd_send.pitch < -30) gimbal_cmd_send.pitch = -30;
+        if (gimbal_cmd_send.pitch > 30)       gimbal_cmd_send.pitch = 30;
+        else if (gimbal_cmd_send.pitch < -30) gimbal_cmd_send.pitch = -30;
+    }
 
 
     /***
@@ -597,10 +604,13 @@ void Keyboard_ctrl_set()
     chassis_cmd_send.vy = rc_data[CURRENT].keyboard.d ? 3000.0f : rc_data[CURRENT].keyboard.a ? -3000.0f : 0;
 
     // 鼠标: 云台 yaw/pitch
-    gimbal_cmd_send.yaw   -= 0.005f * rc_data[CURRENT].mouse.x;
-    gimbal_cmd_send.pitch += 0.005f * rc_data[CURRENT].mouse.y;
-    if (gimbal_cmd_send.pitch > 40)       gimbal_cmd_send.pitch = 40;
-    else if (gimbal_cmd_send.pitch < -30) gimbal_cmd_send.pitch = -30;
+    if (gimbal_cmd_send.gimbal_mode != GIMBAL_ZERO_FORCE)
+    {
+        gimbal_cmd_send.yaw   -= 0.005f * rc_data[CURRENT].mouse.x;
+        gimbal_cmd_send.pitch += 0.005f * rc_data[CURRENT].mouse.y;
+        if (gimbal_cmd_send.pitch > 40)       gimbal_cmd_send.pitch = 40;
+        else if (gimbal_cmd_send.pitch < -30) gimbal_cmd_send.pitch = -30;
+    }
 
     // F: 摩擦轮开关, E: 切换射击模式, 鼠标左键: 发射
     shoot_cmd_send.shoot_mode  = kb_friction ? SHOOT_ON : SHOOT_OFF;

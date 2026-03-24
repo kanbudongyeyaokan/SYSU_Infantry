@@ -5,6 +5,10 @@
 #include "robot_definitions.h"
 #include "ins.h"
 
+#ifndef GIMBAL_USE_OPTIMIZED_CONTROL
+#define GIMBAL_USE_OPTIMIZED_CONTROL 1
+#endif
+
 /**************决策*****************/
 
 /*机器人控制来源------键鼠/遥控器*/
@@ -65,6 +69,12 @@ typedef struct
     float imu_yaw_total_angle;
     //IMU输出的Yaw角速度（度/秒）
     float imu_yaw_rate;
+    //IMU输出的Pitch绝对角（度）
+    float imu_pitch_angle;
+    //云台应用层当前真正执行的目标，用于决策层做无扰切换同步
+    float active_yaw_target;
+    //与 active_yaw_target 成对使用，退出视觉时一起回写到手动目标
+    float active_pitch_target;
     //IMU状态
     // Imu_state_e imu_state;
 }Gimbal_feedback_info_t;

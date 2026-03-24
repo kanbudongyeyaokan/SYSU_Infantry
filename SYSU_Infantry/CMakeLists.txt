@@ -32,6 +32,10 @@ enable_language(C ASM)
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
+file(GLOB UI_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/UI/*.c"
+)
+
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
         1-Hardware_Layer/bsp_dwt/bsp_dwt.h
@@ -44,6 +48,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Remote_Control/video_link.c
         1-Hardware_Layer/bsp_usart/bsp_usart.c
         1-Hardware_Layer/bsp_usart/bsp_usart.h
+        1-Hardware_Layer/bsp_rtt/bsp_rtt.h
+        1-Hardware_Layer/bsp_rtt/bsp_rtt.c
         0-Middleware_Layer/Message_Center/message_center.c
         0-Middleware_Layer/Message_Center/message_center.h
         0-Middleware_Layer/Math_lib/math_lib.h
@@ -144,6 +150,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         3-Function_Module_Layer/Ins/ins.h
         3-Function_Module_Layer/Referee/referee.c
         3-Function_Module_Layer/Referee/referee.h
+        3-Function_Module_Layer/Referee/referee_ui.h
+        3-Function_Module_Layer/Referee/referee_ui.c
+
         3-Function_Module_Layer/Shoot/shoot.c
         3-Function_Module_Layer/Shoot/shoot.h
         3-Function_Module_Layer/Super_Capacitor/supercap_comm.c
@@ -203,6 +212,26 @@ add_executable(${CMAKE_PROJECT_NAME}
 
 
 # Add STM32CubeMX generated sources
+# =========================================================================
+# 👇👇👇 暴力解封 C板 (STM32F407) 算力与硬件浮点 👇👇👇
+# =========================================================================
+
+# # 1. 强制添加编译选项：开启 O2 优化，启用 Cortex-M4 硬浮点指令集
+# target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
+#         -O2
+#         -mfloat-abi=hard
+#         -mfpu=fpv4-sp-d16
+# )
+
+# # 2. 强制添加链接选项：告诉链接器使用硬浮点，防止报错
+# target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
+#         -mfloat-abi=hard
+#         -mfpu=fpv4-sp-d16
+# )
+
+# # =========================================================================
+# # 👆👆👆 插入结束 👆👆👆
+# # =========================================================================
 add_subdirectory(cmake/stm32cubemx)
 
 # Link directories setup
@@ -212,6 +241,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ${UI_SOURCES}
         # Add user sources here
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Robot_Task/robot_task.c
         ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c
@@ -235,6 +265,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Math_lib
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Error_System/inc
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/Crc
+        ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/UI
 
         ${CMAKE_CURRENT_SOURCE_DIR}/0-Middleware_Layer/letter-shell-master/src
 
@@ -262,6 +293,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_usb
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_spi
         ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_iic
+        ${CMAKE_CURRENT_SOURCE_DIR}/1-Hardware_Layer/bsp_rtt
+
 
         ${CMAKE_CURRENT_SOURCE_DIR}/2-Hardware_Driver_Layer/Buzzer_Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/4-Application_Layer/Execution/Chassis_Task

@@ -30,6 +30,10 @@ void Pid_init(Pid_instance_t *pid, Pid_init_t *config)
     pid->LPF_coefficient = config->LPF_coefficient;
     pid->integral_separation_threshold = config->integral_separation_threshold;
 
+    pid->feedforward_source = config->feedforward_source;
+
+    pid->target_ff_coef = config->target_ff_coef;
+
     // 初始化时间戳，避免第一次计算dt过大
     DWT_GetDeltaT(&pid->dwt_counter);
     pid->dt = 0.001f; // 默认给一个安全值
@@ -83,7 +87,7 @@ float Pid_calculate(Pid_instance_t *pid, float measure, float target)
         // 步兵底盘通常希望死区内无力
         // pid->Pout = 0.0f;
         // 积分项是否清零视需求而定，通常不清零以保持姿态，但长时间死区应防饱和
-        pid->Output = 0.0f; // 死区内输出为0
+       
     }
 
     // 4. P项计算
@@ -140,11 +144,15 @@ float Pid_calculate(Pid_instance_t *pid, float measure, float target)
     // 8. 计算总输出
     pid->Output = pid->Pout + pid->Iout + pid->Dout;
 
-    // 9. 前馈控制
+   // 9. 前馈控制 
     if (pid->optimization & PID_FEEDFOWARD) {
-        pid->Output += pid->feedfoward_coefficient * pid->target;
+        pid->Output += pid->target_ff_coef * pid->target; 
+        
+        // 外部源前馈 (专治重力补偿)
+        if (pid->feedforward_source != NULL) {
+            pid->Output += pid->feedfoward_coefficient * (*pid->feedforward_source);
+        }
     }
-
     // 10. 输出限幅
     if (pid->optimization & PID_OUTPUT_LIMIT) {
         LIMIT_MAX(pid->Output, pid->max_out);

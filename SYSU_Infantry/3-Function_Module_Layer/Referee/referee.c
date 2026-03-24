@@ -1,11 +1,13 @@
 #include "referee.h"
 #include <string.h>
 #include "crc_referee.h"
-#include "error_handler.h"
+#include "ui_default.h"
+#include "ui_interface.h"
+#include "SEGGER_RTT.h"
 
 // 全局变量
 static Referee_Data_t referee_data;
-static Uart_instance_t *referee_uart = NULL;
+Uart_instance_t *referee_uart = NULL;
 
 static void Referee_Unpack(uint8_t *data, uint16_t len)
 {
@@ -96,7 +98,7 @@ Referee_Data_t* Referee_Get_Data(UART_HandleTypeDef *huart)
 void Referee_Send_UI_Test(void)
 {
     if (referee_uart == NULL) return;
-    uint8_t tx_buf[128];
+      uint8_t tx_buf[128];
     frame_header_t *pHeader = (frame_header_t *)tx_buf;
     uint16_t *pCmdID = (uint16_t *)&tx_buf[5];
     ext_student_interactive_header_data_t *pInterHeader = (ext_student_interactive_header_data_t *)&tx_buf[7];
@@ -140,6 +142,13 @@ uint16_t ChassisPower_GetMaxLimit(void)
 uint16_t ChassisPower_GetBuffer(void)
 {
     return referee_data.power_heat_data.buffer_energy;
+}
+
+// 修改 referee.c 末尾
+uint8_t Get_Robot_ID(void)
+{
+
+    return referee_data.robot_status.robot_id;
 }
 bool referee_isonline(void) {
     return referee_data.is_online;

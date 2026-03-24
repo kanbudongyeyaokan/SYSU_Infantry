@@ -12,6 +12,8 @@
 #include "main.h"
 #include "tim.h"
 
+#define DECISION_MAKING_TASK_PERIOD 1
+
 // static Buzzer_device_t test_buzzer={0};
 
 /**
@@ -26,6 +28,9 @@
 void Decision_making_task() {
   // 任务初始化
   Decision_making_task_init();
+
+      // 绝对延时变量
+  TickType_t PreviousWakeTime = xTaskGetTickCount();
   /*****测试蜂鸣器******/
   // Buzzer_init(&test_buzzer,&htim4,TIM_CHANNEL_3);
   for (;;) {
@@ -37,7 +42,9 @@ void Decision_making_task() {
     Calc_offset_angle();
     // 向各个应用层传送控制信息
     Send_command_to_all_task();
-    // 控制频率200HZ
-    osDelay(1);
+    // 控制频率1KHZ
+    // osDelay(1);
+    // 绝对延时，保证严格的计算频率
+    vTaskDelayUntil(&PreviousWakeTime, DECISION_MAKING_TASK_PERIOD);
   }
 }

@@ -59,7 +59,7 @@ QueueHandle_t Buzzer_cmd_queue_handle;
 
 QueueHandle_t Gimbal_feedback_queue_handle;
 
-QueueHandle_t Chassis_feedback_queue_handle;\
+QueueHandle_t Chassis_feedback_queue_handle;
 
 QueueHandle_t Shoot_feedback_queue_handle;
 
@@ -68,7 +68,7 @@ Uart_instance_t* test_uart = NULL;
 /**机器人任务创建**/
 void Robot_task_init(void)
 {
-    //test_uart = Uart_register(&huart6,NULL);
+    // test_uart = Uart_register(&huart1,NULL);
 
     // 创建队列 (必须在任务创建之前!)
     // ============================================================
@@ -118,7 +118,7 @@ void Robot_task_init(void)
 
   ERROR_INFO("SYS", "Init");
 
-  osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 1024);
+  osThreadDef(ins_task, Ins_task, osPriorityHigh, 0, 2048);
   ins_task_handle = osThreadCreate(osThread(ins_task), NULL);
     //看门狗任务
    osThreadDef(watchdog_control_task, Watchdog_control_task, osPriorityHigh, 0, 512);
@@ -135,19 +135,19 @@ void Robot_task_init(void)
   referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
 
   //   //决策任务
-   osThreadDef(decision_making_task,Decision_making_task,osPriorityNormal,0,1024);
-   decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
-  //
-  //   // === 启动底盘与电机任务（必需） ===
-  //   // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
-     osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
-      chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
-  //
-      osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityNormal, 0, 512);
-     gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
-  //
-     osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
-      shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
+  osThreadDef(decision_making_task,Decision_making_task,osPriorityAboveNormal,0,1024);
+  decision_making_task_handle = osThreadCreate(osThread(decision_making_task), NULL);
+
+    // === 启动底盘与电机任务（必需） ===
+    // 底盘控制任务：500Hz，接收决策层/测试发布的 chassis_cmd，解算并写入电机目标
+    osThreadDef(chassis_control_task, Chassis_control_task, osPriorityNormal, 0, 512);
+     chassis_task_handle = osThreadCreate(osThread(chassis_control_task), NULL);
+
+     osThreadDef(gimbal_control_task, Gimbal_control_task, osPriorityAboveNormal, 0, 512);
+    gimbal_task_handle = osThreadCreate(osThread(gimbal_control_task), NULL);
+
+    osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
+     shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
 }
 

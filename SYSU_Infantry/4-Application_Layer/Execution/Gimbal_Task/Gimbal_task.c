@@ -7,8 +7,8 @@
 #include "vision_comm.h"
 
 
-// 云台控制频率 200Hz (5ms)
-#define GIMBAL_TASK_PERIOD 5
+// 云台控制频率 500Hz (5ms)
+#define GIMBAL_TASK_PERIOD 1
 
 void Gimbal_control_task(void const *argument) {
     // 初始化

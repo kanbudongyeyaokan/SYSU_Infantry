@@ -26,7 +26,7 @@ typedef struct {
     osMutexId fifo_mutex;             // 互斥锁，保护写指针和数据拷贝
 
     // 接收部分
-    uint8_t  rx_buffer[128];          // 接收缓冲区 (DMA 乒乓或空闲中断用)
+    uint8_t  rx_buffer[512];          // 接收缓冲区 (DMA 乒乓或空闲中断用)
     uint16_t rx_buf_length;           // 接收缓冲区长度
     uint16_t rx_data_len;             // 本次接收到的实际长度
     uart_receive_callback receive_callback; // 接收回调

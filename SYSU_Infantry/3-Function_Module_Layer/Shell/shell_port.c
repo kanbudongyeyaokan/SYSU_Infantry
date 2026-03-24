@@ -133,4 +133,4 @@ int shell_test_hello(int argc, char *argv[])
 
 // 2. 导出这个命令
 // 权限:0, 类型:MAIN, 命令名:hello, 函数名:shell_test_hello, 描述:Test command
-SHELL_EXPORT_CMD(SHELL_CMD_PERMISSION(0)|SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN), hello, shell_test_hello, print hello);
+//SHELL_EXPORT_CMD(SHELL_CMD_PERMISSION(0)|SHELL_CMD_TYPE(SHELL_TYPE_CMD_MAIN), hello, shell_test_hello, print hello);

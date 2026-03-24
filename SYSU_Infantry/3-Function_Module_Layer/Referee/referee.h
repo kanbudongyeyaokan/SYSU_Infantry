@@ -221,4 +221,6 @@ uint16_t ChassisPower_GetMaxLimit(void);
 uint16_t ChassisPower_GetBuffer(void);
 bool referee_isonline(void);
 
+uint8_t Get_Robot_ID(void);
+
 #endif

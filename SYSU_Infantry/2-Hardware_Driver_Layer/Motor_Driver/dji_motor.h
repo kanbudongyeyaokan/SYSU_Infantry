@@ -119,7 +119,9 @@ typedef struct
     Can_controller_t *can_controller;   //电机自身的CAN管理者
     int16_t deadzone_compensation;      // 电机死区补偿值
 
-    // [新增] 看门狗句柄
+
+
+    // 看门狗句柄
     Watchdog_device_t *wdg;
 
     // 缓存计算出的输出电流值 (等待发送)

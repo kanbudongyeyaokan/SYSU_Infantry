@@ -47,9 +47,11 @@ typedef struct
     // --- 优化选项 ---
     uint32_t optimization;          // 优化选项位掩码
     float feedfoward_coefficient;   // 前馈系数
+    float *feedforward_source;   // 前馈源指针 (如果启用前馈，必须指向一个有效的浮点数)
     float LPF_coefficient;          // 低通滤波器系数 (0~1, 越小滤波越强)
     float integral_separation_threshold;    // 积分分离阈值 (|error| > 此值时关闭积分)
 
+    float target_ff_coef; // 目标值速度前馈
     // --- 计时相关 ---
     uint32_t dwt_counter;   // DWT 计数器快照
     float    dt;            // 当前控制周期 (单位: 秒) [重要: 必须是float]
@@ -70,6 +72,9 @@ typedef struct
     float feedfoward_coefficient;
     float LPF_coefficient;
     float integral_separation_threshold; // 积分分离阈值
+    float *feedforward_source; 
+
+    float target_ff_coef; // 目标值速度前馈
 } Pid_init_t;
 
 /**
