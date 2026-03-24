@@ -15,7 +15,7 @@
 #define CHASSIS_POWER_LIMIT_DEFAULT      40.0f
 #define CHASSIS_POWER_BUFFER_DEFAULT     60.0f
 
-#define CHASSIS_POWER_K_T_DEFAULT        1.0e-4f
+#define CHASSIS_POWER_K_T_DEFAULT        2.0e-6f
 #define CHASSIS_POWER_STATIC_DEFAULT     2.0f
 #define CHASSIS_POWER_DANGER_LINE_DEFAULT 30.0f
 #define CHASSIS_POWER_BUFFER_KP_DEFAULT  1.0f
@@ -343,16 +343,16 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
         }
     }
 
-    if (input.e_buffer < 0.0f)
-    {
+    if (input.e_buffer < 0.0f || !referee_isonline()) {
+        ERROR_WARN(CHASSIS_PWR_MODULE, "e_buffer is less than zero or referee offline, fallback to default buffer=%.2fJ", CHASSIS_POWER_BUFFER_DEFAULT);
         input.e_buffer = CHASSIS_POWER_BUFFER_DEFAULT;
     }
 
     Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output, p_measured);
 
-    ERROR_INFO(CHASSIS_PWR_MODULE,
-               "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",
-               input.p_limit, input.e_buffer, output.p_measured, output.p_estimated, output.alpha);
+    // ERROR_INFO(CHASSIS_PWR_MODULE,
+    //            "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",
+    //            input.p_limit, input.e_buffer, output.p_measured, output.p_estimated, output.alpha);
 
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
     {

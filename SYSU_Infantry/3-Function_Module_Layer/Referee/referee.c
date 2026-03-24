@@ -1,6 +1,7 @@
 #include "referee.h"
 #include <string.h>
 #include "crc_referee.h"
+#include "error_handler.h"
 
 // 全局变量
 static Referee_Data_t referee_data;
@@ -139,4 +140,7 @@ uint16_t ChassisPower_GetMaxLimit(void)
 uint16_t ChassisPower_GetBuffer(void)
 {
     return referee_data.power_heat_data.buffer_energy;
+}
+bool referee_isonline(void) {
+    return referee_data.is_online;
 }

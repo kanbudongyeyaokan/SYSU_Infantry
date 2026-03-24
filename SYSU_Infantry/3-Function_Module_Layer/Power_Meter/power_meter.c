@@ -53,6 +53,7 @@ void PowerMeter_Init(CAN_HandleTypeDef *hcan)
     {
         ERROR_CRITICAL(POWER_METER_MODULE, "Power meter CAN init failed");
     }
+    ERROR_INFO(POWER_METER_MODULE, "Power meter CAN init success");
 }
 
 void PowerMeter_Parse(PowerMeter_t *pm, const uint8_t *can_rx_data)

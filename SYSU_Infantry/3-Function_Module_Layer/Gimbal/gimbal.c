@@ -167,7 +167,7 @@ void Gimbal_task_init(void) {
     //初始化云台电机
     Gimbal_motor_init();
 
-    Vision_Comm_Init();
+    //Vision_Comm_Init();
 }
 
 
