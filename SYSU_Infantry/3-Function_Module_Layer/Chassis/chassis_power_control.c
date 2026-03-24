@@ -1,197 +1,366 @@
 #include "chassis_power_control.h"
-#include "algorithm_pid.h"
-#include "referee.h"         // 替换为你实际获取裁判系统数据的头文件
-#include <math.h>
 
-// ================== 物理常数与超参定义 ==================
-#define K_TORQUE 0.0003662109375f             // 3508力矩转换系数
-#define POWER_COEF (187.0f / 3591.0f / 9.55f) // 机械功率系数(适配rpm)
-#define ERROR_UPPER_BOUND 200.0f              // RPM总误差上限 (完全大P分配)
-#define ERROR_LOWER_BOUND 100.0f              // RPM总误差下限 (完全等比缩放)
+#include <stddef.h>
+#include <stdbool.h>
+#include "error_handler.h"
+#include "referee.h"
+#include "supercap_comm.h"
+#define CHASSIS_POWER_WHEEL_NUM          4U
+#define CHASSIS_POWER_EPSILON            1e-6f
+#define CHASSIS_MOTOR_CURRENT_MAX        16000.0f
+#define CHASSIS_POWER_ERR_INTERVAL_TICK  200U
 
-// ================== RLS 动态模型参数 ==================
-// 即使不运行 RLS 更新函数，这套初始参数也足够优秀，能直接作为前馈模型使用
-static float k1_dynamic = 0.22f;       // 转速绝对值损耗系数
-static float k2_dynamic = 1.23e-07f;   // 电流平方损耗系数
-static float k3_static  = 2.78f;       // 底盘静态功耗 (W)
+#define CHASSIS_PWR_MODULE               "CHASSIS_PWR"
 
-// RLS 矩阵变量 (2x2)
-static float rls_P[2][2] = {{1.0f, 0.0f}, {0.0f, 1.0f}}; 
-static const float rls_lambda = 0.999f; 
+#define CHASSIS_POWER_LIMIT_DEFAULT      40.0f
+#define CHASSIS_POWER_BUFFER_DEFAULT     60.0f
 
-// ================== 能量环控制器 ==================
-static Pid_instance_t energy_pd;
-static uint8_t is_energy_pd_init = 0;
+#define CHASSIS_POWER_K_T_DEFAULT        2.0e-6f
+#define CHASSIS_POWER_STATIC_DEFAULT     2.0f
+#define CHASSIS_POWER_DANGER_LINE_DEFAULT 30.0f
+#define CHASSIS_POWER_BUFFER_KP_DEFAULT  1.0f
+#define CHASSIS_POWER_MIN_ALLOW_DEFAULT  1.0f
+
+static chassis_power_ctrl_param_t g_chassis_power_param =
+{
+    .k_t = CHASSIS_POWER_K_T_DEFAULT,
+    .p_static = CHASSIS_POWER_STATIC_DEFAULT,
+    .danger_energy_line = CHASSIS_POWER_DANGER_LINE_DEFAULT,
+    .k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT,
+    .p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT,
+    .fb_ratio = CHASSIS_POWER_FB_RATIO_DEFAULT,
+};
+
+/* 错误节流与恢复状态，防止 1kHz 日志刷屏 */
+static uint16_t g_null_input_err_cd = 0U;
+static uint16_t g_null_motors_err_cd = 0U;
+static uint16_t g_ref_limit_err_cd = 0U;
+static uint16_t g_ref_buffer_err_cd = 0U;
+static uint16_t g_param_pmin_err_cd = 0U;
+static uint16_t g_pmax_floor_warn_cd = 0U;
+
+static uint16_t g_motor_null_warn_cd[CHASSIS_POWER_WHEEL_NUM] = {0U};
+static bool g_motor_null_active[CHASSIS_POWER_WHEEL_NUM] = {false};
+static bool g_ref_limit_abnormal_active = false;
+static bool g_ref_buffer_abnormal_active = false;
+static bool g_pmax_floor_active = false;
+
+static bool chassis_power_should_report(uint16_t *cooldown)
+{
+    if (cooldown == NULL)
+    {
+        return false;
+    }
+
+    if (*cooldown == 0U)
+    {
+        *cooldown = CHASSIS_POWER_ERR_INTERVAL_TICK;
+        return true;
+    }
+
+    (*cooldown)--;
+    return false;
+}
+
+static float chassis_absf(float x)
+{
+    return (x >= 0.0f) ? x : -x;
+}
+
+static float chassis_clampf(float x, float min_val, float max_val)
+{
+    if (x < min_val)
+    {
+        return min_val;
+    }
+    if (x > max_val)
+    {
+        return max_val;
+    }
+    return x;
+}
+
+static int16_t chassis_float_to_i16_clamped(float x)
+{
+    float bounded = chassis_clampf(x, -CHASSIS_MOTOR_CURRENT_MAX, CHASSIS_MOTOR_CURRENT_MAX);
+    if (bounded >= 0.0f)
+    {
+        return (int16_t)(bounded + 0.5f);
+    }
+    return (int16_t)(bounded - 0.5f);
+}
 
 void Chassis_Power_Control_Init(void)
 {
-    // 初始化能量闭环 PD 控制器 (根据缓冲能量动态压低功率上限)
-    Pid_init_t pid_cfg = {
-        .kp = 1.5f,
-        .ki = 0.0f,
-        .kd = 0.2f, // 引入D项，对缓冲能量骤降做出瞬间压制反应
-        .max_out = 40.0f,
-        .max_iout = 0.0f,
-        .optimization = PID_OUTPUT_LIMIT,
-    };
-    Pid_init(&energy_pd, &pid_cfg);
-    is_energy_pd_init = 1;
+    g_chassis_power_param.k_t = CHASSIS_POWER_K_T_DEFAULT;
+    g_chassis_power_param.p_static = CHASSIS_POWER_STATIC_DEFAULT;
+    g_chassis_power_param.danger_energy_line = CHASSIS_POWER_DANGER_LINE_DEFAULT;
+    g_chassis_power_param.k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT;
+    g_chassis_power_param.p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT;
+    g_chassis_power_param.fb_ratio = CHASSIS_POWER_FB_RATIO_DEFAULT;
+
+    ERROR_INFO(CHASSIS_PWR_MODULE,
+               "init k_t=%.6f p_static=%.2f danger=%.2f kp=%.2f pmin=%.2f fb=%.2f",
+               g_chassis_power_param.k_t,
+               g_chassis_power_param.p_static,
+               g_chassis_power_param.danger_energy_line,
+               g_chassis_power_param.k_p_buffer,
+               g_chassis_power_param.p_min_allow,
+               g_chassis_power_param.fb_ratio);
 }
 
-void Chassis_Power_RLS_Update(Djimotor_device_t *motors[4])
+void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
+                                const chassis_power_ctrl_param_t *param,
+                                chassis_power_ctrl_output_t *output,
+                                float p_measured)
 {
-    // 【注意】最新赛季裁判系统不再提供实时功率反馈！
-    // 只有当你的电路板上有 INA226 等电流计，能读到真实电功率时，再传入此变量
-    float real_measured_power = 0.0f; // 替换为你的真实硬件功率读取函数
-    
-    // 如果没有真实功率反馈，强制退出 RLS，避免模型发散
-    if (real_measured_power <= 0.0f) return; 
+    uint8_t i;
+    float p_estimated = 0.0f;
+    float p_total = 0.0f;
+    float p_max_allow;
+    float p_limit;
+    float e_buffer;
+    float p_min_allow;
+    float p_max_allow_raw;
+    float alpha = 1.0f;
+    float fb_ratio;
+    bool p_meter_valid = (p_measured >= 0.0f);
 
-    float sum_abs_rpm = 0.0f;
-    float sum_current_sq = 0.0f;
-    float effective_power = 0.0f;
-
-    for (int i = 0; i < 4; i++) {
-        if (motors[i] == NULL || motors[i]->motor_status == MOTOR_STOP) continue;
-        float rpm = motors[i]->motor_measure.angular_velocity;
-        float current = motors[i]->motor_measure.real_current; 
-
-        sum_abs_rpm += fabsf(rpm);
-        sum_current_sq += current * current;
-        effective_power += current * K_TORQUE * POWER_COEF * rpm; 
-    }
-
-    float y = real_measured_power - effective_power - k3_static;
-    float x[2] = {sum_abs_rpm, sum_current_sq};
-    
-    // RLS 矩阵更新运算 (展开版)
-    float Px[2] = {
-        rls_P[0][0] * x[0] + rls_P[0][1] * x[1],
-        rls_P[1][0] * x[0] + rls_P[1][1] * x[1]
-    };
-    float denominator = rls_lambda + (x[0] * Px[0] + x[1] * Px[1]);
-    float K[2] = {Px[0] / denominator, Px[1] / denominator};
-    float error = y - (k1_dynamic * x[0] + k2_dynamic * x[1]);
-
-    k1_dynamic += K[0] * error;
-    k2_dynamic += K[1] * error;
-
-    if (k1_dynamic < 1e-5f) k1_dynamic = 1e-5f;
-    if (k2_dynamic < 1e-7f) k2_dynamic = 1e-7f;
-
-    float new_P[2][2];
-    new_P[0][0] = (rls_P[0][0] - K[0] * Px[0]) / rls_lambda;
-    new_P[0][1] = (rls_P[0][1] - K[0] * Px[1]) / rls_lambda;
-    new_P[1][0] = (rls_P[1][0] - K[1] * Px[0]) / rls_lambda;
-    new_P[1][1] = (rls_P[1][1] - K[1] * Px[1]) / rls_lambda;
-
-    rls_P[0][0] = new_P[0][0]; rls_P[0][1] = new_P[0][1];
-    rls_P[1][0] = new_P[1][0]; rls_P[1][1] = new_P[1][1];
-}
-
-void Chassis_Power_Control(Djimotor_device_t *motors[4])
-{
-    if (!is_energy_pd_init || motors == NULL) return;
-
-    // 1. 获取裁判系统基础数据
-    float buffer_energy = ChassisPower_GetBuffer();      // 实时缓冲能量,上限为60J
-    float referee_max_power = ChassisPower_GetMaxLimit(); // 裁判系统上限
-    if (referee_max_power < 40.0f) referee_max_power = 40.0f;
-
-    // 2. 能量闭环：计算动态允许功率 P_max
-    // 假设满缓冲 60J，设定维持目标在 45J 左右
-    float target_buffer = 45.0f; 
-    float pd_out = Pid_calculate(&energy_pd, target_buffer, buffer_energy);
-    
-    float P_max_limit = referee_max_power - pd_out; 
-    
-    // 安全底线：最惨情况(电量耗尽)也得给够 80% 的功率维持基本机动
-    float min_power_limit = referee_max_power * 0.8f; 
-    if (P_max_limit < min_power_limit) P_max_limit = min_power_limit;
-
-    // 3. 全向轮核心：功率预测与负功回收
-    float allocatable_power = P_max_limit;
-    float cmd_power[4] = {0};
-    float error_rpm[4] = {0};
-    float sum_cmd_power = 0.0f;
-    float sum_error_rpm = 0.0f;
-    float sum_positive_power_req = 0.0f;
-
-    for (int i = 0; i < 4; i++) {
-        if (motors[i] == NULL || motors[i]->motor_status == MOTOR_STOP) continue;
-
-        float rpm = motors[i]->motor_measure.angular_velocity;
-        float target_rpm = motors[i]->motor_pid.pid_target;
-        float pid_torque_current = motors[i]->out_current; // PID 原始电流
-
-        error_rpm[i] = fabsf(target_rpm - rpm);
-
-        // 预测命令功率模型
-        cmd_power[i] = (pid_torque_current * K_TORQUE * POWER_COEF * rpm) + 
-                       (k1_dynamic * fabsf(rpm)) + 
-                       (k2_dynamic * pid_torque_current * pid_torque_current) + 
-                       (k3_static / 4.0f);
-
-        sum_cmd_power += cmd_power[i];
-
-        // 负功回收：全向轮拖拽发电的轮子，把能量还给功率池
-        if (cmd_power[i] <= 0.0f) {
-            allocatable_power += -cmd_power[i]; 
-        } else {
-            sum_error_rpm += error_rpm[i];
-            sum_positive_power_req += cmd_power[i];
+    if ((input == NULL) || (param == NULL) || (output == NULL))
+    {
+        if (chassis_power_should_report(&g_null_input_err_cd))
+        {
+            ERROR_RAISE(CHASSIS_PWR_MODULE,
+                        "calc null ptr input=0x%lx param=0x%lx output=0x%lx",
+                        (uint32_t)(uintptr_t)input,
+                        (uint32_t)(uintptr_t)param,
+                        (uint32_t)(uintptr_t)output);
         }
+        return;
     }
 
-    // 4. 超功率处理：大 P 误差分配 + 二次方程解算
-    if (sum_cmd_power > P_max_limit && sum_positive_power_req > 0.0f) {
+    p_limit = input->p_limit;
+    e_buffer = input->e_buffer;
+    p_min_allow = param->p_min_allow;
+    fb_ratio = param->fb_ratio;
+
+    if (p_min_allow <= CHASSIS_POWER_EPSILON)
+    {
+        if (chassis_power_should_report(&g_param_pmin_err_cd))
+        {
+            ERROR_WARN(CHASSIS_PWR_MODULE,
+                       "param p_min_allow invalid=%.3f, fallback=%.3f",
+                       p_min_allow,
+                       CHASSIS_POWER_MIN_ALLOW_DEFAULT);
+        }
+        p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT;
+    }
+
+    if (p_limit <= 0.0f)
+    {
+        if (chassis_power_should_report(&g_ref_limit_err_cd))
+        {
+            ERROR_WARN(CHASSIS_PWR_MODULE,
+                       "ref power limit invalid=%.2f, clamp to p_min_allow=%.2f",
+                       p_limit,
+                       p_min_allow);
+        }
+        p_limit = p_min_allow;
+        g_ref_limit_abnormal_active = true;
+    }
+    else if (g_ref_limit_abnormal_active)
+    {
+        ERROR_INFO(CHASSIS_PWR_MODULE, "ref power limit recovered=%.2f", p_limit);
+        g_ref_limit_abnormal_active = false;
+    }
+
+    if (e_buffer < 0.0f)
+    {
+        if (chassis_power_should_report(&g_ref_buffer_err_cd))
+        {
+            ERROR_WARN(CHASSIS_PWR_MODULE,
+                       "buffer energy invalid=%.2f, clamp to 0", e_buffer);
+        }
+        e_buffer = 0.0f;
+        g_ref_buffer_abnormal_active = true;
+    }
+    else if (g_ref_buffer_abnormal_active)
+    {
+        ERROR_INFO(CHASSIS_PWR_MODULE, "buffer energy recovered=%.2f", e_buffer);
+        g_ref_buffer_abnormal_active = false;
+    }
+
+    /* 步骤1：前馈估算 - 单轮功率估算 P_esti = K_t * abs(I_cmd * w_fdb) + P_static */
+    for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
+    {
+        float i_mul_w = input->i_cmd[i] * input->w_fdb[i];
+        float p_wheel = param->k_t * chassis_absf(i_mul_w) + param->p_static;
+        output->p_wheel_esti[i] = p_wheel;
+        p_estimated += p_wheel;
+    }
+
+    output->p_estimated = p_estimated;
+
+    /* 步骤2：闭环反馈 - 混合实测功率与估算功率 */
+    if (p_meter_valid)
+    {
+        /* 功率计有效：混合前馈与反馈
+         * p_total = fb_ratio * p_measured + (1 - fb_ratio) * p_estimated
+         * fb_ratio 越大越信任实测值
+         */
+        if (fb_ratio < 0.0f) fb_ratio = 0.0f;
+        if (fb_ratio > 1.0f) fb_ratio = 1.0f;
         
-        // 计算误差置信度 K_coe
-        float k_coe = 0.0f;
-        if (sum_error_rpm > ERROR_UPPER_BOUND) {
-            k_coe = 1.0f;
-        } else if (sum_error_rpm > ERROR_LOWER_BOUND) {
-            k_coe = (sum_error_rpm - ERROR_LOWER_BOUND) / (ERROR_UPPER_BOUND - ERROR_LOWER_BOUND);
+        p_total = fb_ratio * p_measured + (1.0f - fb_ratio) * p_estimated;
+    }
+    else
+    {
+        /* 功率计无效：纯前馈估算 */
+        p_total = p_estimated;
+    }
+
+    output->p_measured = p_measured;
+    output->p_total = p_total;
+
+    /* 步骤3：缓冲能量防线动态限功 */
+    if (e_buffer > param->danger_energy_line)
+    {
+        p_max_allow_raw = p_limit;
+    }
+    else
+    {
+        p_max_allow_raw = p_limit -
+                          param->k_p_buffer * (param->danger_energy_line - e_buffer);
+    }
+
+    p_max_allow = p_max_allow_raw;
+
+    /* 底层保底，避免功率上限 <= 0 */
+    if (p_max_allow < p_min_allow)
+    {
+        p_max_allow = p_min_allow;
+
+        if (chassis_power_should_report(&g_pmax_floor_warn_cd))
+        {
+            ERROR_WARN(CHASSIS_PWR_MODULE,
+                       "p_max_allow floor raw=%.2f floor=%.2f p_limit=%.2f e_buffer=%.2f",
+                       p_max_allow_raw,
+                       p_min_allow,
+                       p_limit,
+                       e_buffer);
         }
+        g_pmax_floor_active = true;
+    }
+    else if (g_pmax_floor_active)
+    {
+        ERROR_INFO(CHASSIS_PWR_MODULE,
+                   "p_max_allow recovered raw=%.2f p_limit=%.2f e_buffer=%.2f",
+                   p_max_allow_raw,
+                   p_limit,
+                   e_buffer);
+        g_pmax_floor_active = false;
+    }
+    output->p_max_allow = p_max_allow;
 
-        for (int i = 0; i < 4; i++) {
-            if (motors[i] == NULL || motors[i]->motor_status == MOTOR_STOP) continue;
-            
-            // 发电刹车的轮子直接放行
-            if (cmd_power[i] <= 0.0f) continue;
-
-            // 混合权重分配：平滑兼顾等比例缩放与误差突变补偿
-            float weight_error = error_rpm[i] / (sum_error_rpm + 1e-6f);
-            float weight_prop  = cmd_power[i] / sum_positive_power_req;
-            float final_weight = (k_coe * weight_error) + ((1.0f - k_coe) * weight_prop);
-            
-            float target_P_i = allocatable_power * final_weight;
-
-            // 二次方程逆解：A*I^2 + B*I + C = 0
-            float rpm = motors[i]->motor_measure.angular_velocity;
-            float A = k2_dynamic;
-            float B = K_TORQUE * POWER_COEF * rpm;
-            float C = (k1_dynamic * fabsf(rpm)) + (k3_static / 4.0f) - target_P_i;
-
-            float delta = B * B - 4.0f * A * C;
-            int16_t limited_current = motors[i]->out_current;
-
-            if (delta <= 0.0f) {
-                // 无解情况取极点
-                limited_current = (int16_t)(-B / (2.0f * A));
-            } else {
-                // 有解：根据原始PID电流方向取根
-                if (motors[i]->out_current > 0) {
-                    limited_current = (int16_t)((-B + sqrtf(delta)) / (2.0f * A));
-                } else {
-                    limited_current = (int16_t)((-B - sqrtf(delta)) / (2.0f * A));
-                }
-            }
-
-            // 硬件电流限幅与覆盖
-            if (limited_current > 16000) limited_current = 16000;
-            if (limited_current < -16000) limited_current = -16000;
-            motors[i]->out_current = limited_current;
+    /* 步骤4：超功率时做等比例电流缩放 */
+    if ((p_total > p_max_allow) && (p_total > CHASSIS_POWER_EPSILON))
+    {
+        alpha = p_max_allow / p_total;
+        if (alpha < 0.0f)
+        {
+            alpha = 0.0f;
+        }
+        if (alpha > 1.0f)
+        {
+            alpha = 1.0f;
         }
     }
+    else
+    {
+        alpha = 1.0f;
+    }
+
+    output->alpha = alpha;
+
+    for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
+    {
+        output->i_out[i] = input->i_cmd[i] * alpha;
+    }
 }
+
+void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
+{
+    uint8_t i;
+    chassis_power_ctrl_input_t input;
+    chassis_power_ctrl_output_t output;
+
+    if (motors == NULL)
+    {
+        if (chassis_power_should_report(&g_null_motors_err_cd))
+        {
+            ERROR_RAISE(CHASSIS_PWR_MODULE, "motors array is NULL");
+        }
+        return;
+    }
+
+    for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
+    {
+        if ((motors[i] == NULL) || (motors[i]->motor_status == MOTOR_STOP))
+        {
+            input.i_cmd[i] = 0.0f;
+            input.w_fdb[i] = 0.0f;
+
+            if (motors[i] == NULL)
+            {
+                if (chassis_power_should_report(&g_motor_null_warn_cd[i]))
+                {
+                    ERROR_WARN(CHASSIS_PWR_MODULE, "motor[%lu] is NULL", (uint32_t)i);
+                }
+                g_motor_null_active[i] = true;
+            }
+            continue;
+        }
+
+        if (g_motor_null_active[i])
+        {
+            ERROR_INFO(CHASSIS_PWR_MODULE, "motor[%lu] pointer recovered", (uint32_t)i);
+            g_motor_null_active[i] = false;
+        }
+
+        input.i_cmd[i] = (float)motors[i]->out_current;
+        input.w_fdb[i] = motors[i]->motor_measure.angular_velocity;
+    }
+
+    input.p_limit = (float)SuperCap_Get_Power_Limit();
+    input.e_buffer = (float)ChassisPower_GetBuffer();
+
+    if (input.p_limit < CHASSIS_POWER_LIMIT_DEFAULT)
+    {
+        input.p_limit = (float)ChassisPower_GetMaxLimit();
+        if (input.p_limit < CHASSIS_POWER_LIMIT_DEFAULT)
+        {
+            input.p_limit = CHASSIS_POWER_LIMIT_DEFAULT;
+        }
+    }
+
+    if (input.e_buffer < 0.0f || !Referee_Is_Online()) {
+        ERROR_WARN(CHASSIS_PWR_MODULE, "e_buffer is less than zero or referee offline, fallback to default buffer=%.2fJ", CHASSIS_POWER_BUFFER_DEFAULT);
+        input.e_buffer = CHASSIS_POWER_BUFFER_DEFAULT;
+    }
+
+    Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output, p_measured);
+
+    // ERROR_INFO(CHASSIS_PWR_MODULE,
+    //            "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",
+    //            input.p_limit, input.e_buffer, output.p_measured, output.p_estimated, output.alpha);
+
+    for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
+    {
+        if ((motors[i] == NULL) || (motors[i]->motor_status == MOTOR_STOP))
+        {
+            continue;
+        }
+        motors[i]->out_current = chassis_float_to_i16_clamped(output.i_out[i]);
+    }
+}
+

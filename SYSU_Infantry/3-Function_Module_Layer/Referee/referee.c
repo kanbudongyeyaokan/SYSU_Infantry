@@ -84,9 +84,6 @@ static void Referee_Unpack(uint8_t *data, uint16_t len)
 static void Referee_Rx_Callback(void)
 {
     if (referee_uart == NULL) return;
-    SEGGER_RTT_printf(0, "Ref RX Len: %d, Head: %02X\r\n", 
-                      referee_uart->rx_data_len, 
-                      referee_uart->rx_buffer[0]);
     Referee_Unpack(referee_uart->rx_buffer, referee_uart->rx_data_len);
 }
 
@@ -106,6 +103,7 @@ void Referee_Send_UI_Test(void)
     uint16_t *pCmdID = (uint16_t *)&tx_buf[5];
     ext_student_interactive_header_data_t *pInterHeader = (ext_student_interactive_header_data_t *)&tx_buf[7];
     graphic_data_struct_t *pGraphic = (graphic_data_struct_t *)&tx_buf[7 + sizeof(ext_student_interactive_header_data_t)];
+
     pInterHeader->data_cmd_id = 0x0101;
     uint8_t robot_id = referee_data.robot_status.robot_id;
     pInterHeader->sender_id = robot_id;
@@ -151,4 +149,7 @@ uint8_t Get_Robot_ID(void)
 {
 
     return referee_data.robot_status.robot_id;
+}
+bool Referee_Is_Online(void) {
+    return referee_data.is_online;
 }

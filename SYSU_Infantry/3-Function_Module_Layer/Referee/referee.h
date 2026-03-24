@@ -1,6 +1,8 @@
 #ifndef _REFEREE_H
 #define _REFEREE_H
 
+#include <stdbool.h>
+
 #include "main.h"
 #include "bsp_usart.h"
 #include "crc_referee.h"
@@ -217,6 +219,7 @@ void Referee_Send_UI_Test(void);
 
 uint16_t ChassisPower_GetMaxLimit(void);
 uint16_t ChassisPower_GetBuffer(void);
+bool Referee_Is_Online(void);
 
 uint8_t Get_Robot_ID(void);
 

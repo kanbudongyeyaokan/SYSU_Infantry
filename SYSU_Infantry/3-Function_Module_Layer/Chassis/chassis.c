@@ -24,6 +24,7 @@
 #include "error_handler.h"
 #include "chassis_ramp.h"
 
+#include "power_meter.h"
 
 #define CHASSIS_FOLLOW_YAW_GAIN 0.5f
 #define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
@@ -76,6 +77,7 @@ void Chassis_task_init(void) {
 
     //底盘功率控制初始化
     Chassis_Power_Control_Init();
+    //SuperCap_Comm_Init(&hcan1);
 }
 
 /**
@@ -199,6 +201,10 @@ void Chassis_init() {
     for (int i = 0; i < 4; i++) {
         chassis_motors[i] = DJI_Motor_Init(&cfg[i]);
     }
+    // chassis_motors[2] = DJI_Motor_Init(&cfg[2]);
+    // chassis_motors[3] = DJI_Motor_Init(&cfg[3]);
+    PowerMeter_Init(&hcan1);
+    Chassis_Power_Control_Init();
 }
 
 /**
@@ -228,12 +234,13 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
         Chassis_Ramp_Update(&chassis_ramp, cmd->vx, cmd->vy, &cmd_solved.vx, &cmd_solved.vy);
     }
 
-    switch (cmd_solved.chassis_mode) 
+    switch (cmd_solved.chassis_mode)
     {
         case CHASSIS_ZERO_FORCE:
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_status(chassis_motors[i], MOTOR_STOP);
                 Djimotor_set_target(chassis_motors[i], 0);
+                //计算PID
                 Djimotor_Calc_Output(chassis_motors[i]);
             }
             break;
@@ -260,7 +267,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             }
 
             // 删掉重复的结构体定义，直接用外部的 cmd_solved
-            float pid_out = Pid_calculate(&chassis_follow_pid, 0.0f, cmd_solved.offset_angle); 
+            float pid_out = Pid_calculate(&chassis_follow_pid, 0.0f, cmd_solved.offset_angle);
             float K_ff = 1200.0f; 
             cmd_solved.wz = (cmd_solved.cmd_yaw * K_ff) + pid_out;
             
@@ -315,9 +322,22 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             break;
     }
 
+    // 在 1kHz 控制周期末统一做动态功率控制与等比例电流限幅
+    float power = PowerMeter_GetPower();
+    //float power = SuperCap_Get_Chassis_Power();
+    //从超级电容模块获取当前功率
+    //去除注释时记得去chassis_init那里初始化supercap
+    if (PowerMeter_IsOnline()) {
+        Chassis_Power_Control(chassis_motors, power);
+    } else {
+        Chassis_Power_Control(chassis_motors, -1);
+        //-1 代表功率计无效
+    }
+
+
     // 反馈底盘数据回决策层
     chassis_feedback.chassis_wz = cmd_solved.wz;
-    xQueueOverwrite(Chassis_feedback_queue_handle, &chassis_feedback); 
+    xQueueOverwrite(Chassis_feedback_queue_handle, &chassis_feedback);
 }
 
 /**

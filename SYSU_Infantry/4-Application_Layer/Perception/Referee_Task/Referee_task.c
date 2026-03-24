@@ -6,7 +6,7 @@
 #include "Referee_task.h"
 #include "referee.h"
 #include "referee_ui.h"
-#include "cmsis_os.h"  
+#include "cmsis_os.h"
 #include "stdlib.h"
 extern UART_HandleTypeDef huart6;
 static Referee_Data_t* ref_data_ptr;
@@ -22,7 +22,7 @@ static void Draw_Tactical_HUD(void)
     UI_Pack_Line(&static_figs[0], "CHH", UI_OPERATE_ADD, 1, UI_COLOR_GREEN, 2, 920, 540, 1000, 540);
     UI_Pack_Line(&static_figs[1], "CHV", UI_OPERATE_ADD, 1, UI_COLOR_GREEN, 2, 960, 500, 960, 580);
     UI_Pack_Circle(&static_figs[2], "CHC", UI_OPERATE_ADD, 1, UI_COLOR_CYAN, 4, 960, 540, 5);
-    
+
     // 电容条背景
     UI_Pack_Line(&static_figs[3], "CBB", UI_OPERATE_ADD, 2, UI_COLOR_WHITE, 10, 700, 200, 900, 200);
     // 电容条前景初始层
@@ -30,7 +30,7 @@ static void Draw_Tactical_HUD(void)
 
     // 发送 5 图组合包
     UI_Send_Multi_Figures(5, static_figs);
-    osDelay(30); 
+    osDelay(30);
 
     UI_Pack_String(&cap_text, "TXT", UI_OPERATE_ADD, 2, UI_COLOR_YELLOW, 20, 4, 630, 215, "CAP:");
     UI_Send_String(&cap_text);
@@ -44,12 +44,12 @@ static void Update_Dynamic_Capacitor(void)
     static uint16_t last_buffer = 999;
     uint16_t current_buffer = ref_data_ptr->power_heat_data.buffer_energy;
 
-    if (abs(current_buffer - last_buffer) >= 1) 
+    if (abs(current_buffer - last_buffer) >= 1)
     {
         graphic_data_struct_t cap_fg;
-        
+
         uint32_t end_x = 700 + (uint32_t)(current_buffer * 3.3f);
-        if (end_x > 900) end_x = 900; 
+        if (end_x > 900) end_x = 900;
 
         uint8_t bar_color = (current_buffer < 20) ? UI_COLOR_PINK : UI_COLOR_ORANGE;
 
@@ -67,9 +67,9 @@ static void Update_Dynamic_Capacitor(void)
 void Referee_task(void const * argument)
 {
     ref_data_ptr = Referee_Get_Data(&huart6);
-    osDelay(2000); 
+    osDelay(2000);
 
-    UI_Delete_All(); 
+    UI_Delete_All();
     osDelay(200);
 
     uint32_t time_tick = 0;
@@ -77,8 +77,8 @@ void Referee_task(void const * argument)
     for(;;)
     {
         // 慢循环：每 2000ms (2秒) 发送一次静态图层“心跳包”
-    
-        if (time_tick % 20 == 0) 
+
+        if (time_tick % 20 == 0)
         {
             Draw_Tactical_HUD();
         }

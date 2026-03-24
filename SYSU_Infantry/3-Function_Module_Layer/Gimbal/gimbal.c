@@ -270,7 +270,7 @@ static void Gimbal_motor_init(void) {
                 // .feedforward_source = &pitch_gravity_factor, // cos 因子
                 .feedfoward_coefficient = 5500.0f,           // 需要实测
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_FEEDFOWARD,
-                
+
             },
 
         },
@@ -337,19 +337,19 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
     
     // 极速解析 NUC 发来的最新预测指令 (非阻塞)
     // Vision_Comm_Parse_Task();
-        
+
     // uint32_t current_us = (uint32_t)(DWT_GetTimeline_s() * 1000000.0f);
-        
+
     //     // 疯狂发报：送出绝对时间戳、连续 Yaw 角、纯净角速度、以及当前血量
     //     // TODO: 如果你已经接入了裁判系统，把这里的 600 替换成真正的裁判系统全局变量！
-    // Vision_Send_Pose(current_us, 
-    //                      gimbal_imu_data->euler.roll, 
-    //                      gimbal_imu_data->total_yaw,   
-    //                      gimbal_imu_data->gyro_body.x, 
+    // Vision_Send_Pose(current_us,
+    //                      gimbal_imu_data->euler.roll,
+    //                      gimbal_imu_data->total_yaw,
+    //                      gimbal_imu_data->gyro_body.x,
     //                      gimbal_imu_data->gyro_body.z,
     //                      600,  // 测试用 Current HP
     //                      600); // 测试用 Maximum HP
-    
+
     // Rtt_Printf(1,"pitch:%.2f,yaw:%.2f,pitch_speed:%.2f,yaw_speed:%.2f\r\n",gimbal_imu_data->euler.roll,
     // gimbal_imu_data->euler.yaw,gimbal_imu_data->gyro_body.x,gimbal_imu_data->gyro_body.z);
 
@@ -381,7 +381,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
                 //设置电机目标值
                 // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
-                
+
                 Djimotor_set_target(yaw_motor, cmd->yaw);
                 Djimotor_set_target(pitch_motor, cmd->pitch);
                
@@ -395,28 +395,28 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             case GIMBAL_VISION_MODE:
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
-            
+
                 if (Is_Vision_Online()) {
                     // 获取 NUC 的预测数据
                     const Vision_Ctrl_Data_t* v_cmd = Get_Vision_Ctrl_Data();
-                    
+
                     // 绝对坐标系追踪：直接把预测的世界坐标扔给 PID
                     Djimotor_set_target(yaw_motor, v_cmd->target_yaw);
                     Djimotor_set_target(pitch_motor, v_cmd->target_pitch);
-                    
+
                     // 计算基础 PID 输出 (包含 PITCH 重力补偿)
                     Djimotor_Calc_Output(yaw_motor);
                     Djimotor_Calc_Output(pitch_motor);
-                    
+
                     // 在电流层直接叠加上视觉速度前馈！
                     yaw_motor->out_current += (int16_t)(30.0f * v_cmd->target_yaw_v);
                     pitch_motor->out_current += (int16_t)(30.0f * v_cmd->target_pitch_v);
-                
+
                 } else {
                     //视觉掉线，云台瞬间停止在当前绝对角度
                     Djimotor_set_target(yaw_motor, gimbal_imu_data->total_yaw);
                     Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.pitch);
-                    
+
                     Djimotor_Calc_Output(yaw_motor);
                     Djimotor_Calc_Output(pitch_motor);
                 }
