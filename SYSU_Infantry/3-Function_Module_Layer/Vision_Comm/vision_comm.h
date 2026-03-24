@@ -107,5 +107,6 @@ void Vision_Comm_Init(void);
 void Vision_Comm_Parse_Task(void);
 void Vision_Send_Pose(uint32_t time_us, float pitch, float yaw, float pitch_v, float yaw_v, uint16_t current_hp, uint16_t max_hp);
 bool Is_Vision_Online(void);
+const Vision_Ctrl_Data_t* Get_Vision_Ctrl_Data(void);
 
 #endif // __VISION_COMM_H
