@@ -309,7 +309,6 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             float temp_vy = cmd_solved.vx * sin_theta + cmd_solved.vy * cos_theta;
             cmd_solved.vx = temp_vx;
             cmd_solved.vy = temp_vy;
-            //test
             Chassis_kinematics_solve(&cmd_solved, &chassis_output);
 
             for (uint8_t i = 0; i < 4; i++) {
