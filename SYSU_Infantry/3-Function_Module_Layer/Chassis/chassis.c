@@ -297,7 +297,7 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             for (uint8_t i = 0; i < 4; i++) {
                 Djimotor_set_status(chassis_motors[i], MOTOR_ENABLED);
             }
-
+            //这里可能有隐患
             // 直接操作 cmd_solved
             cmd_solved.wz = CHASSIS_ROTATE_WZ;
 
