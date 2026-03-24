@@ -14,7 +14,7 @@
 #include "bsp_wdg.h"
 #include "bmi088_temp.h"
 
-#include "arm_math.h"
+// #include "arm_math.h"
 
 #define DEG2SEC             (3.14159265f / 180.0f)
 #define RAD2DEG             (180.0f / 3.14159265f)

@@ -4,6 +4,7 @@
  */
 #include "chassis_ramp.h"
 #include <stddef.h>
+#include <math.h>  // 【新增】引入数学库以使用 fabsf
 
 // 绝对值斜坡函数
 static float Apply_Ramp(float target, float current, float step) {
@@ -19,7 +20,15 @@ void Chassis_Ramp_Init(Chassis_Ramp_t *ramp_inst, float step) {
     if (ramp_inst == NULL) return;
     ramp_inst->ramp_vx = 0.0f;
     ramp_inst->ramp_vy = 0.0f;
-    ramp_inst->step = step;
+    
+    // ==========================================
+    // 参数安全保护 (Parameter Clamp)
+    // ==========================================
+    float safe_step = fabsf(step); // 1. 强制取绝对值，防止手滑填成负数
+    if (safe_step < 0.01f) {
+        safe_step = 0.01f;         // 2. 强制设置最小底线，防止填 0 导致死锁不前进
+    }
+    ramp_inst->step = safe_step;
 }
 
 void Chassis_Ramp_Reset(Chassis_Ramp_t *ramp_inst) {

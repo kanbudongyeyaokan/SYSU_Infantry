@@ -87,27 +87,6 @@ void Robot_task_init(void)
 
     Buzzer_cmd_queue_handle = xQueueCreate(5, sizeof(uint8_t));
 
-    // 选择要运行的测试任务（取消注释需要的测试）
-    
-    // === 单元测试 ===
-    //  osThreadDef(bmi088_test_task, Bmi088_test_task, osPriorityNormal, 0, 512);
-    //  bmi088_test_task_handle = osThreadCreate(osThread(bmi088_test_task), NULL);
-
-
-    // osThreadDef(can_motors_test_task, Can_motors_test_task, osPriorityNormal, 0, 512);
-    // can_motors_test_task_handle = osThreadCreate(osThread(can_motors_test_task), NULL);
-
-    // osThreadDef(rc_test_task, Rc_test_task, osPriorityNormal, 0, 512);
-    // rc_test_task_handle = osThreadCreate(osThread(rc_test_task), NULL);
-
-    // // === 3508电机开环测试 ===
-    // osThreadDef(m3508_openloop_test_task, M3508_openloop_test_task, osPriorityNormal, 0, 512);
-    // m3508_openloop_test_task_handle = osThreadCreate(osThread(m3508_openloop_test_task), NULL);
-
-    // === 消息中心测试 ===
-    // osThreadDef(message_test_task, Message_test_task, osPriorityNormal, 0, 1024);
-    // message_test_task_handle = osThreadCreate(osThread(message_test_task), NULL);
-
 
   // 创建蜂鸣器报警任务（提前启动，确保能处理错误报警）
   osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
@@ -145,8 +124,8 @@ void Robot_task_init(void)
     osThreadDef(shoot_control_task, Shoot_control_task, osPriorityNormal, 0, 512);
      shoot_task_handle = osThreadCreate(osThread(shoot_control_task), NULL);
 
-    // osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
-    // referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
+    osThreadDef(referee_task, Referee_task, osPriorityNormal, 0, 512);
+    referee_task_handle = osThreadCreate(osThread(referee_task), NULL);
 
 }
 
