@@ -147,6 +147,9 @@ add_executable(${CMAKE_PROJECT_NAME}
 
         3-Function_Module_Layer/Chassis/chassis_power_control.c
         3-Function_Module_Layer/Chassis/chassis_power_control.h
+        3-Function_Module_Layer/Chassis/chassis_scurve.c
+        3-Function_Module_Layer/Chassis/chassis_scurve.h
+        
         3-Function_Module_Layer/Gimbal/gimbal.c
         3-Function_Module_Layer/Gimbal/gimbal.h
         3-Function_Module_Layer/Ins/ins.c
