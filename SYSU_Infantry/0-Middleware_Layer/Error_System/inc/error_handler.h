@@ -28,6 +28,7 @@ typedef enum {
     ERROR_LEVEL_WARNING = 1u,
     ERROR_LEVEL_ERROR = 2u,
     ERROR_LEVEL_CRITICAL = 3u,
+    ERROR_LEVEL_FATAL = 4u,   // 最高级别：触发全车急停
 } error_level_t;
 
 /* ================= 错误记录结构 ================= */
@@ -81,6 +82,9 @@ void error_report_core(error_level_t level,
 #define ERROR_CRITICAL(module_name, fmt, ...) \
     error_report_core(ERROR_LEVEL_CRITICAL, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
+#define ERROR_FATAL(module_name, fmt, ...) \
+    error_report_core(ERROR_LEVEL_FATAL, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
+
 /* ================= 快捷宏 ================= */
 
 uint32_t error_get_total_count(void);
@@ -89,6 +93,8 @@ const error_record_t* error_get_history(uint32_t index);
 void error_get_system_status(error_system_status_t* status);
 void error_clear_records(void);
 bool error_has_critical(void);
+bool error_has_fatal(void);
+void error_register_fatal_callback(void (*cb)(void));
 
 /* ================= 平台相关接口 ================= */
 

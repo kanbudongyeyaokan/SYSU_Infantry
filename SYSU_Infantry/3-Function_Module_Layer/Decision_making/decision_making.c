@@ -8,6 +8,7 @@
  * @note    决策控制模式，控制量，并传送到对应的任务
  */
 #include "decision_making.h"
+#include "error_handler.h"
 #include "message_center.h"
 #include "robot_definitions.h"
 #include "remote_control.h"
@@ -335,7 +336,6 @@ void RC_ctrl_set()
 
     // shoot_cmd_send.shoot_mode = vrc_data[CURRENT].rc.trigger ? SHOOT_ON : SHOOT_OFF;
     // shoot_cmd_send.loader_mode = vrc_data[CURRENT].rc.trigger ? LOAD_1_BULLET : LOAD_STOP;
-
     Emergency_stop();
     Decision_sync_gimbal_manual_target();
 
@@ -706,4 +706,15 @@ void Calc_offset_angle()
 #endif
     chassis_cmd_send.gimbal_yaw_total_angle = gimbal_feedback_recv.imu_yaw_total_angle;
     chassis_cmd_send.gimbal_yaw_rate = gimbal_feedback_recv.imu_yaw_rate;
+}
+
+void Check_fatal_estop(void)
+{
+    if (!error_has_fatal()) return;
+
+    robot_state = ROBOT_OFF;
+    gimbal_cmd_send.gimbal_mode   = GIMBAL_ZERO_FORCE;
+    chassis_cmd_send.chassis_mode = CHASSIS_ZERO_FORCE;
+    shoot_cmd_send.shoot_mode     = SHOOT_OFF;
+    shoot_cmd_send.loader_mode    = LOAD_STOP;
 }

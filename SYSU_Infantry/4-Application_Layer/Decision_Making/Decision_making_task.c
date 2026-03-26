@@ -40,6 +40,8 @@ void Decision_making_task() {
     Robot_set_command();
     // 根据gimbal的反馈值计算云台和底盘正方向的夹角
     Calc_offset_angle();
+    // Fatal 级别报错检查：覆盖所有指令，强制全车停止
+    Check_fatal_estop();
     // 向各个应用层传送控制信息
     Send_command_to_all_task();
     // 控制频率1KHZ

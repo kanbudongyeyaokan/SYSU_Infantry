@@ -30,6 +30,10 @@ static error_system_status_t error_status;
 /* Critical 错误标志 */
 static volatile bool error_has_critical_flag = false;
 
+/* Fatal 错误标志与回调 */
+static volatile bool error_has_fatal_flag = false;
+static void (*error_fatal_callback)(void) = NULL;
+
 /* UART 句柄指针 */
 static void* error_uart_handle = NULL;
 
@@ -46,6 +50,7 @@ void error_system_init(void* uart_handle)
     error_count = 0u;
     memset(&error_status, 0, sizeof(error_status));
     error_has_critical_flag = false;
+    error_has_fatal_flag = false;
     error_uart_handle = uart_handle;
 }
 
@@ -86,6 +91,16 @@ void error_report_core(error_level_t level,
 
     /* 输出错误信息 */
     error_port_output(&record);
+
+    /* Fatal 级别：置标志并触发急停回调 */
+    if (level == ERROR_LEVEL_FATAL)
+    {
+        error_has_fatal_flag = true;
+        if (error_fatal_callback != NULL)
+        {
+            error_fatal_callback();
+        }
+    }
 }
 
 /* ================= 缓冲区操作 ================= */
@@ -197,4 +212,14 @@ void* error_get_uart_handle(void)
 void error_set_critical_flag(void)
 {
     error_has_critical_flag = true;
+}
+
+bool error_has_fatal(void)
+{
+    return error_has_fatal_flag;
+}
+
+void error_register_fatal_callback(void (*cb)(void))
+{
+    error_fatal_callback = cb;
 }
