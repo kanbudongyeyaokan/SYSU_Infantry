@@ -8,7 +8,6 @@
  * @note    决策控制模式，控制量，并传送到对应的任务
  */
 #include "decision_making.h"
-#include "error_handler.h"
 #include "message_center.h"
 #include "robot_definitions.h"
 #include "remote_control.h"

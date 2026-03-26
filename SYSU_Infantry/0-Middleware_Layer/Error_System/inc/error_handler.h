@@ -59,7 +59,7 @@ typedef struct {
 
 /* ================= 初始化 ================= */
 
-void error_system_init(void* uart_handle);
+void error_system_init(void);
 
 /* ================= 错误上报核心接口 ================= */
 

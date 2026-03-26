@@ -92,7 +92,7 @@ void Robot_task_init(void)
   osThreadDef(buzzer_alarm_task, Buzzer_alarm_control_task, osPriorityNormal, 0, 1024);
   buzzer_alarm_task_handle = osThreadCreate(osThread(buzzer_alarm_task), NULL);
 
-  error_system_init(test_uart);
+  error_system_init();
 
 
   ERROR_INFO("SYS", "Init");

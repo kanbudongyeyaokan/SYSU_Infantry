@@ -207,7 +207,7 @@ Djimotor_device_t *DJI_Motor_Init(Djimotor_init_config_t *config) {
   // 看门狗注册
   Watchdog_init_t wdg_conf;
   wdg_conf.owner_id = motor;
-  wdg_conf.reload_count = 3; // 3 * 100ms = 300ms 超时
+  wdg_conf.reload_count = 300; // 3 * 100ms = 300ms 超时
   // [修正] 这里赋值正确的函数名
   wdg_conf.callback = Motor_Offline_Callback;
   wdg_conf.online_callback = NULL;
