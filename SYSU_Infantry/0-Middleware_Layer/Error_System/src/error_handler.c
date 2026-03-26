@@ -27,11 +27,10 @@ static volatile uint32_t error_count = 0u;
 /* 系统状态 */
 static error_system_status_t error_status;
 
-/* Critical 错误标志 */
-static volatile bool error_has_critical_flag = false;
+/* Fatal 错误标志与回调 */
+static volatile bool error_has_fatal_flag = false;
 
-/* UART 句柄指针 */
-static void* error_uart_handle = NULL;
+
 
 /* ================= 私有函数声明 ================= */
 
@@ -39,14 +38,13 @@ static void error_buffer_push(const error_record_t* record);
 
 /* ================= 初始化 ================= */
 
-void error_system_init(void* uart_handle)
+void error_system_init(void)
 {
     memset(error_buffer, 0, sizeof(error_buffer));
     error_head = 0u;
     error_count = 0u;
     memset(&error_status, 0, sizeof(error_status));
-    error_has_critical_flag = false;
-    error_uart_handle = uart_handle;
+    error_has_fatal_flag = false;
 }
 
 /* ================= 核心实现 ================= */
@@ -86,6 +84,14 @@ void error_report_core(error_level_t level,
 
     /* 输出错误信息 */
     error_port_output(&record);
+
+    /*置 Fatal 标志，供上层任务轮询触发急停*/
+    if (level == ERROR_LEVEL_FATAL)
+    {
+        __disable_irq();
+        error_has_fatal_flag = true;
+        __enable_irq();
+    }
 }
 
 /* ================= 缓冲区操作 ================= */
@@ -175,26 +181,18 @@ void error_clear_records(void)
     __enable_irq();
 }
 
-bool error_has_critical(void)
-{
-    return error_has_critical_flag;
-}
-
 /* ================= 内部接口（供 error_port 使用） ================= */
 
-/**
-  * @brief  获取 UART 句柄
-  * @retval UART 句柄指针
-  */
-void* error_get_uart_handle(void)
+
+
+bool error_has_fatal(void)
 {
-    return error_uart_handle;
+    return error_has_fatal_flag;
 }
 
-/**
-  * @brief  设置 Critical 错误标志
-  */
-void error_set_critical_flag(void)
+void error_clear_fatal_flag(void)
 {
-    error_has_critical_flag = true;
+    __disable_irq();
+    error_has_fatal_flag = false;
+    __enable_irq();
 }

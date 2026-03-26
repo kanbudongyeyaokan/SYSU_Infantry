@@ -124,6 +124,7 @@ void Keyboard_ctrl_set();
 
 
 void Emergency_stop();
+void Check_fatal_estop(void);
 /**
  * @brief 控制输入为键鼠的模式和控制量设置，不做发送
  *

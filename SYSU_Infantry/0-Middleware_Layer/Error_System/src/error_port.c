@@ -26,9 +26,6 @@ extern Uart_instance_t* test_uart;
 /* 声明获取 UART 句柄的内部函数 */
 void* error_get_uart_handle(void);
 
-/* 声明设置 Critical 标志的函数 */
-void error_set_critical_flag(void);
-
 /* ================= 私有变量 ================= */
 
 /* 输出缓冲区 */
@@ -81,12 +78,13 @@ void error_port_output(const error_record_t* record)
         "INFO",
         "WARN",
         "ERR",
-        "CRIT"
+        "CRIT",
+        "FATAL"
     };
 
     uint8_t level = ERROR_GET_LEVEL(record->error_code);
     uint8_t in_isr = error_port_in_isr();
-    if (level > ERROR_LEVEL_CRITICAL)
+    if (level > ERROR_LEVEL_FATAL)
     {
         level = ERROR_LEVEL_ERROR;
     }
@@ -113,23 +111,14 @@ void error_port_output(const error_record_t* record)
                  record->message);
     }
 
-    /* UART 输出 */
     strcat(error_output_buf, "\r\n");
-    Uart_instance_t* uart = (Uart_instance_t*)error_get_uart_handle();
-    if (uart != NULL && !in_isr)
-    {
-        Uart_printf(uart, "%s", error_output_buf);
-    }
 
     /* RTT 输出 */
     Rtt_Printf(0, "%s", error_output_buf);
 
-    /* Critical 错误处理：设置标志 + 蜂鸣器报警 */
-    if (level == ERROR_LEVEL_CRITICAL)
+    /* Fatal / Critical 错误处理：蜂鸣器报警 */
+    if (level >= ERROR_LEVEL_CRITICAL)
     {
-        /* 设置 Critical 标志 */
-        error_set_critical_flag();
-
         /* 蜂鸣器报警（带去重） */
         uint32_t now = HAL_GetTick();
         const char* current_module = record->module_name ? record->module_name : "UNK";
