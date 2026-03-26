@@ -32,7 +32,6 @@ static volatile bool error_has_critical_flag = false;
 
 /* Fatal 错误标志与回调 */
 static volatile bool error_has_fatal_flag = false;
-static void (*error_fatal_callback)(void) = NULL;
 
 /* UART 句柄指针 */
 static void* error_uart_handle = NULL;
@@ -96,10 +95,6 @@ void error_report_core(error_level_t level,
     if (level == ERROR_LEVEL_FATAL)
     {
         error_has_fatal_flag = true;
-        if (error_fatal_callback != NULL)
-        {
-            error_fatal_callback();
-        }
     }
 }
 
@@ -211,7 +206,9 @@ void* error_get_uart_handle(void)
   */
 void error_set_critical_flag(void)
 {
+    __disable_irq();
     error_has_critical_flag = true;
+    __enable_irq();
 }
 
 bool error_has_fatal(void)
@@ -219,7 +216,9 @@ bool error_has_fatal(void)
     return error_has_fatal_flag;
 }
 
-void error_register_fatal_callback(void (*cb)(void))
+void error_clear_fatal_flag(void)
 {
-    error_fatal_callback = cb;
+    __disable_irq();
+    error_has_fatal_flag = false;
+    __enable_irq();
 }

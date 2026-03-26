@@ -81,12 +81,13 @@ void error_port_output(const error_record_t* record)
         "INFO",
         "WARN",
         "ERR",
-        "CRIT"
+        "CRIT",
+        "FATAL"
     };
 
     uint8_t level = ERROR_GET_LEVEL(record->error_code);
     uint8_t in_isr = error_port_in_isr();
-    if (level > ERROR_LEVEL_CRITICAL)
+    if (level > ERROR_LEVEL_FATAL)
     {
         level = ERROR_LEVEL_ERROR;
     }
@@ -124,8 +125,8 @@ void error_port_output(const error_record_t* record)
     /* RTT 输出 */
     Rtt_Printf(0, "%s", error_output_buf);
 
-    /* Critical 错误处理：设置标志 + 蜂鸣器报警 */
-    if (level == ERROR_LEVEL_CRITICAL)
+    /* Critical / Fatal 错误处理：设置标志 + 蜂鸣器报警 */
+    if (level == ERROR_LEVEL_CRITICAL || level == ERROR_LEVEL_FATAL)
     {
         /* 设置 Critical 标志 */
         error_set_critical_flag();

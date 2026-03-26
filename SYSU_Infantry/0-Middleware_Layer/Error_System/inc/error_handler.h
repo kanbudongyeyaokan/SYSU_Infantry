@@ -82,6 +82,12 @@ void error_report_core(error_level_t level,
 #define ERROR_CRITICAL(module_name, fmt, ...) \
     error_report_core(ERROR_LEVEL_CRITICAL, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
+/**
+ * @warning 【高危】调用此宏会立即触发全车急停，所有电机将切换至零力矩输出且不可通过遥控器恢复。
+ *          仅用于以下场景：硬件彻底失联、安全边界被突破、软件状态不可恢复的严重错误。
+ *          禁止在正常控制逻辑、调试代码或可恢复的异常中使用。
+ *
+ */
 #define ERROR_FATAL(module_name, fmt, ...) \
     error_report_core(ERROR_LEVEL_FATAL, module_name, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
@@ -94,7 +100,7 @@ void error_get_system_status(error_system_status_t* status);
 void error_clear_records(void);
 bool error_has_critical(void);
 bool error_has_fatal(void);
-void error_register_fatal_callback(void (*cb)(void));
+void error_clear_fatal_flag(void);
 
 /* ================= 平台相关接口 ================= */
 
