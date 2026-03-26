@@ -717,5 +717,5 @@ void Check_fatal_estop(void)
     chassis_cmd_send.chassis_mode = CHASSIS_ZERO_FORCE;
     shoot_cmd_send.shoot_mode     = SHOOT_OFF;
     shoot_cmd_send.loader_mode    = LOAD_STOP;
-    taskENTER_CRITICAL();
+    taskEXIT_CRITICAL();
 }
