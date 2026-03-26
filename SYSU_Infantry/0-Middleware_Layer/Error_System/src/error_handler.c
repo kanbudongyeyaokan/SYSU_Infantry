@@ -27,9 +27,6 @@ static volatile uint32_t error_count = 0u;
 /* 系统状态 */
 static error_system_status_t error_status;
 
-/* Critical 错误标志 */
-static volatile bool error_has_critical_flag = false;
-
 /* Fatal 错误标志与回调 */
 static volatile bool error_has_fatal_flag = false;
 
@@ -48,7 +45,6 @@ void error_system_init(void* uart_handle)
     error_head = 0u;
     error_count = 0u;
     memset(&error_status, 0, sizeof(error_status));
-    error_has_critical_flag = false;
     error_has_fatal_flag = false;
     error_uart_handle = uart_handle;
 }
@@ -94,7 +90,9 @@ void error_report_core(error_level_t level,
     /* Fatal 级别：置标志并触发急停回调 */
     if (level == ERROR_LEVEL_FATAL)
     {
+        __disable_irq();
         error_has_fatal_flag = true;
+        __enable_irq();
     }
 }
 
@@ -185,11 +183,6 @@ void error_clear_records(void)
     __enable_irq();
 }
 
-bool error_has_critical(void)
-{
-    return error_has_critical_flag;
-}
-
 /* ================= 内部接口（供 error_port 使用） ================= */
 
 /**
@@ -199,16 +192,6 @@ bool error_has_critical(void)
 void* error_get_uart_handle(void)
 {
     return error_uart_handle;
-}
-
-/**
-  * @brief  设置 Critical 错误标志
-  */
-void error_set_critical_flag(void)
-{
-    __disable_irq();
-    error_has_critical_flag = true;
-    __enable_irq();
 }
 
 bool error_has_fatal(void)

@@ -98,7 +98,6 @@ const error_record_t* error_get_latest(void);
 const error_record_t* error_get_history(uint32_t index);
 void error_get_system_status(error_system_status_t* status);
 void error_clear_records(void);
-bool error_has_critical(void);
 bool error_has_fatal(void);
 void error_clear_fatal_flag(void);
 

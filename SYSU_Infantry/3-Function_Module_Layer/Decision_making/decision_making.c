@@ -711,10 +711,11 @@ void Calc_offset_angle()
 void Check_fatal_estop(void)
 {
     if (!error_has_fatal()) return;
-
+    taskENTER_CRITICAL();
     robot_state = ROBOT_OFF;
     gimbal_cmd_send.gimbal_mode   = GIMBAL_ZERO_FORCE;
     chassis_cmd_send.chassis_mode = CHASSIS_ZERO_FORCE;
     shoot_cmd_send.shoot_mode     = SHOOT_OFF;
     shoot_cmd_send.loader_mode    = LOAD_STOP;
+    taskENTER_CRITICAL();
 }
