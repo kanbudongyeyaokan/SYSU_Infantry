@@ -12,7 +12,8 @@
 /* 4 轮麦轮底盘功率控制结构体定义 */
 typedef struct
 {
-	float i_cmd[4];      /* PID 输出原始目标电流 */
+	float i_cmd[4];      /* PID 输出原始目标电流（用于缩放输出） */
+	float i_fdb[4];      /* 电机实测电流（用于功率估算） */
 	float w_fdb[4];      /* 电机反馈转速 */
 	float p_limit;       /* 裁判系统动态功率上限(W) */
 	float e_buffer;      /* 当前缓冲能量(J) */

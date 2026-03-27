@@ -15,7 +15,7 @@
 #define CHASSIS_POWER_LIMIT_DEFAULT      40.0f
 #define CHASSIS_POWER_BUFFER_DEFAULT     60.0f
 
-#define CHASSIS_POWER_K_T_DEFAULT        2.05e-6f
+#define CHASSIS_POWER_K_T_DEFAULT        2.6e-6f
 #define CHASSIS_POWER_STATIC_DEFAULT     1.0f
 #define CHASSIS_POWER_DANGER_LINE_DEFAULT 30.0f
 #define CHASSIS_POWER_BUFFER_KP_DEFAULT  1.0f
@@ -45,9 +45,6 @@ static bool g_ref_limit_abnormal_active = false;
 static bool g_ref_buffer_abnormal_active = false;
 static bool g_pmax_floor_active = false;
 
-/* 功率监控日志节流 (默认500ms打印一次) */
-static uint16_t g_power_monitor_log_cd = 0U;
-#define CHASSIS_POWER_MONITOR_LOG_INTERVAL  500U
 
 /* p_estimated EMA 低通滤波，时间常数 ~10ms @1kHz */
 #define CHASSIS_POWER_EST_EMA_ALPHA  0.1f
@@ -201,7 +198,7 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
     /* 步骤1：前馈估算 - 单轮功率估算 P_esti = K_t * abs(I_cmd * w_fdb) + P_static */
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
     {
-        float i_mul_w = input->i_cmd[i] * input->w_fdb[i];
+        float i_mul_w = input->i_fdb[i] * input->w_fdb[i];
         float p_wheel = param->k_t * chassis_absf(i_mul_w) + param->p_static;
         output->p_wheel_esti[i] = p_wheel;
         p_estimated += p_wheel;
@@ -340,6 +337,7 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
         }
 
         input.i_cmd[i] = (float)motors[i]->out_current;
+        input.i_fdb[i] = (float)motors[i]->motor_measure.real_current;
         input.w_fdb[i] = motors[i]->motor_measure.angular_velocity;
     }
 
