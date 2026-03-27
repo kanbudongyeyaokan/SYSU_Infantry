@@ -48,7 +48,7 @@ static bool g_pmax_floor_active = false;
 
 /* p_estimated EMA 低通滤波，时间常数 ~10ms @1kHz */
 #define CHASSIS_POWER_EST_EMA_ALPHA  0.1f
-static float g_p_estimated_ema = 0.0f;
+static float g_p_estimated_ema = -1.0f; /* 哨兵值：未初始化 */
 
 static bool chassis_power_should_report(uint16_t *cooldown)
 {
@@ -103,7 +103,7 @@ void Chassis_Power_Control_Init(void)
     g_chassis_power_param.k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT;
     g_chassis_power_param.p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT;
     g_chassis_power_param.fb_ratio = CHASSIS_POWER_FB_RATIO_DEFAULT;
-    g_p_estimated_ema = 0.0f;
+    g_p_estimated_ema = -1.0f; /* 哨兵值：首次 CalcAndScale 调用时 warm-start */
 
     ERROR_INFO(CHASSIS_PWR_MODULE,
                "init k_t=%.6f p_static=%.2f danger=%.2f kp=%.2f pmin=%.2f fb=%.2f",
@@ -209,9 +209,17 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
         p_estimated += p_wheel;
     }
 
-    /* EMA 低通滤波：消除单周期 i_fdb 抖动噪声 */
-    *ema_state = CHASSIS_POWER_EST_EMA_ALPHA * p_estimated +
-                 (1.0f - CHASSIS_POWER_EST_EMA_ALPHA) * (*ema_state);
+    /* EMA 低通滤波：消除单周期 i_fdb 抖动噪声
+     * *ema_state < 0 为哨兵值，表示首次调用，直接 warm-start 避免从 0 收敛的启动瞬态 */
+    if (*ema_state < 0.0f)
+    {
+        *ema_state = p_estimated;
+    }
+    else
+    {
+        *ema_state = CHASSIS_POWER_EST_EMA_ALPHA * p_estimated +
+                     (1.0f - CHASSIS_POWER_EST_EMA_ALPHA) * (*ema_state);
+    }
     p_estimated = *ema_state;
     output->p_estimated = p_estimated;
 
