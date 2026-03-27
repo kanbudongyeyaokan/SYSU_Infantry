@@ -15,8 +15,8 @@
 #define CHASSIS_POWER_LIMIT_DEFAULT      40.0f
 #define CHASSIS_POWER_BUFFER_DEFAULT     60.0f
 
-#define CHASSIS_POWER_K_T_DEFAULT        2.0e-6f
-#define CHASSIS_POWER_STATIC_DEFAULT     2.0f
+#define CHASSIS_POWER_K_T_DEFAULT        2.05e-6f
+#define CHASSIS_POWER_STATIC_DEFAULT     1.0f
 #define CHASSIS_POWER_DANGER_LINE_DEFAULT 30.0f
 #define CHASSIS_POWER_BUFFER_KP_DEFAULT  1.0f
 #define CHASSIS_POWER_MIN_ALLOW_DEFAULT  1.0f
@@ -44,6 +44,14 @@ static bool g_motor_null_active[CHASSIS_POWER_WHEEL_NUM] = {false};
 static bool g_ref_limit_abnormal_active = false;
 static bool g_ref_buffer_abnormal_active = false;
 static bool g_pmax_floor_active = false;
+
+/* 功率监控日志节流 (默认500ms打印一次) */
+static uint16_t g_power_monitor_log_cd = 0U;
+#define CHASSIS_POWER_MONITOR_LOG_INTERVAL  500U
+
+/* p_estimated EMA 低通滤波，时间常数 ~10ms @1kHz */
+#define CHASSIS_POWER_EST_EMA_ALPHA  0.1f
+static float g_p_estimated_ema = 0.0f;
 
 static bool chassis_power_should_report(uint16_t *cooldown)
 {
@@ -199,6 +207,10 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
         p_estimated += p_wheel;
     }
 
+    /* EMA 低通滤波：消除单周期 I_cmd 抖动噪声 */
+    g_p_estimated_ema = CHASSIS_POWER_EST_EMA_ALPHA * p_estimated +
+                        (1.0f - CHASSIS_POWER_EST_EMA_ALPHA) * g_p_estimated_ema;
+    p_estimated = g_p_estimated_ema;
     output->p_estimated = p_estimated;
 
     /* 步骤2：闭环反馈 - 混合实测功率与估算功率 */

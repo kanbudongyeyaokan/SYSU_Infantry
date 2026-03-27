@@ -7,7 +7,7 @@
 #include "dji_motor.h"
 
 /* 功率闭环反馈混合系数 (0~1)，越大越信任实测功率 */
-#define CHASSIS_POWER_FB_RATIO_DEFAULT   0.7f
+#define CHASSIS_POWER_FB_RATIO_DEFAULT   0.85f
 
 /* 4 轮麦轮底盘功率控制结构体定义 */
 typedef struct
