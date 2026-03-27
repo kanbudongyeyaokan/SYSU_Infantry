@@ -118,7 +118,8 @@ void Chassis_Power_Control_Init(void)
 void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
                                 const chassis_power_ctrl_param_t *param,
                                 chassis_power_ctrl_output_t *output,
-                                float p_measured)
+                                float p_measured,
+                                float *ema_state)
 {
     uint8_t i;
     float p_estimated = 0.0f;
@@ -132,7 +133,7 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
     float fb_ratio;
     bool p_meter_valid = (p_measured >= 0.0f);
 
-    if ((input == NULL) || (param == NULL) || (output == NULL))
+    if ((input == NULL) || (param == NULL) || (output == NULL) || (ema_state == NULL))
     {
         if (chassis_power_should_report(&g_null_input_err_cd))
         {
@@ -209,9 +210,9 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
     }
 
     /* EMA 低通滤波：消除单周期 i_fdb 抖动噪声 */
-    g_p_estimated_ema = CHASSIS_POWER_EST_EMA_ALPHA * p_estimated +
-                        (1.0f - CHASSIS_POWER_EST_EMA_ALPHA) * g_p_estimated_ema;
-    p_estimated = g_p_estimated_ema;
+    *ema_state = CHASSIS_POWER_EST_EMA_ALPHA * p_estimated +
+                 (1.0f - CHASSIS_POWER_EST_EMA_ALPHA) * (*ema_state);
+    p_estimated = *ema_state;
     output->p_estimated = p_estimated;
 
     /* 步骤2：闭环反馈 - 混合实测功率与估算功率 */
@@ -363,7 +364,7 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
         input.e_buffer = CHASSIS_POWER_BUFFER_DEFAULT;
     }
 
-    Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output, p_measured);
+    Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output, p_measured, &g_p_estimated_ema);
 
     // ERROR_INFO(CHASSIS_PWR_MODULE,
     //            "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",

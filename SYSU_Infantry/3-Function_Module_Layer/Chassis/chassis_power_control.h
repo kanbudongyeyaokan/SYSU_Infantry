@@ -47,10 +47,12 @@ typedef struct
  * 3) 缓冲能量防线动态限功
  * 4) 四轮等比例电流缩放
  */
+/* ema_state: 调用方持有的 EMA 滤波器状态，首次调用前初始化为 0.0f */
 void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
                                 const chassis_power_ctrl_param_t *param,
                                 chassis_power_ctrl_output_t *output,
-                                float p_measured);
+                                float p_measured,
+                                float *ema_state);
 
 /* 与现有电机驱动对接的包装函数，直接修改 motors[i]->out_current */
 void Chassis_Power_Control_Init(void);
