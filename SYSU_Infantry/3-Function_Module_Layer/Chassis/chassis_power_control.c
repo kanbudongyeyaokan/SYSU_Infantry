@@ -103,6 +103,7 @@ void Chassis_Power_Control_Init(void)
     g_chassis_power_param.k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT;
     g_chassis_power_param.p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT;
     g_chassis_power_param.fb_ratio = CHASSIS_POWER_FB_RATIO_DEFAULT;
+    g_p_estimated_ema = 0.0f;
 
     ERROR_INFO(CHASSIS_PWR_MODULE,
                "init k_t=%.6f p_static=%.2f danger=%.2f kp=%.2f pmin=%.2f fb=%.2f",
@@ -195,7 +196,10 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
         g_ref_buffer_abnormal_active = false;
     }
 
-    /* 步骤1：前馈估算 - 单轮功率估算 P_esti = K_t * abs(I_cmd * w_fdb) + P_static */
+    /* 步骤1：前馈估算 - 单轮功率估算 P_esti = K_t * abs(i_fdb * w_fdb) + P_static
+     * i_fdb: C620 CAN 反馈的转矩电流（raw，与 out_current 同量纲，正负表示方向）
+     * w_fdb: 电机转速，单位 rpm
+     * 取绝对值：制动与驱动均消耗能量（不含再生回收） */
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
     {
         float i_mul_w = input->i_fdb[i] * input->w_fdb[i];
@@ -204,7 +208,7 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
         p_estimated += p_wheel;
     }
 
-    /* EMA 低通滤波：消除单周期 I_cmd 抖动噪声 */
+    /* EMA 低通滤波：消除单周期 i_fdb 抖动噪声 */
     g_p_estimated_ema = CHASSIS_POWER_EST_EMA_ALPHA * p_estimated +
                         (1.0f - CHASSIS_POWER_EST_EMA_ALPHA) * g_p_estimated_ema;
     p_estimated = g_p_estimated_ema;
@@ -317,6 +321,7 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
         if ((motors[i] == NULL) || (motors[i]->motor_status == MOTOR_STOP))
         {
             input.i_cmd[i] = 0.0f;
+            input.i_fdb[i] = 0.0f;
             input.w_fdb[i] = 0.0f;
 
             if (motors[i] == NULL)
