@@ -30,7 +30,11 @@
 #define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
 #define CHASSIS_ROTATE_WZ 500.0f
 #define CHASSIS_MOTOR_PID_MAX_OUT 15000.0f
-#define CHASSIS_FORWARD_ANGLE 45.0f
+// 云台0位（offset_angle=0）对应的底盘运动学坐标系偏转角（度）
+// 全向轮轴线与底盘前方夹角，需与 robot_definitions.h 中 YAW_CHASSIS_ALIGN_ECD 所对应的物理方向保持一致
+// YAW_CHASSIS_ALIGN_ECD=2190 → 0度方向 → CHASSIS_FORWARD_ANGLE=0
+// YAW_CHASSIS_ALIGN_ECD=1050 → 45度方向 → CHASSIS_FORWARD_ANGLE=45
+#define CHASSIS_FORWARD_ANGLE 0.0f
 
 //底盘斜坡规划步长
 #define CHASSIS_RAMP_STEP 6.0f // 斜坡步长，越大越猛，越小越顺滑
@@ -271,8 +275,10 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             float K_ff = 1200.0f; 
             cmd_solved.wz = (cmd_solved.cmd_yaw * K_ff) + pid_out;
             
-            // 矢量变换逻辑 (全部改用 cmd_solved)
-            float theta = (-cmd_solved.offset_angle - 45.0f) * (M_PI / 180.0f);
+            // 矢量变换：将遥控器速度指令从云台坐标系转换到底盘坐标系
+            // -offset_angle: 补偿云台当前偏转角
+            // -CHASSIS_FORWARD_ANGLE: 补偿云台0位与底盘运动学轴线的固定夹角
+            float theta = (-cmd_solved.offset_angle - CHASSIS_FORWARD_ANGLE) * (M_PI / 180.0f);
             float cos_theta = arm_cos_f32(theta);
             float sin_theta = arm_sin_f32(theta);
 
