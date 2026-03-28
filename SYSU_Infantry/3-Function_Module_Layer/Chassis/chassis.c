@@ -352,18 +352,34 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
  */
 static void Chassis_omni_kinematics(const Chassis_cmd_send_t *cmd, Chassis_output_t *output) {
     //目前以电池所在位置为后方，其对面为正前方
+
+    // === 速度归一化：保证各方向最大速度一致 ===
+    // 问题：斜向移动时 vx + vy 会叠加，导致斜向比正向快
+    // 解决：当合速度超过正向最大速度时，按比例缩放
+    float vx = cmd->vx;
+    float vy = cmd->vy;
+
+    float speed_magnitude = sqrtf(vx * vx + vy * vy);
+    float max_component = fmaxf(fabsf(vx), fabsf(vy));
+
+    if (speed_magnitude > max_component && speed_magnitude > 0.001f) { // 避免接近零时除法溢出
+        float scale = max_component / speed_magnitude;
+        vx *= scale;
+        vy *= scale;
+    }
+
     // 计算各轮子线速度 (rad/s)
     float wheel_linear_speed[4];
-    wheel_linear_speed[0] = -cmd->vx - cmd->vy
+    wheel_linear_speed[0] = -vx - vy
                             - cmd->wz * (chassis_params.half_wheel_base + chassis_params.half_track_width) *
                             MATH_DEG2RAD; // 右前轮
-    wheel_linear_speed[1] = -cmd->vx + cmd->vy
+    wheel_linear_speed[1] = -vx + vy
                             - cmd->wz * (chassis_params.half_wheel_base + chassis_params.half_track_width) *
                             MATH_DEG2RAD; // 左后轮
-    wheel_linear_speed[2] = cmd->vx + cmd->vy
+    wheel_linear_speed[2] = vx + vy
                             - cmd->wz * (chassis_params.half_wheel_base + chassis_params.half_track_width) *
                             MATH_DEG2RAD; // 左前轮
-    wheel_linear_speed[3] = cmd->vx - cmd->vy
+    wheel_linear_speed[3] = vx - vy
                             - cmd->wz * (chassis_params.half_wheel_base + chassis_params.half_track_width) *
                             MATH_DEG2RAD; // 右后轮
     for (int i = 0; i < 4; i++) {
