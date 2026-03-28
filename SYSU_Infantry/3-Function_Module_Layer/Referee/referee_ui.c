@@ -1,202 +1,439 @@
 #include "referee_ui.h"
+
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
-// 引入外部必需的变量和函数（确保你在 referee.c 中有对应定义）
+#include "cmsis_os.h"
+
 extern Uart_instance_t *referee_uart;
-extern uint8_t Get_Robot_ID(void); 
 
-// 获取发送目标 Client ID
-static uint16_t UI_Get_Client_ID(void)
+#define ROBOT_RED                0u
+#define ROBOT_BLUE               1u
+#define UI_DATA_DEL_ID           0x0100u
+#define UI_DATA_DRAW_1_ID        0x0101u
+#define UI_DATA_DRAW_2_ID        0x0102u
+#define UI_DATA_DRAW_5_ID        0x0103u
+#define UI_DATA_DRAW_7_ID        0x0104u
+#define UI_DATA_DRAW_CHAR_ID     0x0110u
+#define UI_INTERACTIVE_HEADER_LEN 6u
+#define UI_DELETE_DATA_LEN       2u
+#define UI_SINGLE_GRAPH_LEN      15u
+#define UI_STRING_DATA_LEN       (UI_SINGLE_GRAPH_LEN + 30u)
+#define UI_MAX_GRAPH_COUNT       7u
+#define UI_SEND_INTERVAL_MS      115u
+
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t SOF;
+    uint16_t DataLength;
+    uint8_t Seq;
+    uint8_t CRC8;
+} xFrameHeader;
+
+typedef struct {
+    xFrameHeader FrameHeader;
+    uint16_t CmdID;
+    ext_student_interactive_header_data_t datahead;
+} ui_graph_frame_header_t;
+
+typedef struct {
+    xFrameHeader FrameHeader;
+    uint16_t CmdID;
+    ext_student_interactive_header_data_t datahead;
+    uint8_t Delete_Operate;
+    uint8_t Layer;
+    uint16_t frametail;
+} UI_delete_t;
+
+typedef struct {
+    xFrameHeader FrameHeader;
+    uint16_t CmdID;
+    ext_student_interactive_header_data_t datahead;
+    String_Data_t String_Data;
+    uint16_t frametail;
+} UI_CharReFresh_t;
+#pragma pack(pop)
+
+static uint8_t ui_seq = 0;
+
+static void UI_Send_Buffer(uint8_t *send, uint16_t tx_len)
 {
-    uint8_t robot_id = Get_Robot_ID(); 
-    // 离线测试时强制映射为 3号红方步兵的屏幕，在线时自动匹配
-    return (robot_id == 0) ? (3 | 0x0100) : (robot_id | 0x0100);
+    if (referee_uart == NULL || send == NULL || tx_len == 0u) {
+        return;
+    }
+
+    Uart_sendData(referee_uart, send, tx_len);
+    osDelay(UI_SEND_INTERVAL_MS);
 }
 
-// =========================================================
-// 核心发送引擎：绝对物理偏移打包，无视编译器对齐Bug
-// =========================================================
-static void UI_Send_Raw(uint16_t sub_cmd_id, uint8_t *payload, uint16_t payload_size)
+static void UI_Fill_Default_ID(referee_id_t *id)
 {
-    if (referee_uart == NULL) return;
+    uint8_t robot_id;
 
-    uint8_t tx_buf[128]; 
-    memset(tx_buf, 0, 128);
+    if (id == NULL) {
+        return;
+    }
 
-    // 1. 帧头 (5字节)
-    frame_header_t *pHeader = (frame_header_t *)tx_buf;
-    pHeader->SOF = REF_SOF;
-    pHeader->data_length = 6 + payload_size; // 交互数据头(6字节) + 图形数据长度
-    
-    static uint8_t seq_num = 0;
-    pHeader->seq = seq_num++; 
-    Append_CRC8_Check_Sum(tx_buf, REF_HEADER_LEN - 1);
+    memset(id, 0, sizeof(*id));
 
-    // 2. CmdID (2字节)
-    uint16_t *pCmdID = (uint16_t *)&tx_buf[5];
-    *pCmdID = INTERACTIVE_DATA_CMD_ID; // 0x0301
+    robot_id = Get_Robot_ID();
+    if (robot_id == 0u) {
+        return;
+    }
 
-    // 3. 交互数据头 (6字节：通过绝对偏移单字节赋值，100%安全)
-    uint8_t robot_id = Get_Robot_ID();
-    uint16_t receiver_id = UI_Get_Client_ID();
-
-    tx_buf[7]  = sub_cmd_id & 0xFF;         // data_cmd_id 低八位
-    tx_buf[8]  = (sub_cmd_id >> 8) & 0xFF;  // data_cmd_id 高八位
-    tx_buf[9]  = robot_id;                  // sender_id 低八位
-    tx_buf[10] = 0x00;                      // sender_id 高八位
-    tx_buf[11] = receiver_id & 0xFF;        // receiver_id 低八位
-    tx_buf[12] = (receiver_id >> 8) & 0xFF; // receiver_id 高八位
-
-    // 4. 数据段拷贝 (从第13个字节开始)
-    memcpy(&tx_buf[13], payload, payload_size);
-
-    // 5. 结尾 CRC16
-    uint16_t total_len = REF_HEADER_LEN + REF_CMD_LEN + 6 + payload_size + REF_CRC16_LEN;
-    Append_CRC16_Check_Sum(tx_buf, total_len - 2);
-
-    // 串口发送
-    Uart_sendData(referee_uart, tx_buf, total_len);
+    id->Robot_Color = (robot_id > 7u) ? ROBOT_BLUE : ROBOT_RED;
+    id->Robot_ID = robot_id;
+    id->Cilent_ID = (uint16_t)(0x0100u + robot_id);
+    id->Receiver_Robot_ID = 0u;
 }
 
-// =========================================================
-// 图形参数装填 API
-// =========================================================
-
-void UI_Pack_Line(graphic_data_struct_t *pic, const char* name, uint8_t op, uint8_t layer, uint8_t color, uint32_t width, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y)
+static const referee_id_t *UI_Resolve_Referee_ID(referee_id_t *id, referee_id_t *local_id)
 {
-    memset(pic, 0, sizeof(graphic_data_struct_t));
-    memcpy(pic->graphic_name, name, 3);
-    pic->operate_tpye = op;
-    pic->graphic_tpye = UI_GRAPHIC_LINE; 
-    pic->layer = layer;
-    pic->color = color;
-    pic->width = width;
-    pic->start_x = start_x;
-    pic->start_y = start_y;
-    pic->end_x = end_x; 
-    pic->end_y = end_y; 
+    if (id != NULL) {
+        return id;
+    }
+
+    UI_Fill_Default_ID(local_id);
+    return local_id;
 }
 
-void UI_Pack_Rectangle(graphic_data_struct_t *pic, const char* name, uint8_t op, uint8_t layer, uint8_t color, uint32_t width, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y)
+static bool UI_Referee_ID_Is_Valid(const referee_id_t *id)
 {
-    memset(pic, 0, sizeof(graphic_data_struct_t));
-    memcpy(pic->graphic_name, name, 3);
-    pic->operate_tpye = op;
-    pic->graphic_tpye = UI_GRAPHIC_RECTANGLE; 
-    pic->layer = layer;
-    pic->color = color;
-    pic->width = width;
-    pic->start_x = start_x;
-    pic->start_y = start_y;
-    pic->end_x = end_x; 
-    pic->end_y = end_y; 
+    return (referee_uart != NULL) && (id != NULL) && (id->Robot_ID != 0u) && (id->Cilent_ID != 0u);
 }
 
-void UI_Pack_Circle(graphic_data_struct_t *pic, const char* name, uint8_t op, uint8_t layer, uint8_t color, uint32_t width, uint32_t center_x, uint32_t center_y, uint32_t radius_val)
+static void UI_Copy_Graphic_Name(uint8_t dest[3], const char *name)
 {
-    memset(pic, 0, sizeof(graphic_data_struct_t));
-    memcpy(pic->graphic_name, name, 3);
-    pic->operate_tpye = op;
-    pic->graphic_tpye = UI_GRAPHIC_CIRCLE;
-    pic->layer = layer;
-    pic->color = color;
-    pic->width = width;
-    pic->start_x = center_x;
-    pic->start_y = center_y;
-    pic->radius = radius_val; 
+    uint8_t i;
+
+    memset(dest, 0, 3);
+    if (name == NULL) {
+        return;
+    }
+
+    for (i = 0; i < 3u && name[i] != '\0'; i++) {
+        dest[2u - i] = (uint8_t)name[i];
+    }
 }
 
-void UI_Pack_Float(graphic_data_struct_t *pic, const char* name, uint8_t op, uint8_t layer, uint8_t color, uint32_t font_size, uint32_t start_x, uint32_t start_y, float value)
+static uint16_t UI_Get_Graph_Data_Cmd_ID(uint8_t count)
 {
-    memset(pic, 0, sizeof(graphic_data_struct_t));
-    memcpy(pic->graphic_name, name, 3);
-    pic->operate_tpye = op;
-    pic->graphic_tpye = UI_GRAPHIC_FLOAT;
-    pic->layer = layer;
-    pic->color = color;
-    pic->start_x = start_x;
-    pic->start_y = start_y;
-    pic->start_angle = font_size; // 手册：浮点数字体大小由 details_a(此处宏定义为start_angle) 决定
-    
-    // 浮点数拆包转换
-    int32_t val_int = (int32_t)(value * 1000.0f);
-    pic->radius = (val_int >> 0)  & 0x3FF;
-    pic->end_x  = (val_int >> 10) & 0x7FF;
-    pic->end_y  = (val_int >> 21) & 0x7FF;
+    switch (count) {
+        case 1u:
+            return UI_DATA_DRAW_1_ID;
+        case 2u:
+            return UI_DATA_DRAW_2_ID;
+        case 5u:
+            return UI_DATA_DRAW_5_ID;
+        case 7u:
+            return UI_DATA_DRAW_7_ID;
+        default:
+            return 0u;
+    }
 }
 
-void UI_Pack_Int(graphic_data_struct_t *pic, const char* name, uint8_t op, uint8_t layer, uint8_t color, uint32_t font_size, uint32_t start_x, uint32_t start_y, int32_t value)
+static void UI_Send_GraphArray(const referee_id_t *id, uint8_t count, const Graph_Data_t *graphs)
 {
-    memset(pic, 0, sizeof(graphic_data_struct_t));
-    memcpy(pic->graphic_name, name, 3);
-    pic->operate_tpye = op;
-    pic->graphic_tpye = UI_GRAPHIC_INT;
-    pic->layer = layer;
-    pic->color = color;
-    pic->start_x = start_x;
-    pic->start_y = start_y;
-    pic->start_angle = font_size; 
-    
-    // 整型拆包转换
-    pic->radius = (value >> 0)  & 0x3FF;
-    pic->end_x  = (value >> 10) & 0x7FF;
-    pic->end_y  = (value >> 21) & 0x7FF;
+    ui_graph_frame_header_t header;
+    uint8_t buffer[REF_HEADER_LEN + REF_CMD_LEN + UI_INTERACTIVE_HEADER_LEN +
+                   UI_SINGLE_GRAPH_LEN * UI_MAX_GRAPH_COUNT + REF_CRC16_LEN];
+    uint16_t data_cmd_id = UI_Get_Graph_Data_Cmd_ID(count);
+    uint16_t payload_len;
+    uint16_t total_len;
+
+    if (!UI_Referee_ID_Is_Valid(id) || graphs == NULL || data_cmd_id == 0u) {
+        return;
+    }
+
+    payload_len = (uint16_t)(UI_INTERACTIVE_HEADER_LEN + UI_SINGLE_GRAPH_LEN * count);
+    total_len = (uint16_t)(REF_HEADER_LEN + REF_CMD_LEN + payload_len + REF_CRC16_LEN);
+
+    memset(&header, 0, sizeof(header));
+    header.FrameHeader.SOF = REF_SOF;
+    header.FrameHeader.DataLength = payload_len;
+    header.FrameHeader.Seq = ui_seq;
+    header.FrameHeader.CRC8 = crc_8((const uint8_t *)&header, 4);
+    header.CmdID = INTERACTIVE_DATA_CMD_ID;
+    header.datahead.data_cmd_id = data_cmd_id;
+    header.datahead.sender_id = id->Robot_ID;
+    header.datahead.receiver_id = id->Cilent_ID;
+
+    memset(buffer, 0, sizeof(buffer));
+    memcpy(buffer, &header, sizeof(header));
+    memcpy(buffer + sizeof(header), graphs, (size_t)UI_SINGLE_GRAPH_LEN * count);
+    Append_CRC16_Check_Sum(buffer, total_len - REF_CRC16_LEN);
+
+    UI_Send_Buffer(buffer, total_len);
+    ui_seq++;
 }
 
-void UI_Pack_String(ui_string_t *str_struct, const char* name, uint8_t op, uint8_t layer, uint8_t color, uint32_t font_size, uint32_t str_len, uint32_t start_x, uint32_t start_y, const char* string)
+void UIDelete(referee_id_t *id, uint8_t delete_operate, uint8_t delete_layer)
 {
-    memset(str_struct, 0, sizeof(ui_string_t));
-    memcpy(str_struct->figure.graphic_name, name, 3);
-    str_struct->figure.operate_tpye = op;
-    str_struct->figure.graphic_tpye = UI_GRAPHIC_CHAR;
-    str_struct->figure.layer = layer;
-    str_struct->figure.color = color;
-    str_struct->figure.start_x = start_x;
-    str_struct->figure.start_y = start_y;
-    str_struct->figure.start_angle = font_size;
-    str_struct->figure.end_angle = str_len; 
+    UI_delete_t delete_frame;
+    referee_id_t local_id;
+    const referee_id_t *resolved_id = UI_Resolve_Referee_ID(id, &local_id);
+    uint16_t data_len = UI_INTERACTIVE_HEADER_LEN + UI_DELETE_DATA_LEN;
+    uint16_t total_len = REF_HEADER_LEN + REF_CMD_LEN + data_len + REF_CRC16_LEN;
 
-    // 拷贝至多30个字符
-    strncpy((char *)str_struct->string, string, 30);
+    if (!UI_Referee_ID_Is_Valid(resolved_id)) {
+        return;
+    }
+
+    memset(&delete_frame, 0, sizeof(delete_frame));
+    delete_frame.FrameHeader.SOF = REF_SOF;
+    delete_frame.FrameHeader.DataLength = data_len;
+    delete_frame.FrameHeader.Seq = ui_seq;
+    delete_frame.FrameHeader.CRC8 = crc_8((const uint8_t *)&delete_frame, 4);
+    delete_frame.CmdID = INTERACTIVE_DATA_CMD_ID;
+    delete_frame.datahead.data_cmd_id = UI_DATA_DEL_ID;
+    delete_frame.datahead.sender_id = resolved_id->Robot_ID;
+    delete_frame.datahead.receiver_id = resolved_id->Cilent_ID;
+    delete_frame.Delete_Operate = delete_operate;
+    delete_frame.Layer = delete_layer;
+    delete_frame.frametail = crc_16((const uint8_t *)&delete_frame, total_len - REF_CRC16_LEN);
+
+    UI_Send_Buffer((uint8_t *)&delete_frame, total_len);
+    ui_seq++;
 }
 
-// =========================================================
-// 发送指令 API
-// =========================================================
-
-void UI_Delete_Layer(uint8_t layer)
+void UILineDraw(Graph_Data_t *graph, const char graphname[3], uint32_t graph_operate, uint32_t graph_layer,
+                uint32_t graph_color, uint32_t graph_width, uint32_t start_x, uint32_t start_y,
+                uint32_t end_x, uint32_t end_y)
 {
-    uint8_t del_data[2];
-    del_data[0] = 1; // 1: 删除单图层
-    del_data[1] = layer;
-    UI_Send_Raw(UI_DATA_DEL_ID, del_data, 2); 
+    if (graph == NULL) {
+        return;
+    }
+
+    memset(graph, 0, sizeof(*graph));
+    UI_Copy_Graphic_Name(graph->graphic_name, graphname);
+    graph->operate_tpye = graph_operate;
+    graph->graphic_tpye = UI_Graph_Line;
+    graph->layer = graph_layer;
+    graph->color = graph_color;
+    graph->width = graph_width;
+    graph->start_x = start_x;
+    graph->start_y = start_y;
+    graph->end_x = end_x;
+    graph->end_y = end_y;
 }
 
-void UI_Delete_All(void)
+void UIRectangleDraw(Graph_Data_t *graph, const char graphname[3], uint32_t graph_operate, uint32_t graph_layer,
+                     uint32_t graph_color, uint32_t graph_width, uint32_t start_x, uint32_t start_y,
+                     uint32_t end_x, uint32_t end_y)
 {
-    uint8_t del_data[2];
-    del_data[0] = 2; // 2: 删除所有
-    del_data[1] = 0;
-    UI_Send_Raw(UI_DATA_DEL_ID, del_data, 2); 
+    if (graph == NULL) {
+        return;
+    }
+
+    memset(graph, 0, sizeof(*graph));
+    UI_Copy_Graphic_Name(graph->graphic_name, graphname);
+    graph->operate_tpye = graph_operate;
+    graph->graphic_tpye = UI_Graph_Rectangle;
+    graph->layer = graph_layer;
+    graph->color = graph_color;
+    graph->width = graph_width;
+    graph->start_x = start_x;
+    graph->start_y = start_y;
+    graph->end_x = end_x;
+    graph->end_y = end_y;
 }
 
-void UI_Send_Single_Figure(graphic_data_struct_t *pic)
+void UICircleDraw(Graph_Data_t *graph, const char graphname[3], uint32_t graph_operate, uint32_t graph_layer,
+                  uint32_t graph_color, uint32_t graph_width, uint32_t start_x, uint32_t start_y,
+                  uint32_t graph_radius)
 {
-    UI_Send_Raw(UI_DATA_DRAW_1_ID, (uint8_t *)pic, 15);
+    if (graph == NULL) {
+        return;
+    }
+
+    memset(graph, 0, sizeof(*graph));
+    UI_Copy_Graphic_Name(graph->graphic_name, graphname);
+    graph->operate_tpye = graph_operate;
+    graph->graphic_tpye = UI_Graph_Circle;
+    graph->layer = graph_layer;
+    graph->color = graph_color;
+    graph->width = graph_width;
+    graph->start_x = start_x;
+    graph->start_y = start_y;
+    graph->radius = graph_radius;
 }
 
-void UI_Send_Multi_Figures(uint8_t count, graphic_data_struct_t *pics)
+void UIOvalDraw(Graph_Data_t *graph, const char graphname[3], uint32_t graph_operate, uint32_t graph_layer,
+                uint32_t graph_color, uint32_t graph_width, uint32_t start_x, uint32_t start_y,
+                uint32_t end_x, uint32_t end_y)
 {
-    uint16_t sub_cmd_id;
-    if (count == 2)      sub_cmd_id = UI_DATA_DRAW_2_ID;  // 0x0102
-    else if (count <= 5) sub_cmd_id = UI_DATA_DRAW_5_ID;  // 0x0103
-    else if (count <= 7) sub_cmd_id = UI_DATA_DRAW_7_ID;  // 0x0104
-    else return;
+    if (graph == NULL) {
+        return;
+    }
 
-    UI_Send_Raw(sub_cmd_id, (uint8_t *)pics, count * 15);
+    memset(graph, 0, sizeof(*graph));
+    UI_Copy_Graphic_Name(graph->graphic_name, graphname);
+    graph->operate_tpye = graph_operate;
+    graph->graphic_tpye = UI_Graph_Ellipse;
+    graph->layer = graph_layer;
+    graph->color = graph_color;
+    graph->width = graph_width;
+    graph->start_x = start_x;
+    graph->start_y = start_y;
+    graph->end_x = end_x;
+    graph->end_y = end_y;
 }
 
-void UI_Send_String(ui_string_t *str_struct)
+void UIArcDraw(Graph_Data_t *graph, const char graphname[3], uint32_t graph_operate, uint32_t graph_layer,
+               uint32_t graph_color, uint32_t graph_start_angle, uint32_t graph_end_angle,
+               uint32_t graph_width, uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y)
 {
-    UI_Send_Raw(UI_DATA_DRAW_CHAR_ID, (uint8_t *)str_struct, 45); 
+    if (graph == NULL) {
+        return;
+    }
+
+    memset(graph, 0, sizeof(*graph));
+    UI_Copy_Graphic_Name(graph->graphic_name, graphname);
+    graph->operate_tpye = graph_operate;
+    graph->graphic_tpye = UI_Graph_Arc;
+    graph->layer = graph_layer;
+    graph->color = graph_color;
+    graph->start_angle = graph_start_angle;
+    graph->end_angle = graph_end_angle;
+    graph->width = graph_width;
+    graph->start_x = start_x;
+    graph->start_y = start_y;
+    graph->end_x = end_x;
+    graph->end_y = end_y;
+}
+
+void UIFloatDraw(Graph_Data_t *graph, const char graphname[3], uint32_t graph_operate, uint32_t graph_layer,
+                 uint32_t graph_color, uint32_t graph_size, uint32_t graph_digit, uint32_t graph_width,
+                 uint32_t start_x, uint32_t start_y, int32_t graph_float)
+{
+    if (graph == NULL) {
+        return;
+    }
+
+    memset(graph, 0, sizeof(*graph));
+    UI_Copy_Graphic_Name(graph->graphic_name, graphname);
+    graph->operate_tpye = graph_operate;
+    graph->graphic_tpye = UI_Graph_Float;
+    graph->layer = graph_layer;
+    graph->color = graph_color;
+    graph->start_angle = graph_size;
+    graph->end_angle = graph_digit;
+    graph->width = graph_width;
+    graph->start_x = start_x;
+    graph->start_y = start_y;
+    graph->radius = (uint32_t)graph_float & 0x3FFu;
+    graph->end_x = ((uint32_t)graph_float >> 10) & 0x7FFu;
+    graph->end_y = ((uint32_t)graph_float >> 21) & 0x7FFu;
+}
+
+void UIIntDraw(Graph_Data_t *graph, const char graphname[3], uint32_t graph_operate, uint32_t graph_layer,
+               uint32_t graph_color, uint32_t graph_size, uint32_t graph_width,
+               uint32_t start_x, uint32_t start_y, int32_t graph_integer)
+{
+    if (graph == NULL) {
+        return;
+    }
+
+    memset(graph, 0, sizeof(*graph));
+    UI_Copy_Graphic_Name(graph->graphic_name, graphname);
+    graph->operate_tpye = graph_operate;
+    graph->graphic_tpye = UI_Graph_Int;
+    graph->layer = graph_layer;
+    graph->color = graph_color;
+    graph->start_angle = graph_size;
+    graph->width = graph_width;
+    graph->start_x = start_x;
+    graph->start_y = start_y;
+    graph->radius = (uint32_t)graph_integer & 0x3FFu;
+    graph->end_x = ((uint32_t)graph_integer >> 10) & 0x7FFu;
+    graph->end_y = ((uint32_t)graph_integer >> 21) & 0x7FFu;
+}
+
+void UICharDraw(String_Data_t *graph, const char graphname[3], uint32_t graph_operate, uint32_t graph_layer,
+                uint32_t graph_color, uint32_t graph_size, uint32_t graph_width,
+                uint32_t start_x, uint32_t start_y, const char *fmt, ...)
+{
+    va_list ap;
+    int written;
+
+    if (graph == NULL) {
+        return;
+    }
+
+    memset(graph, 0, sizeof(*graph));
+    UI_Copy_Graphic_Name(graph->Graph_Control.graphic_name, graphname);
+    graph->Graph_Control.operate_tpye = graph_operate;
+    graph->Graph_Control.graphic_tpye = UI_Graph_Char;
+    graph->Graph_Control.layer = graph_layer;
+    graph->Graph_Control.color = graph_color;
+    graph->Graph_Control.start_angle = graph_size;
+    graph->Graph_Control.width = graph_width;
+    graph->Graph_Control.start_x = start_x;
+    graph->Graph_Control.start_y = start_y;
+
+    va_start(ap, fmt);
+    written = vsnprintf((char *)graph->show_Data, sizeof(graph->show_Data), fmt, ap);
+    va_end(ap);
+
+    if (written < 0) {
+        graph->show_Data[0] = '\0';
+        graph->Graph_Control.end_angle = 0u;
+        return;
+    }
+
+    if ((size_t)written >= sizeof(graph->show_Data)) {
+        graph->Graph_Control.end_angle = sizeof(graph->show_Data) - 1u;
+    } else {
+        graph->Graph_Control.end_angle = (uint32_t)written;
+    }
+}
+
+void UIGraphRefresh(referee_id_t *id, int cnt, ...)
+{
+    Graph_Data_t graphs[UI_MAX_GRAPH_COUNT];
+    referee_id_t local_id;
+    const referee_id_t *resolved_id = UI_Resolve_Referee_ID(id, &local_id);
+    va_list ap;
+    uint8_t i;
+
+    if (cnt != 1 && cnt != 2 && cnt != 5 && cnt != 7) {
+        return;
+    }
+
+    va_start(ap, cnt);
+    for (i = 0u; i < (uint8_t)cnt; i++) {
+        graphs[i] = va_arg(ap, Graph_Data_t);
+    }
+    va_end(ap);
+
+    UI_Send_GraphArray(resolved_id, (uint8_t)cnt, graphs);
+}
+
+void UICharRefresh(referee_id_t *id, String_Data_t string_data)
+{
+    UI_CharReFresh_t string_frame;
+    referee_id_t local_id;
+    const referee_id_t *resolved_id = UI_Resolve_Referee_ID(id, &local_id);
+    uint16_t data_len = UI_INTERACTIVE_HEADER_LEN + UI_STRING_DATA_LEN;
+    uint16_t total_len = REF_HEADER_LEN + REF_CMD_LEN + data_len + REF_CRC16_LEN;
+
+    if (!UI_Referee_ID_Is_Valid(resolved_id)) {
+        return;
+    }
+
+    memset(&string_frame, 0, sizeof(string_frame));
+    string_frame.FrameHeader.SOF = REF_SOF;
+    string_frame.FrameHeader.DataLength = data_len;
+    string_frame.FrameHeader.Seq = ui_seq;
+    string_frame.FrameHeader.CRC8 = crc_8((const uint8_t *)&string_frame, 4);
+    string_frame.CmdID = INTERACTIVE_DATA_CMD_ID;
+    string_frame.datahead.data_cmd_id = UI_DATA_DRAW_CHAR_ID;
+    string_frame.datahead.sender_id = resolved_id->Robot_ID;
+    string_frame.datahead.receiver_id = resolved_id->Cilent_ID;
+    string_frame.String_Data = string_data;
+    string_frame.frametail = crc_16((const uint8_t *)&string_frame, total_len - REF_CRC16_LEN);
+
+    UI_Send_Buffer((uint8_t *)&string_frame, total_len);
+    ui_seq++;
 }

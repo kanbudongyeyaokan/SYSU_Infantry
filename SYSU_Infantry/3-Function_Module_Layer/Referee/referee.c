@@ -1,9 +1,6 @@
 #include "referee.h"
 #include <string.h>
 #include "crc_referee.h"
-#include "ui_default.h"
-#include "ui_interface.h"
-#include "SEGGER_RTT.h"
 
 // 全局变量
 static Referee_Data_t referee_data;

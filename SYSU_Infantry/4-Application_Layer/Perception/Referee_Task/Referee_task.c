@@ -1,92 +1,81 @@
 /**
  * @file    Referee_task.c
- * @brief   裁判系统处理任务 (双频心跳版，完美抗丢包、防掉线)
+ * @brief   Referee UI task.
  */
 
 #include "Referee_task.h"
+
+#include <stdlib.h>
+
+#include "cmsis_os.h"
 #include "referee.h"
 #include "referee_ui.h"
-#include "cmsis_os.h"
-#include "stdlib.h"
-extern UART_HandleTypeDef huart6;
-static Referee_Data_t* ref_data_ptr;
 
-// =========================================================
-// 战术 HUD 绘制函数 (静态元素)
-// =========================================================
+extern UART_HandleTypeDef huart6;
+
+static Referee_Data_t *ref_data_ptr;
+
 static void Draw_Tactical_HUD(void)
 {
-    graphic_data_struct_t static_figs[5];
-    ui_string_t cap_text;
+    Graph_Data_t static_figs[5];
+    String_Data_t cap_text;
 
-    UI_Pack_Line(&static_figs[0], "CHH", UI_OPERATE_ADD, 1, UI_COLOR_GREEN, 2, 920, 540, 1000, 540);
-    UI_Pack_Line(&static_figs[1], "CHV", UI_OPERATE_ADD, 1, UI_COLOR_GREEN, 2, 960, 500, 960, 580);
-    UI_Pack_Circle(&static_figs[2], "CHC", UI_OPERATE_ADD, 1, UI_COLOR_CYAN, 4, 960, 540, 5);
+    UILineDraw(&static_figs[0], "CHH", UI_Graph_ADD, 1, UI_Color_Green, 2, 920, 540, 1000, 540);
+    UILineDraw(&static_figs[1], "CHV", UI_Graph_ADD, 1, UI_Color_Green, 2, 960, 500, 960, 580);
+    UICircleDraw(&static_figs[2], "CHC", UI_Graph_ADD, 1, UI_Color_Cyan, 4, 960, 540, 5);
+    UILineDraw(&static_figs[3], "CBB", UI_Graph_ADD, 2, UI_Color_White, 10, 700, 200, 900, 200);
+    UILineDraw(&static_figs[4], "CBF", UI_Graph_ADD, 3, UI_Color_Orange, 10, 700, 200, 700, 200);
 
-    // 电容条背景
-    UI_Pack_Line(&static_figs[3], "CBB", UI_OPERATE_ADD, 2, UI_COLOR_WHITE, 10, 700, 200, 900, 200);
-    // 电容条前景初始层
-    UI_Pack_Line(&static_figs[4], "CBF", UI_OPERATE_ADD, 3, UI_COLOR_ORANGE, 10, 700, 200, 700, 200);
+    UIGraphRefresh(NULL, 5, static_figs[0], static_figs[1], static_figs[2], static_figs[3], static_figs[4]);
 
-    // 发送 5 图组合包
-    UI_Send_Multi_Figures(5, static_figs);
-    osDelay(30);
-
-    UI_Pack_String(&cap_text, "TXT", UI_OPERATE_ADD, 2, UI_COLOR_YELLOW, 20, 4, 630, 215, "CAP:");
-    UI_Send_String(&cap_text);
+    UICharDraw(&cap_text, "TXT", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 2, 630, 215, "CAP:");
+    UICharRefresh(NULL, cap_text);
 }
 
-// =========================================================
-// 动态电容条更新 (动态元素)
-// =========================================================
 static void Update_Dynamic_Capacitor(void)
 {
-    static uint16_t last_buffer = 999;
+    static uint16_t last_buffer = 999u;
     uint16_t current_buffer = ref_data_ptr->power_heat_data.buffer_energy;
 
-    if (abs(current_buffer - last_buffer) >= 1)
+    if (abs((int)current_buffer - (int)last_buffer) >= 1)
     {
-        graphic_data_struct_t cap_fg;
+        Graph_Data_t cap_fg;
+        uint32_t end_x = 700u + (uint32_t)(current_buffer * 3.3f);
+        uint8_t bar_color = (current_buffer < 20u) ? UI_Color_Pink : UI_Color_Orange;
 
-        uint32_t end_x = 700 + (uint32_t)(current_buffer * 3.3f);
-        if (end_x > 900) end_x = 900;
+        if (end_x > 900u) {
+            end_x = 900u;
+        }
 
-        uint8_t bar_color = (current_buffer < 20) ? UI_COLOR_PINK : UI_COLOR_ORANGE;
-
-        // MODIFY 更新
-        UI_Pack_Line(&cap_fg, "CBF", UI_OPERATE_MODIFY, 3, bar_color, 10, 700, 200, end_x, 200);
-        UI_Send_Single_Figure(&cap_fg);
+        UILineDraw(&cap_fg, "CBF", UI_Graph_Change, 3, bar_color, 10, 700, 200, end_x, 200);
+        UIGraphRefresh(NULL, 1, cap_fg);
 
         last_buffer = current_buffer;
     }
 }
 
-// =========================================================
-// 任务主体
-// =========================================================
-void Referee_task(void const * argument)
+void Referee_task(void const *argument)
 {
+    uint32_t time_tick = 0u;
+
+    (void)argument;
+
     ref_data_ptr = Referee_Get_Data(&huart6);
     osDelay(2000);
 
-    UI_Delete_All();
+    UIDelete(NULL, UI_Data_Del_ALL, 0);
     osDelay(200);
 
-    uint32_t time_tick = 0;
-
-    for(;;)
+    for (;;)
     {
-        // 慢循环：每 2000ms (2秒) 发送一次静态图层“心跳包”
-
-        if (time_tick % 20 == 0)
+        if ((time_tick % 20u) == 0u)
         {
             Draw_Tactical_HUD();
         }
 
-        // 快循环：每 100ms 检查并刷新一次动态电容条，保证丝滑
         Update_Dynamic_Capacitor();
 
         time_tick++;
-        osDelay(100); // 基础节拍 100ms (10Hz)
+        osDelay(100);
     }
 }
