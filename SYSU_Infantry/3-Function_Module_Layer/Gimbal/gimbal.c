@@ -204,15 +204,15 @@ static void Gimbal_motor_init(void) {
             .angle_pid = {
                 .kp = 30,
                 .ki = 0,
-                .kd = 0,
+                .kd = 0.8f,   // 加 D 项：角度环接近目标时减速，抑制过冲
                 .deadband = 0.2f,
-                .max_out = 800,
+                .max_out = 650,   // 限制最大速度指令，防止电机惯性甩过目标
                 .max_iout = 100,
-                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL, // 角度环输出限幅 + 梯形积分
+                .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_DIFFERENTIAL_GO_FIRST,
             },
             .speed_pid = {
                 .kp = 90,//60
-                .ki = 10.0,
+                .ki = 1.0,
                 .kd = 0.01,
                 .deadband = 0.2f,
                 .max_out = 20000,
