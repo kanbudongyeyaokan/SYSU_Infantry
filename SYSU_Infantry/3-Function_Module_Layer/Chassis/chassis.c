@@ -32,7 +32,7 @@
 #define CHASSIS_MOTOR_PID_MAX_OUT 15000.0f
 // 云台0位（offset_angle=0）对应的底盘运动学坐标系偏转角（度）
 // 全向轮轴线与底盘前方夹角，需与 robot_definitions.h 中 YAW_CHASSIS_ALIGN_ECD 所对应的物理方向保持一致
-// YAW_CHASSIS_ALIGN_ECD=2190 → 0度方向 → CHASSIS_FORWARD_ANGLE=0
+// YAW_CHASSIS_ALIGN_ECD=1990 → 0度方向 → CHASSIS_FORWARD_ANGLE=0
 // YAW_CHASSIS_ALIGN_ECD=1050 → 45度方向 → CHASSIS_FORWARD_ANGLE=45
 #define CHASSIS_FORWARD_ANGLE 0.0f
 
