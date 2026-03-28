@@ -162,7 +162,7 @@ static void UI_Send_GraphArray(const referee_id_t *id, uint8_t count, const Grap
     memset(buffer, 0, sizeof(buffer));
     memcpy(buffer, &header, sizeof(header));
     memcpy(buffer + sizeof(header), graphs, (size_t)UI_SINGLE_GRAPH_LEN * count);
-    Append_CRC16_Check_Sum(buffer, total_len - REF_CRC16_LEN);
+    Append_CRC16_Check_Sum(buffer, total_len);
 
     UI_Send_Buffer(buffer, total_len);
     ui_seq++;

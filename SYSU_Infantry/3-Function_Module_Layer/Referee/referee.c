@@ -127,7 +127,7 @@ void Referee_Send_UI_Test(void)
     Append_CRC8_Check_Sum(tx_buf, REF_HEADER_LEN - 1);
     *pCmdID = INTERACTIVE_DATA_CMD_ID;
     uint16_t total_len = REF_HEADER_LEN + REF_CMD_LEN + data_len + REF_CRC16_LEN;
-    Append_CRC16_Check_Sum(tx_buf, total_len - 2);
+    Append_CRC16_Check_Sum(tx_buf, total_len);
     Uart_sendData(referee_uart, tx_buf, total_len);
 }
 

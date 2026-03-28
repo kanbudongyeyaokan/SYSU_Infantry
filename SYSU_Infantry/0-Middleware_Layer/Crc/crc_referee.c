@@ -1,10 +1,6 @@
 #include "crc_referee.h"
 
-// ==========================================================
-// 1. CRC8 (RoboMaster 专用定义)
-// ==========================================================
 const uint8_t CRC8_INIT = 0xff;
-// CRC8查找表，用于快速计算CRC8校验值
 const uint8_t CRC8_TAB[256] =
 {
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83, 0xc2, 0x9c, 0x7e, 0x20, 0xa3, 0xfd, 0x1f, 0x41,
@@ -27,7 +23,7 @@ const uint8_t CRC8_TAB[256] =
 
 uint8_t crc_8(const uint8_t *input_str, uint16_t num_bytes)
 {
-    uint8_t crc = CRC8_INIT; // 使用官方初始值 0xFF
+    uint8_t crc = CRC8_INIT;
     const uint8_t *ptr = input_str;
     while (num_bytes--)
     {
@@ -52,9 +48,6 @@ void Append_CRC8_Check_Sum(uint8_t *pchMessage, uint16_t dwLength)
     pchMessage[dwLength] = ucCRC;
 }
 
-// ==========================================================
-// 2. CRC16 (RoboMaster 专用定义)
-// ==========================================================
 const uint16_t CRC16_INIT = 0xffff;
 const uint16_t wCRC_Table[256] =
 {
@@ -92,28 +85,49 @@ const uint16_t wCRC_Table[256] =
     0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
 };
 
-// 移除动态生成代码，使用静态表
 uint16_t crc_16(const uint8_t *input_str, uint16_t num_bytes)
 {
-    uint16_t crc = CRC16_INIT; // 使用官方初始值 0xFFFF
+    uint16_t crc = CRC16_INIT;
     const uint8_t *ptr = input_str;
 
-    while (num_bytes--) {
+    while (num_bytes--)
+    {
         crc = (crc >> 8) ^ wCRC_Table[(crc ^ (uint16_t)*ptr++) & 0x00FF];
     }
     return crc;
+}
+
+uint16_t get_crc16_check_sum(const uint8_t *data, uint32_t len)
+{
+    uint16_t wCRC = 0xFFFF;
+    if (data == NULL) return 0xFFFF;
+
+    while (len--)
+    {
+        wCRC ^= (uint16_t)(*data++);
+        for (int i = 0; i < 8; i++)
+        {
+            if (wCRC & 0x0001)
+            {
+                wCRC = (wCRC >> 1) ^ 0x8408;
+            }
+            else
+            {
+                wCRC >>= 1;
+            }
+        }
+    }
+    return wCRC;
 }
 
 uint16_t Verify_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength)
 {
     uint16_t wExpected = 0;
     if ((pchMessage == 0) || (dwLength <= 2)) return 0;
-    
-    // 计算除了最后两字节(CRC)以外的数据的校验值
+
     wExpected = crc_16(pchMessage, dwLength - 2);
-    
-    // 比较计算值和最后两字节
-    return (((wExpected & 0xff) == pchMessage[dwLength - 2]) && 
+
+    return (((wExpected & 0xff) == pchMessage[dwLength - 2]) &&
             (((wExpected >> 8) & 0xff) == pchMessage[dwLength - 1]));
 }
 
@@ -121,10 +135,9 @@ void Append_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength)
 {
     uint16_t wCRC = 0;
     if (pchMessage == 0) return;
-    
-    wCRC = crc_16(pchMessage, dwLength);
-    
-    // 小端模式填充
-    pchMessage[dwLength] = (uint8_t)(wCRC & 0x00ff);
-    pchMessage[dwLength + 1] = (uint8_t)((wCRC >> 8) & 0x00ff);
+
+    wCRC = crc_16(pchMessage, dwLength - 2);
+
+    pchMessage[dwLength - 2] = (uint8_t)(wCRC & 0x00ff);
+    pchMessage[dwLength - 1] = (uint8_t)((wCRC >> 8) & 0x00ff);
 }

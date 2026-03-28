@@ -163,7 +163,7 @@ void Vision_Send_Pose(uint32_t time_us, float pitch, float yaw, float pitch_v, f
     tx_frame.data.maximum_HP = max_hp;
     
     // 4. 追加 CRC16 校验 
-    Append_CRC16_Check_Sum((uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t) - 2);
+    Append_CRC16_Check_Sum((uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t));
     
     // 5. 调用底层非阻塞发送
     Uart_sendData(vision_uart, (uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t));
