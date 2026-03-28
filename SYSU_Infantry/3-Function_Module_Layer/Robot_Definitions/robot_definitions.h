@@ -8,9 +8,10 @@
 #define ECD_ANGLE_COEF_DJI 0.043945f // (360/8192),将编码器值转化为角度制
           
 // 云台参数
-// #define YAW_CHASSIS_ALIGN_ECD 900  // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
-//现在下面这个是对齐45度方向的角度，如果想对齐0度方向需要改成2190
-#define YAW_CHASSIS_ALIGN_ECD 1050  // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
+// 云台和底盘对齐时的YAW电机编码器值（机械改动后需重新标定）
+// 对应关系：0度方向(云台正对底盘前方) = 1990，45度方向 = 1050
+// 注意：修改此值时，chassis.c 中的 CHASSIS_FORWARD_ANGLE 必须同步修改！
+#define YAW_CHASSIS_ALIGN_ECD 1990  // 当前：0度方向
 #define YAW_ECD_GREATER_THAN_4096 0 // ALIGN_ECD值是否大于4096,是为1,否为0;用于计算云台偏转角度
 #define PITCH_HORIZON_ECD 760      // 云台处于水平位置时编码器值（760）,若对云台有机械改动需要修改
 
