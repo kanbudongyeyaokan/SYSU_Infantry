@@ -49,7 +49,7 @@ static Ins_data_t *gimbal_imu_data;
 // 存储发送给决策层的反馈信息
 static Gimbal_feedback_info_t gimbal_feedback;
 
-extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队列句柄
+extern QueueHandle_t Gimbal_feedback_queue_handle; // 声明外部队列句柄
 
  Gimbal_cmd_send_t gimbal_cmd;
 
@@ -219,7 +219,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
     uint32_t current_us = (uint32_t)(DWT_GetTimeline_s() * 1000000.0f);
 
-    // 【修改点】单位转换：Degree -> Radian，提供给 NUC
+    // 单位转换：Degree -> Radian，提供给 NUC
     // 注意：你的代码中使用 euler.roll 代指 pitch
     float pitch_rad = gimbal_imu_data->euler.roll * ANGLE_TO_RAD; 
     float yaw_rad   = gimbal_imu_data->total_yaw * ANGLE_TO_RAD;
@@ -273,7 +273,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
                // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",pitch_target_deg,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
-                //云台视觉模式
+             //云台视觉模式
             case GIMBAL_VISION_MODE:
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
@@ -282,22 +282,32 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                     // 获取 NUC 的预测数据
                     const Vision_Ctrl_Data_t* v_cmd = Get_Vision_Ctrl_Data();
 
-                    // 绝对坐标系追踪：直接把预测的世界坐标扔给 PID
-                    Djimotor_set_target(yaw_motor, v_cmd->target_yaw);
-                    Djimotor_set_target(pitch_motor, v_cmd->target_pitch);
+                    // 单位转换：NUC 的 Radian -> 底层 PID 需要的 Degree
+                    float target_yaw_deg   = v_cmd->target_yaw * RAD_TO_ANGLE;
+                    float target_pitch_deg = v_cmd->target_pitch * RAD_TO_ANGLE;
+                    
+                    // 速度前馈转换：rad/s -> deg/s
+                    float target_yaw_v_deg = v_cmd->target_yaw_v * RAD_TO_ANGLE;
+                    float target_pitch_v_deg = v_cmd->target_pitch_v * RAD_TO_ANGLE;
+
+                    // 绝对坐标系追踪：给 PID 喂入转换后的角度
+                    Djimotor_set_target(yaw_motor, target_yaw_deg);
+                    Djimotor_set_target(pitch_motor, target_pitch_deg);
 
                     // 计算基础 PID 输出 (包含 PITCH 重力补偿)
                     Djimotor_Calc_Output(yaw_motor);
                     Djimotor_Calc_Output(pitch_motor);
 
-                    // 在电流层直接叠加上视觉速度前馈！
-                    yaw_motor->out_current += (int16_t)(30.0f * v_cmd->target_yaw_v);
-                    pitch_motor->out_current += (int16_t)(30.0f * v_cmd->target_pitch_v);
+                    // 在电流层直接叠加上视觉速度前馈 (此时前后单位统一)
+                    yaw_motor->out_current += (int16_t)(30.0f * target_yaw_v_deg);
+                    pitch_motor->out_current += (int16_t)(30.0f * target_pitch_v_deg);
 
                 } else {
-                    //视觉掉线，云台瞬间停止在当前绝对角度
+                    // 视觉掉线，云台瞬间停止在当前绝对角度
                     Djimotor_set_target(yaw_motor, gimbal_imu_data->total_yaw);
-                    Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.pitch);
+                    
+                    // 严格遵循初始化时的映射，使用 euler.roll，防止掉线时云台抽搐甩头
+                    Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.roll); 
 
                     Djimotor_Calc_Output(yaw_motor);
                     Djimotor_Calc_Output(pitch_motor);
