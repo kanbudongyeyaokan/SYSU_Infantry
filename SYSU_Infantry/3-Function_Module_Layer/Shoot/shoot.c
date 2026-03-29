@@ -145,8 +145,8 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
         // 开启摩擦轮
         Djimotor_set_status(shoot_motors[0], MOTOR_ENABLED);
         Djimotor_set_status(shoot_motors[1], MOTOR_ENABLED);
-        Djimotor_set_target(shoot_motors[0], 15000);  // 上摩擦轮
-        Djimotor_set_target(shoot_motors[1], -15000); // 下摩擦轮
+        Djimotor_set_target(shoot_motors[0], 6700);  // 上摩擦轮
+        Djimotor_set_target(shoot_motors[1], -6700); // 下摩擦轮
     }
 
     // 2. 处理拨弹盘 (LOADER_MODE)
