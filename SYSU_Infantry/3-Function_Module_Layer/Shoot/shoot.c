@@ -17,9 +17,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#define ONE_BULLET_DELTA_ANGLE  36.0f    // 单发子弹拨弹盘转动角度 (10孔盘为36度)
-#define REDUCTION_RATIO_LOADER  36.0f    // M2006电机减速比
-#define SINGLE_SHOOT_INTERVAL_MS 200     // 单发连续触发的时间间隔(ms)，200ms = 5Hz点射
+#define ONE_BULLET_DELTA_ANGLE    36.0f  // 单发子弹拨弹盘转动角度 (10孔盘为36度)
+#define REDUCTION_RATIO_LOADER    36.0f  // M2006电机减速比
+#define SINGLE_SHOOT_INTERVAL_MS  200    // 单发连续触发的时间间隔(ms)，200ms = 5Hz点射
+#define FRICTION_WHEEL_TARGET_RPM 6700   // 摩擦轮目标转速(RPM)，对应弹速约24.9m/s
 
 /****************接收决策层的射击控制信息********************/
 // 存储决策层发来的控制命令
@@ -145,8 +146,8 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
         // 开启摩擦轮
         Djimotor_set_status(shoot_motors[0], MOTOR_ENABLED);
         Djimotor_set_status(shoot_motors[1], MOTOR_ENABLED);
-        Djimotor_set_target(shoot_motors[0], 15000);  // 上摩擦轮
-        Djimotor_set_target(shoot_motors[1], -15000); // 下摩擦轮
+        Djimotor_set_target(shoot_motors[0], FRICTION_WHEEL_TARGET_RPM);   // 上摩擦轮
+        Djimotor_set_target(shoot_motors[1], -FRICTION_WHEEL_TARGET_RPM); // 下摩擦轮
     }
 
     // 2. 处理拨弹盘 (LOADER_MODE)
