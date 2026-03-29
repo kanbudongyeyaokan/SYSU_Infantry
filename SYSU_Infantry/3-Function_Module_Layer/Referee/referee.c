@@ -4,6 +4,7 @@
 #include "ui_default.h"
 #include "ui_interface.h"
 #include "SEGGER_RTT.h"
+#include "error_handler.h"
 
 // 全局变量
 static Referee_Data_t referee_data;
@@ -62,6 +63,11 @@ static void Referee_Unpack(uint8_t *data, uint16_t len)
                             break;
                         case SHOOT_DATA_CMD_ID:
                             memcpy(&referee_data.shoot_data, pData, sizeof(ext_shoot_data_t));
+                            ERROR_INFO("Referee", "bullet type=%u id=%u freq=%u speed=%.2f m/s",
+                                referee_data.shoot_data.bullet_type,
+                                referee_data.shoot_data.shooter_id,
+                                referee_data.shoot_data.bullet_freq,
+                                (double)referee_data.shoot_data.bullet_speed);
                             break;
                         case PROJECTILE_ALLOWANCE_CMD_ID:
                             memcpy(&referee_data.projectile_allowance, pData, sizeof(ext_projectile_allowance_t));
