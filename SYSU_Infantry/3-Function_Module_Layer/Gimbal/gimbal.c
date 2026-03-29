@@ -35,13 +35,10 @@
 #include "SEGGER_RTT.h"
 #include "bsp_rtt.h"
 
-// 用于控制 RTT 打印的频率
-enum {
-    GIMBAL_PITCH_RTT_HZ = 500U,
-    GIMBAL_PITCH_RTT_PERIOD_MS = 1000U / GIMBAL_PITCH_RTT_HZ,
-    GIMBAL_PITCH_VOFA_RTT_CHANNEL = 1U,
-    GIMBAL_PITCH_VOFA_RTT_BUFFER_SIZE = 1024U,
-};
+//用于角度和弧度的转换
+#define ANGLE_TO_RAD 0.01745329252f
+#define RAD_TO_ANGLE 57.295779513f
+
 
 //云台电机
 static Djimotor_device_t *yaw_motor, *pitch_motor;
@@ -49,8 +46,6 @@ static Djimotor_device_t *yaw_motor, *pitch_motor;
 //云台模块的姿态数据指针，指向ins模块的全局变量
 static Ins_data_t *gimbal_imu_data;
 
-// 发布给决策层的云台反馈信息
-// static Publisher_t*gimbal_pub;
 // 存储发送给决策层的反馈信息
 static Gimbal_feedback_info_t gimbal_feedback;
 
@@ -61,126 +56,10 @@ extern QueueHandle_t Gimbal_feedback_queue_handle; // 新增：声明外部队�
 //云台PITCH重力补偿
 static float pitch_gravity_factor = 0.0f;
 
-// 用于 Cortex-Debug 在线改 pitch 目标角 与 RTT 不同端口打印
-volatile float gimbal_pitch_gravity_test_target_deg = 0.0f;
-
-static char gimbal_pitch_vofa_rtt_buffer[GIMBAL_PITCH_VOFA_RTT_BUFFER_SIZE];
-static uint32_t gimbal_pitch_rtt_last_print_tick = 0U;
-static uint8_t gimbal_pitch_rtt_channel_ready = 0U;
-
 static float pitch_gimbal;
 static float pitch_speed;
 
 
-// 无扰切换核心时间参数：
-// 1. blend   决定 active_ref 从旧目标过渡到新目标的总时间
-// 2. ff blend 决定视觉速度前馈的渐入/渐出时间
-// 3. ref tau 决定视觉绝对角的一阶滤波强度
-// 4. i hold  决定切换初期冻结积分的时长
-// 这一组参数优先保证“不过冲、不抽搐”，再去追求切换速度。
-#define GIMBAL_MODE_BLEND_TIME_S       0.08f
-#define GIMBAL_VISION_FF_BLEND_TIME_S  0.05f
-#define GIMBAL_VISION_REF_FILTER_TAU_S 0.03f
-#define GIMBAL_I_HOLD_TIME_S           0.03f
-#define GIMBAL_CONTROL_DT_MIN_S        0.0001f
-#define GIMBAL_CONTROL_DT_MAX_S        0.02f
-#define GIMBAL_VISION_YAW_FF_GAIN      30.0f
-#define GIMBAL_VISION_PITCH_FF_GAIN    30.0f
-
-// 视觉解算系到 IMU 世界系的小角度偏差补偿量
-volatile float gimbal_vision_yaw_bias_deg = 0.0f;
-volatile float gimbal_vision_pitch_bias_deg = 0.0f;
-
-// 无扰切换统一状态：
-// - active_ref 是真正送给底层 PID 的唯一目标
-// - transition_* 负责在模式切换时保证目标连续
-// - vision_filtered_* 负责对视觉绝对角做轻量滤波
-// - vision_ff_blend 负责视觉速度前馈的渐入渐出
-// - *_ki_saved + integral_hold_active 负责短时冻结积分但保留历史 Iout
-typedef struct {
-    bool initialized;
-    bool vision_source_active;
-    bool vision_filter_initialized;
-    bool transition_active;
-    bool integral_hold_active;
-    gimbal_mode_e last_mode;
-
-    // 当前统一目标 active_ref，任何模式下都只允许改这里
-    float active_yaw_target;
-    float active_pitch_target;
-
-    // S 曲线过渡器的起点、终点和累计时间
-    float transition_from_yaw;
-    float transition_from_pitch;
-    float transition_to_yaw;
-    float transition_to_pitch;
-    float transition_elapsed_s;
-
-    // 视觉绝对角在进入 active_ref 之前的滤波结果
-    float vision_filtered_yaw;
-    float vision_filtered_pitch;
-
-    // 视觉速度前馈渐入系数，以及积分冻结剩余时间
-    float vision_ff_blend;
-    float integral_hold_time_s;
-
-    // 保存最近一拍视觉给出的角速度，供前馈渐入阶段使用
-    float last_vision_yaw_rate;
-    float last_vision_pitch_rate;
-
-    // 冻结积分时只把 Ki 临时置零，恢复时再写回原参数
-    float yaw_speed_ki_saved;
-    float yaw_angle_ki_saved;
-    float pitch_speed_ki_saved;
-    float pitch_angle_ki_saved;
-
-    // 统一用 DWT 统计控制周期，避免不同路径各算各的 dt
-    uint32_t dwt_counter;
-} Gimbal_bumpless_state_t;
-
-static Gimbal_bumpless_state_t gimbal_bumpless_state = {
-    .last_mode = GIMBAL_ZERO_FORCE,
-};
-
-static void Gimbal_pitch_rtt_init(void) {
-    if (gimbal_pitch_rtt_channel_ready == 0U) {
-        SEGGER_RTT_ConfigUpBuffer(GIMBAL_PITCH_VOFA_RTT_CHANNEL,
-                                  "VOFA-PITCH",
-                                  gimbal_pitch_vofa_rtt_buffer,
-                                  sizeof(gimbal_pitch_vofa_rtt_buffer),
-                                  SEGGER_RTT_MODE_NO_BLOCK_SKIP);
-        gimbal_pitch_rtt_channel_ready = 1U;
-    }
-}
-
-static void Gimbal_pitch_rtt_vofa_print(float pitch_target_deg) {
-    if (pitch_motor == NULL || gimbal_imu_data == NULL) {
-        return;
-    }
-
-    const float pitch_measure_deg = gimbal_imu_data->euler.roll;
-
-    Gimbal_pitch_rtt_init();
-
-    uint32_t now = HAL_GetTick();
-    if ((now - gimbal_pitch_rtt_last_print_tick) < GIMBAL_PITCH_RTT_PERIOD_MS) {
-        return;
-    }
-    gimbal_pitch_rtt_last_print_tick = now;
-
-    char rtt_line[128];
-    int len = snprintf(rtt_line, sizeof(rtt_line),
-                       "%.3f,%.3f,%.5f,%.3f,%.3f,%.3f\r\n",
-                       pitch_target_deg,
-                       pitch_measure_deg,
-                       pitch_gravity_factor,
-                       pitch_motor->motor_pid.speed_pid.Pout,
-                       pitch_motor->motor_pid.speed_pid.Iout,
-                       pitch_motor->motor_pid.speed_pid.Output);
-    if (len > 0) {
-        SEGGER_RTT_WriteString(GIMBAL_PITCH_VOFA_RTT_CHANNEL, rtt_line);
-    }
-}
 
 
 /**
@@ -302,10 +181,9 @@ void Gimbal_task_init(void) {
 
     //初始化云台电机
     Gimbal_motor_init();
-    Gimbal_pitch_rtt_init();
 
-    //暂时注释掉视觉初始化
-    // Vision_Comm_Init();
+    //视觉初始化
+    Vision_Comm_Init();
 }
 
 Gimbal_state_e Gimbal_get_state(void)
@@ -332,26 +210,30 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             return;
         }
         // =========================================================
-    // 视觉通信层：无脑收发 (在物理控制前执行，确保目标最新)
+   // =========================================================
+    // 1. 视觉通信层：无脑收发 (在物理控制前执行，确保目标最新)
     // =========================================================
     
-    // 极速解析 NUC 发来的最新预测指令 (非阻塞)
-    // Vision_Comm_Parse_Task();
+    // 极速解析 NUC 发来的最新预测指令 (非阻塞提取 FIFO)
+    Vision_Comm_Parse_Task();
 
-    // uint32_t current_us = (uint32_t)(DWT_GetTimeline_s() * 1000000.0f);
+    uint32_t current_us = (uint32_t)(DWT_GetTimeline_s() * 1000000.0f);
 
-    //     // 疯狂发报：送出绝对时间戳、连续 Yaw 角、纯净角速度、以及当前血量
-    //     // TODO: 如果你已经接入了裁判系统，把这里的 600 替换成真正的裁判系统全局变量！
-    // Vision_Send_Pose(current_us,
-    //                      gimbal_imu_data->euler.roll,
-    //                      gimbal_imu_data->total_yaw,
-    //                      gimbal_imu_data->gyro_body.x,
-    //                      gimbal_imu_data->gyro_body.z,
-    //                      600,  // 测试用 Current HP
-    //                      600); // 测试用 Maximum HP
+    // 【修改点】单位转换：Degree -> Radian，提供给 NUC
+    // 注意：你的代码中使用 euler.roll 代指 pitch
+    float pitch_rad = gimbal_imu_data->euler.roll * ANGLE_TO_RAD; 
+    float yaw_rad   = gimbal_imu_data->total_yaw * ANGLE_TO_RAD;
+    float pitch_v_rad = gimbal_imu_data->gyro_body.x * ANGLE_TO_RAD;
+    float yaw_v_rad   = gimbal_imu_data->gyro_body.z * ANGLE_TO_RAD;
 
-    // Rtt_Printf(1,"pitch:%.2f,yaw:%.2f,pitch_speed:%.2f,yaw_speed:%.2f\r\n",gimbal_imu_data->euler.roll,
-    // gimbal_imu_data->euler.yaw,gimbal_imu_data->gyro_body.x,gimbal_imu_data->gyro_body.z);
+    // 疯狂发报：送出绝对时间戳、连续 Yaw/Pitch 弧度、弧度角速度
+    Vision_Send_Pose(current_us, 
+                     pitch_rad, 
+                     yaw_rad, 
+                     pitch_v_rad, 
+                     yaw_v_rad, 
+                     600,  // 此处需替换为裁判系统当前血量
+                     600); // 此处需替换为裁判系统最大血量
 
     // =========================================================
     // 2. 云台物理控制层
