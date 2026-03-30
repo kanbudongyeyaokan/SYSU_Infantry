@@ -26,6 +26,8 @@
 
 #include "power_meter.h"
 
+#include "chassis_scurve.h"
+
 #define CHASSIS_FOLLOW_YAW_GAIN 0.5f
 #define CHASSIS_FOLLOW_WZ_LIMIT 200.0f
 #define CHASSIS_ROTATE_WZ 500.0f
@@ -64,7 +66,9 @@ Chassis_cmd_send_t test_cmd;
 static Pid_instance_t chassis_follow_pid;
 
 // 声明底盘斜坡控制器实例
-static Chassis_Ramp_t chassis_ramp;
+// static Chassis_Ramp_t chassis_ramp;
+
+static Chassis_SCurve_t chassis_scurve; // 新增 S 曲线实例
 
 
 /*********************************底盘方法接口**************************************/
@@ -75,7 +79,8 @@ void Chassis_task_init(void) {
     //底盘模块初始化
     Chassis_init();
 
-    Chassis_Ramp_Init(&chassis_ramp, CHASSIS_RAMP_STEP);
+    // Chassis_Ramp_Init(&chassis_ramp, CHASSIS_RAMP_STEP);
+    Chassis_SCurve_Init(&chassis_scurve); // 新增 S 曲线初始化
     //超电初始化
     // SuperCap_Comm_Init(&hcan2);
 
@@ -230,12 +235,14 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
     Chassis_cmd_send_t cmd_solved = *cmd;
     if (cmd->chassis_mode == CHASSIS_ZERO_FORCE) {
         // 失能时复位斜坡控制器，防止重使能时车子突然窜出去
-        Chassis_Ramp_Reset(&chassis_ramp);
+        // Chassis_Ramp_Reset(&chassis_ramp);
+        Chassis_SCurve_Reset(&chassis_scurve); // 更换为 S 曲线复位
         cmd_solved.vx = 0.0f;
         cmd_solved.vy = 0.0f;
     } else {
         // 调用库函数进行平滑处理，直接将结果写入 cmd_solved 的 vx 和 vy
-        Chassis_Ramp_Update(&chassis_ramp, cmd->vx, cmd->vy, &cmd_solved.vx, &cmd_solved.vy);
+        // Chassis_Ramp_Update(&chassis_ramp, cmd->vx, cmd->vy, &cmd_solved.vx, &cmd_solved.vy);
+        Chassis_SCurve_Update(&chassis_scurve, cmd->vx, cmd->vy, &cmd_solved.vx, &cmd_solved.vy);
     }
 
     switch (cmd_solved.chassis_mode)
