@@ -1,4 +1,7 @@
 #include "vision_comm.h"
+
+#include <stdio.h>
+
 #include "cmsis_os.h"
 #include "string.h"
 #include "error_handler.h"
@@ -33,22 +36,13 @@ static uint16_t Get_FIFO_Data_Len(void);
 static void Read_FIFO_Data(uint8_t* dest, uint16_t len, uint16_t offset);
 
 void Vision_Comm_Init(void) {
+    ERROR_INFO("VISION", "Initializing USB communication");
     memset(&latest_vision_ctrl_data, 0, sizeof(Vision_Ctrl_Data_t));
     
-#ifdef USE_VISION_USB
-    // 注册 USB 接收回调
+
+    // 注册 USB 接收回调2
     Usb_Init(Vision_Rx_Callback);
     ERROR_INFO("VISION", "Init OK, USB CDC registered");
-#else
-    // 注册串口接收回调
-    vision_uart = Uart_register(&huart6, Vision_Rx_Callback);
-    
-    if (vision_uart != NULL) {
-        ERROR_INFO("VISION", "Init OK, UART registered");
-    } else {
-        ERROR_CRITICAL("VISION", "Init FAILED, UART register error");
-    }
-#endif
 }
 
 #ifdef USE_VISION_USB
@@ -128,7 +122,7 @@ void Vision_Comm_Parse_Task(void) {
             if (cmd_id == CMD_ID_CTRL_RX && data_len == sizeof(Vision_Rx_Payload_t)) {
                 
                 Vision_Rx_Payload_t *rx_payload = (Vision_Rx_Payload_t *)&frame_buf[4];
-                
+                //ERROR_INFO("VISION", "Received Ctrl: flags=0x%02X, pitch=%.2f, yaw=%.2f", rx_payload->flags, rx_payload->angular_y, rx_payload->angular_z);
                 taskENTER_CRITICAL();
                 
                 // 1. 组合状态机映射
@@ -157,7 +151,8 @@ void Vision_Comm_Parse_Task(void) {
                 latest_vision_ctrl_data.linear_z = rx_payload->linear_z;
                 latest_vision_ctrl_data.angular_x = rx_payload->angular_x;
 
-                last_valid_time = osKernelSysTick(); 
+                latest_vision_ctrl_data.frame_id++;
+                last_valid_time = osKernelSysTick();
                 taskEXIT_CRITICAL();
             }
             rx_tail = (rx_tail + frame_total_len) % VISION_RX_FIFO_SIZE;

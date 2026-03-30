@@ -1,5 +1,7 @@
 #include "bsp_usb.h"
 #include "usbd_cdc_if.h"
+#include "usbd_def.h"
+#include "error_handler.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,18 +15,29 @@ static void Usb_Try_Transmit(void);
 // ============================================================
 // 初始化
 // ============================================================
+// 外部 USB 设备句柄 (由 STM32 USB 库定义)
+extern USBD_HandleTypeDef hUsbDeviceFS;
+
 void Usb_Init(usb_rx_callback cb) {
-    // 清零结构体
     memset(&usb_inst, 0, sizeof(Usb_Instance_t));
-    
-    // 注册接收回调
     usb_inst.rx_cb = cb;
 
-    // 创建互斥锁 (CMSIS-RTOS API)
     osMutexDef(usb_lock);
     usb_inst.mutex = osMutexCreate(osMutex(usb_lock));
 
-    osDelay(1500); // 等待 USB 初始化完成
+    ERROR_INFO("USB", "Waiting for enumeration, initial state=%d", hUsbDeviceFS.dev_state);
+
+    uint32_t start = osKernelSysTick();
+    while (hUsbDeviceFS.dev_state != USBD_STATE_CONFIGURED) {
+        if (osKernelSysTick() - start > 5000) {
+            ERROR_INFO("USB", "Enumeration timeout, state=%d", hUsbDeviceFS.dev_state);
+            break;
+        }
+        osDelay(100);
+    }
+
+    ERROR_INFO("USB", "Init done, state=%d, wait=%dms", 
+               hUsbDeviceFS.dev_state, osKernelSysTick() - start);
 }
 
 // ============================================================

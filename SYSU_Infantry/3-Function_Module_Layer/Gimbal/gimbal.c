@@ -183,6 +183,8 @@ void Gimbal_task_init(void) {
     Gimbal_motor_init();
 
     //视觉初始化
+
+
     Vision_Comm_Init();
 }
 
@@ -239,8 +241,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
     // 2. 云台物理控制层
     // =========================================================
         //重力补偿计算
-        float pitch_rad = gimbal_imu_data->euler.pitch * (3.14159265f / 180.0f);
-        pitch_gravity_factor = cosf(pitch_rad);
+        float pitch_rad2 = gimbal_imu_data->euler.pitch * (3.14159265f / 180.0f);
+        pitch_gravity_factor = cosf(pitch_rad2);
 
         // 根据控制模式进行处理
         gimbal_cmd  = *cmd; 
@@ -278,37 +280,39 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
 
-                if (Is_Vision_Online()) {
-                    // 获取 NUC 的预测数据
+                {
                     const Vision_Ctrl_Data_t* v_cmd = Get_Vision_Ctrl_Data();
+                    static uint32_t last_frame_id    = 0;
+                    static float    abs_yaw_target   = 0.0f;
+                    static float    abs_pitch_target = 0.0f;
 
-                    // 单位转换：NUC 的 Radian -> 底层 PID 需要的 Degree
-                    float target_yaw_deg   = v_cmd->target_yaw * RAD_TO_ANGLE;
-                    float target_pitch_deg = v_cmd->target_pitch * RAD_TO_ANGLE;
-                    
-                    // 速度前馈转换：rad/s -> deg/s
-                    float target_yaw_v_deg = v_cmd->target_yaw_v * RAD_TO_ANGLE;
-                    float target_pitch_v_deg = v_cmd->target_pitch_v * RAD_TO_ANGLE;
+                    // frame_id > 0 才说明真正收到过视觉包，避免启动时 last_valid_time=0 误判在线
+                    if (Is_Vision_Online() && v_cmd->frame_id > 0) {
+                        if (v_cmd->frame_id != last_frame_id) {
+                            last_frame_id    = v_cmd->frame_id;
+                            // NUC 发的是增量（当前位置到目标的偏差），每帧用真实 IMU 角度重新换算绝对目标
+                            abs_yaw_target   = gimbal_imu_data->total_yaw  + v_cmd->target_yaw   * RAD_TO_ANGLE;
+                            abs_pitch_target = gimbal_imu_data->euler.roll + v_cmd->target_pitch * RAD_TO_ANGLE;
+                            ERROR_INFO("GIMBAL", "Vision frame %lu: delta_yaw=%.2f delta_pitch=%.2f -> abs_yaw=%.2f abs_pitch=%.2f",
+                                       v_cmd->frame_id,
+                                       v_cmd->target_yaw * RAD_TO_ANGLE, v_cmd->target_pitch * RAD_TO_ANGLE,
+                                       abs_yaw_target, abs_pitch_target);
+                        }
 
-                    // 绝对坐标系追踪：给 PID 喂入转换后的角度
-                    Djimotor_set_target(yaw_motor, target_yaw_deg);
-                    Djimotor_set_target(pitch_motor, target_pitch_deg);
-
-                    // 计算基础 PID 输出 (包含 PITCH 重力补偿)
-                    Djimotor_Calc_Output(yaw_motor);
-                    Djimotor_Calc_Output(pitch_motor);
-
-                    // 在电流层直接叠加上视觉速度前馈 (此时前后单位统一)
-                    yaw_motor->out_current += (int16_t)(30.0f * target_yaw_v_deg);
-                    pitch_motor->out_current += (int16_t)(30.0f * target_pitch_v_deg);
-
-                } else {
-                    // 视觉掉线，云台瞬间停止在当前绝对角度
-                    Djimotor_set_target(yaw_motor, gimbal_imu_data->total_yaw);
-                    
-                    // 严格遵循初始化时的映射，使用 euler.roll，防止掉线时云台抽搐甩头
-                    Djimotor_set_target(pitch_motor, gimbal_imu_data->euler.roll); 
-
+                        Djimotor_set_target(yaw_motor,   abs_yaw_target);
+                        Djimotor_set_target(pitch_motor, abs_pitch_target);
+                        // ERROR_INFO("GIMBAL", "target: yaw=%.2f pitch=%.2f imu_yaw=%.2f imu_pitch=%.2f",
+                        //            abs_yaw_target, abs_pitch_target,
+                        //            gimbal_imu_data->total_yaw, gimbal_imu_data->euler.roll);
+                    }
+                // else {
+                //         // 视觉未就绪或掉线，回退到遥控目标
+                //         abs_yaw_target   = cmd->yaw;
+                //         abs_pitch_target = cmd->pitch;
+                //         last_frame_id    = 0;
+                //         Djimotor_set_target(yaw_motor,   cmd->yaw);
+                //         Djimotor_set_target(pitch_motor, cmd->pitch);
+                //     }
                     Djimotor_Calc_Output(yaw_motor);
                     Djimotor_Calc_Output(pitch_motor);
                 }
@@ -319,6 +323,9 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         }
         //反馈数据
         gimbal_feedback.yaw_motor_single_round_angle = yaw_motor->motor_measure.current_angle;
+        // 把实际执行的目标回写，供决策层模式切换时做无扰同步
+        gimbal_feedback.active_yaw_target   = yaw_motor->motor_pid.pid_target;
+        gimbal_feedback.active_pitch_target = pitch_motor->motor_pid.pid_target;
         xQueueOverwrite(Gimbal_feedback_queue_handle, &gimbal_feedback);
 }
 

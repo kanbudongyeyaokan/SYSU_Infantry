@@ -90,8 +90,9 @@ typedef struct {
 // 外部调用数据结构
 // ==========================================
 typedef struct {
+    uint32_t frame_id;       // 每收到一个有效包递增，用于检测新帧
     uint8_t  tracking_state;// 0:丢失, 1:追踪中, 2:锁死可开火
-    
+
     float    target_pitch;  // 映射自 angular_y
     float    target_yaw;    // 映射自 angular_z
     
