@@ -263,8 +263,6 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
 
-                //设置电机目标值
-                // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
 
                 Djimotor_set_target(yaw_motor, cmd->yaw);
                 Djimotor_set_target(pitch_motor, cmd->pitch);
@@ -272,39 +270,19 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
 
-                // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
-               // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",pitch_target_deg,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
              //云台视觉模式
             case GIMBAL_VISION_MODE:
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
 
-                {
-                    const Vision_Ctrl_Data_t* v_cmd = Get_Vision_Ctrl_Data();
-                    static uint32_t last_frame_id    = 0;
-                    static float    abs_yaw_target   = 0.0f;
-                    static float    abs_pitch_target = 0.0f;
-
-                    // frame_id > 0 才说明真正收到过视觉包，避免启动时 last_valid_time=0 误判在线
-                    if (Is_Vision_Online() && v_cmd->frame_id > 0) {
-                        if (v_cmd->frame_id != last_frame_id) {
-                            last_frame_id    = v_cmd->frame_id;
-                            // NUC 发的是增量（当前位置到目标的偏差），每帧用真实 IMU 角度重新换算绝对目标
-                            abs_yaw_target   = gimbal_imu_data->total_yaw  + v_cmd->target_yaw   * RAD_TO_ANGLE;
-                            abs_pitch_target = gimbal_imu_data->euler.roll + v_cmd->target_pitch * RAD_TO_ANGLE;
-                            ERROR_INFO("GIMBAL", "Vision frame %lu: delta_yaw=%.2f delta_pitch=%.2f -> abs_yaw=%.2f abs_pitch=%.2f",
-                                       v_cmd->frame_id,
-                                       v_cmd->target_yaw * RAD_TO_ANGLE, v_cmd->target_pitch * RAD_TO_ANGLE,
-                                       abs_yaw_target, abs_pitch_target);
-                        }
-
-                        Djimotor_set_target(yaw_motor,   abs_yaw_target);
-                        Djimotor_set_target(pitch_motor, abs_pitch_target);
-                        // ERROR_INFO("GIMBAL", "target: yaw=%.2f pitch=%.2f imu_yaw=%.2f imu_pitch=%.2f",
-                        //            abs_yaw_target, abs_pitch_target,
-                        //            gimbal_imu_data->total_yaw, gimbal_imu_data->euler.roll);
-                    }
+            if (Is_Vision_Online()){
+                const Vision_Ctrl_Data_t* v_cmd = Get_Vision_Ctrl_Data();
+                Djimotor_set_target(yaw_motor,   v_cmd->target_yaw);
+                Djimotor_set_target(pitch_motor, v_cmd->target_pitch);
+                ERROR_INFO("GIMBAL", "target: yaw=%.2f pitch=%.2f",
+                    v_cmd->target_yaw, v_cmd->target_yaw);
+            }
                 // else {
                 //         // 视觉未就绪或掉线，回退到遥控目标
                 //         abs_yaw_target   = cmd->yaw;
@@ -315,7 +293,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 //     }
                     Djimotor_Calc_Output(yaw_motor);
                     Djimotor_Calc_Output(pitch_motor);
-                }
+
                 break;
 
             default:
