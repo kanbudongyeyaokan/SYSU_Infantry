@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "error_handler.h"
+
 // 单例实例 (STM32 通常只有一个 USB Device)
 static Usb_Instance_t usb_inst;
 
@@ -20,11 +22,13 @@ void Usb_Init(usb_rx_callback cb) {
     // 注册接收回调
     usb_inst.rx_cb = cb;
 
-    // 创建互斥锁 (CMSIS-RTOS API)
-    osMutexDef(usb_lock);
-    usb_inst.mutex = osMutexCreate(osMutex(usb_lock));
-
-    osDelay(1500); // 等待 USB 初始化完成
+    ERROR_INFO("USB","Usb Init complete");
+    // mutex 已移除：Usb_Send 改用 taskENTER_CRITICAL 统一保护 FIFO，
+    // 可同时防止任务抢占和 TxCplt ISR 并发访问 head/tail。
+    // USB 枚举由硬件中断异步完成，此处仅完成 USB 实例与互斥锁等软件栈初始化，尚未完成与主机的枚举过程。
+    // 在主机完成枚举之前，直接调用 CDC_Transmit_FS 可能返回失败（如 USBD_BUSY/USBD_FAIL），本模块会丢弃本次发送长度记录，
+    // 但不会自动重试；只有在后续再次触发 Usb_Try_Transmit（例如通过 Usb_Send 发送数据，或在显式“枚举完成”回调中调用）
+    // 时才会重新尝试发送队列中的数据。
 }
 
 // ============================================================
@@ -69,8 +73,8 @@ static void Usb_Try_Transmit(void) {
 void Usb_Send(uint8_t* data, uint16_t len) {
     if (len == 0 || data == NULL) return;
 
-    // --- 加锁 (保护 FIFO) ---
-    if (osMutexWait(usb_inst.mutex, 10) != osOK) return;
+    // 临界区同时防止：其他任务抢占 + TxCplt ISR 并发修改 tail/is_busy
+    taskENTER_CRITICAL();
 
     // 计算 FIFO 剩余空间
     uint16_t space;
@@ -80,30 +84,22 @@ void Usb_Send(uint8_t* data, uint16_t len) {
         space = usb_inst.tail - usb_inst.head;
     }
 
-    // 如果空间不足 (留 1 字节防止完全重合)，放弃发送或根据需求在此等待
-    if (space <= len + 1) {
-        osMutexRelease(usb_inst.mutex);
-        return; 
-    }
-
-    // 将数据写入 FIFO (处理回绕)
-    for (uint16_t i = 0; i < len; i++) {
-        usb_inst.tx_fifo[usb_inst.head] = data[i];
-        usb_inst.head++;
-        if (usb_inst.head >= USB_FIFO_SIZE) {
-            usb_inst.head = 0;
+    // 空间充足时写入；保留 1 字节防止 head==tail 被误判为空
+    if (space > len) {
+        for (uint16_t i = 0; i < len; i++) {
+            usb_inst.tx_fifo[usb_inst.head] = data[i];
+            usb_inst.head++;
+            if (usb_inst.head >= USB_FIFO_SIZE) {
+                usb_inst.head = 0;
+            }
         }
     }
+    // 空间不足时不写入，但仍触发发送以排空 FIFO，使 TX 链在枚举后能自动恢复。
 
-    // --- 解锁 ---
-    osMutexRelease(usb_inst.mutex);
-
-    // --- 尝试触发发送 ---
-    // 进入临界区：防止 "判断 busy 为 0" 后，瞬间被中断打断并设为 1，导致冲突
-    taskENTER_CRITICAL();
     if (usb_inst.is_busy == 0) {
         Usb_Try_Transmit();
     }
+
     taskEXIT_CRITICAL();
 }
 
