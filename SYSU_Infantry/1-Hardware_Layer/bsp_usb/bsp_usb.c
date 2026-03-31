@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "error_handler.h"
+
 // 单例实例 (STM32 通常只有一个 USB Device)
 static Usb_Instance_t usb_inst;
 
@@ -23,8 +25,9 @@ void Usb_Init(usb_rx_callback cb) {
     // 创建互斥锁 (CMSIS-RTOS API)
     osMutexDef(usb_lock);
     usb_inst.mutex = osMutexCreate(osMutex(usb_lock));
-
-    osDelay(1500); // 等待 USB 初始化完成
+    ERROR_INFO("USB","Usb Init complete");
+    // USB 枚举由硬件中断异步完成，无需应用层阻塞等待。
+    // 枚举前 CDC_Transmit_FS 会失败并静默丢弃，枚举后自动恢复正常。
 }
 
 // ============================================================
@@ -80,20 +83,18 @@ void Usb_Send(uint8_t* data, uint16_t len) {
         space = usb_inst.tail - usb_inst.head;
     }
 
-    // 如果空间不足 (留 1 字节防止完全重合)，放弃发送或根据需求在此等待
-    if (space <= len + 1) {
-        osMutexRelease(usb_inst.mutex);
-        return; 
-    }
-
-    // 将数据写入 FIFO (处理回绕)
-    for (uint16_t i = 0; i < len; i++) {
-        usb_inst.tx_fifo[usb_inst.head] = data[i];
-        usb_inst.head++;
-        if (usb_inst.head >= USB_FIFO_SIZE) {
-            usb_inst.head = 0;
+    // 如果空间充足，将数据写入 FIFO (处理回绕)
+    if (space > len + 1) {
+        for (uint16_t i = 0; i < len; i++) {
+            usb_inst.tx_fifo[usb_inst.head] = data[i];
+            usb_inst.head++;
+            if (usb_inst.head >= USB_FIFO_SIZE) {
+                usb_inst.head = 0;
+            }
         }
     }
+    // 空间不足时不写入新数据，但仍然尝试触发发送以排空 FIFO。
+    // 修复：USB 未连接时 FIFO 被填满，枚举完成后 TX 链无法启动的问题。
 
     // --- 解锁 ---
     osMutexRelease(usb_inst.mutex);
