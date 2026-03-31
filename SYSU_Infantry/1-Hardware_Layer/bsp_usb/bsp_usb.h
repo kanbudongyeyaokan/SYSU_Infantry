@@ -2,7 +2,7 @@
 #define __BSP_USB_H
 
 #include "main.h"
-#include "cmsis_os.h" // 必须包含，用于互斥锁
+#include "cmsis_os.h"
 #include <stdint.h>
 
 // ==========================================
@@ -26,9 +26,6 @@ typedef struct {
     uint16_t tail;                   // 读指针 (Tail)
     uint16_t last_sent_len;          // 记录上一次请求发送的长度 (用于中断更新 Tail)
     volatile uint8_t is_busy;        // 硬件忙标志位 (1:正在发送, 0:空闲)
-
-    // --- 线程安全 ---
-    osMutexId mutex;                 // 互斥锁，保护 FIFO 写操作
 
     // --- 接收部分 ---
     usb_rx_callback rx_cb;           // 接收回调函数指针
