@@ -51,6 +51,8 @@ static Robot_status_e robot_state = ROBOT_OFF;
 #define PITCH_DOWN_MAX -40.0f
 #define KEY_SENSITIVITY 0.05f // 键盘控制灵敏度，数值越大响应越快，但可能不够平滑，建议从0.1开始调试
 #define KEYCTL__SPEED 2000.0f // 键盘控制的最大速度，单位可以根据实际情况调整
+#define KEY_RESTART_HOLD_TICKS 2000U
+#define KEY_RESTART_FLUSH_TICKS 10U
 /************************************************************/
 
 /**********************接收反馈信息***************************/
@@ -518,7 +520,40 @@ void Keyboard_ctrl_set()
     Decision_sync_gimbal_manual_target();
 #elif USE_SBUS_RECEIVER == 2
     Key_t kb  = {.keys = vrc_data[CURRENT].keyboard};
-    Key_t kbl = {.keys = vrc_data[LAST].keyboard};
+    static uint16_t restart_hold_ticks = 0U;
+    static uint16_t restart_flush_ticks = 0U;
+    static bool restart_pending = false;
+
+    if (!restart_pending)
+    {
+        restart_hold_ticks = kb.g ? (uint16_t)(restart_hold_ticks + 1U) : 0U;
+        if (restart_hold_ticks >= KEY_RESTART_HOLD_TICKS)
+        {
+            restart_pending = true;
+            restart_flush_ticks = 0U;
+        }
+    }
+
+    if (restart_pending)
+    {
+        robot_state = ROBOT_OFF;
+        chassis_cmd_send.vx = 0.0f;
+        chassis_cmd_send.vy = 0.0f;
+        chassis_cmd_send.wz = 0.0f;
+        chassis_cmd_send.cmd_yaw = 0.0f;
+        chassis_cmd_send.chassis_mode = CHASSIS_ZERO_FORCE;
+        gimbal_cmd_send.chassis_wz = 0.0f;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_ZERO_FORCE;
+        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+        shoot_cmd_send.loader_mode = LOAD_STOP;
+
+        // 先让安全态连续发几个控制周期，再触发 MCU 复位。
+        if (restart_flush_ticks++ >= KEY_RESTART_FLUSH_TICKS)
+        {
+            NVIC_SystemReset();
+        }
+        return;
+    }
 
 
     if (kb.c) {
