@@ -24,9 +24,10 @@
 #define FRICTION_WHEEL_TARGET_RPM 6700   // 摩擦轮目标转速(RPM)，对应弹速约24.9m/s
 
 // 堵转检测参数
-#define JAM_DETECT_TIME_MS        100    // 堵转判定时间(ms)
-#define JAM_CURRENT_THRESHOLD     11000   // 堵转电流阈值(mA)
-#define REVERSE_ANGLE             72.0f  // 反转角度(2颗弹)
+#define JAM_DETECT_TIME_MS        250   // 堵转判定时间(ms) - 0.5秒
+#define JAM_CURRENT_THRESHOLD     8000  // 堵转电流阈值(mA)
+#define JAM_CURRENT_SAMPLES       10     // 电流采样次数
+#define REVERSE_ANGLE             108.0f  // 反转角度(3颗弹) - 增大冲程
 
 /****************接收决策层的射击控制信息********************/
 // 存储决策层发来的控制命令
@@ -42,6 +43,8 @@ static float loader_target_angle = 0.0f;
 static uint32_t jam_detect_start_time = 0;
 static float jam_detect_start_angle = 0.0f;
 static bool is_reversing = false;
+static int16_t current_samples[JAM_CURRENT_SAMPLES] = {0};
+static uint8_t current_sample_index = 0;
 
 /****************发送给决策层的射击反馈信息******************/
 // 发布给决策层的射击反馈信息
@@ -116,12 +119,12 @@ void Shoot_motors_init(void)
                     .max_out = 2000,
                 },
                 .speed_pid = {
-                    .kp = 10,   // 10
-                    .ki = 2, // 1
+                    .kp = 20,   // 10 -> 20 (提高响应)
+                    .ki = 5,    // 2 -> 5 (增强积分)
                     .kd = 0,
-                    .max_iout = 3000,
+                    .max_iout = 6000,  // 3000 -> 6000
                     .optimization = PID_TRAPEZOID_INTERGRAL | PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST,
-                    .max_out = 10000,
+                    .max_out = 20000,  // 10000 -> 20000 (M2006最大输出)
                 },
             },
             .can_init = {.can_handle = &hcan2, .can_id = 0x200, .tx_id = 3, .rx_id = 0x203}
@@ -196,20 +199,22 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
             // 刚切入连发模式时初始化堵转检测
             if (loader_last_mode != LOAD_BURSTFIRE) {
                 jam_detect_start_time = xTaskGetTickCount();
-                jam_detect_start_angle = shoot_motors[2]->motor_measure.current_angle;
+                jam_detect_start_angle = shoot_motors[2]->motor_measure.total_angle;
+                loader_target_angle = shoot_motors[2]->motor_measure.total_angle;
                 is_reversing = false;
             }
-
             if (is_reversing) {
-                // 反转完成检测
-                float reverse_error = loader_target_angle - shoot_motors[2]->motor_measure.current_angle;
+                ERROR_INFO("SHOOT", "reversing... target=%.1f, total=%.1f",
+                    loader_target_angle, shoot_motors[2]->motor_measure.total_angle);
+                // 反转完成检测：使用多圈角度比较
+                float reverse_error = loader_target_angle - shoot_motors[2]->motor_measure.total_angle;
                 if (reverse_error < 0) reverse_error = -reverse_error;
-                if (reverse_error < 10.0f * REDUCTION_RATIO_LOADER) {
+                if (reverse_error < 40.0f * REDUCTION_RATIO_LOADER) {  // 10° -> 30°，不等完全到位
                     is_reversing = false;
-                    // 反转完成，重置目标角度为当前位置，准备继续正常供弹
-                    loader_target_angle = shoot_motors[2]->motor_measure.current_angle;
+                    ERROR_INFO("SHOOT", "reverse complete!");
+                    loader_target_angle = shoot_motors[2]->motor_measure.total_angle;
                     jam_detect_start_time = xTaskGetTickCount();
-                    last_single_shoot_time = xTaskGetTickCount();
+                    last_single_shoot_time = xTaskGetTickCount() + 100;  // 延迟100ms再继续供弹
                 }
             } else {
                 // 正常供弹逻辑
@@ -218,25 +223,35 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
                 if (current_time - last_single_shoot_time >= burst_interval_ms) {
                     loader_target_angle -= ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER;
                     last_single_shoot_time = current_time;
-                    // 发射新子弹时，重置堵转检测
-                    jam_detect_start_time = current_time;
-                    jam_detect_start_angle = shoot_motors[2]->motor_measure.current_angle;
                 }
 
-                // 堵转检测：检测电流是否过大
+                // 堵转检测：采集电流并计算平均值
                 int16_t current_mA = shoot_motors[2]->motor_measure.real_current;
                 if (current_mA < 0) current_mA = -current_mA;
 
-                if (current_mA > JAM_CURRENT_THRESHOLD) {
-                    // 电流过大，可能堵转
-                    if (current_time - jam_detect_start_time > JAM_DETECT_TIME_MS) {
-                        // 持续高电流，确认堵转（暂时禁用反转）
-                        ERROR_INFO("SHOOT","jam detected! current=%d", current_mA);
-                        // is_reversing = true;
-                        // loader_target_angle = shoot_motors[2]->motor_measure.current_angle + REVERSE_ANGLE * REDUCTION_RATIO_LOADER;
+                // 更新电流采样缓冲区
+                current_samples[current_sample_index] = current_mA;
+                current_sample_index = (current_sample_index + 1) % JAM_CURRENT_SAMPLES;
+
+                // 计算平均电流
+                int32_t current_sum = 0;
+                for (int i = 0; i < JAM_CURRENT_SAMPLES; i++) {
+                    current_sum += current_samples[i];
+                }
+                int16_t current_avg = current_sum / JAM_CURRENT_SAMPLES;
+
+                ERROR_INFO("SHOOT", "avg=%d, thresh=%d, time_diff=%d, detect_time=%d",
+                    current_avg, JAM_CURRENT_THRESHOLD,
+                    (int)(current_time - jam_detect_start_time), JAM_DETECT_TIME_MS);
+
+                if (current_avg > JAM_CURRENT_THRESHOLD) {
+                    ERROR_INFO("SHOOT", "current over threshold!");
+                    if (current_time - jam_detect_start_time >= JAM_DETECT_TIME_MS) {
+                        ERROR_INFO("SHOOT","jam detected! avg_current=%d", current_avg);
+                        is_reversing = true;
+                        loader_target_angle = shoot_motors[2]->motor_measure.total_angle + REVERSE_ANGLE * REDUCTION_RATIO_LOADER;
                     }
                 } else {
-                    // 电流正常，重置检测
                     jam_detect_start_time = current_time;
                 }
             }
