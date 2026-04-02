@@ -46,7 +46,7 @@ typedef struct
 {
     shoot_mode_e shoot_mode;    //发射模式-若打开则摩擦轮也跟着打开
     loader_mode_e loader_mode;  //子弹发射模式
-    uint8_t shoot_rate;         //发射弹频 (发/秒)
+    uint8_t shoot_rate;         //发射弹频 (发/秒)f
 }Shoot_cmd_send_t;
 
 /******************决策任务接收各个模块的反馈信息**********************/

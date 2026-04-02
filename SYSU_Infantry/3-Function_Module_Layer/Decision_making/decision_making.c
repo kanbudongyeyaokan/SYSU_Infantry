@@ -323,7 +323,7 @@ void RC_ctrl_set()
     {
         shoot_cmd_send.shoot_mode = SHOOT_ON;
         shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
-        shoot_cmd_send.shoot_rate = 6;
+        shoot_cmd_send.shoot_rate = 15;
     }
     else
     {
@@ -523,6 +523,7 @@ void Keyboard_ctrl_set()
     Decision_sync_gimbal_manual_target();
 #elif USE_SBUS_RECEIVER == 2
     Key_t kb  = {.keys = vrc_data[CURRENT].keyboard};
+
 
     if (!restart_pending)
     {
