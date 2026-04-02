@@ -470,6 +470,9 @@ void RC_ctrl_set()
  *
  */
 static chassis_mode_e chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+static uint16_t restart_hold_ticks = 0U;
+static uint16_t restart_flush_ticks = 0U;
+static bool restart_pending = false;
 void Keyboard_ctrl_set()
 {
     // 键鼠控制固定回到手动 IMU 模式，并先同步手动目标。
@@ -520,9 +523,6 @@ void Keyboard_ctrl_set()
     Decision_sync_gimbal_manual_target();
 #elif USE_SBUS_RECEIVER == 2
     Key_t kb  = {.keys = vrc_data[CURRENT].keyboard};
-    static uint16_t restart_hold_ticks = 0U;
-    static uint16_t restart_flush_ticks = 0U;
-    static bool restart_pending = false;
 
     if (!restart_pending)
     {
