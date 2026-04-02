@@ -1,9 +1,18 @@
 #include "vision_comm.h"
-#include "bsp_usart.h"
-#include "usart.h"
+
+#include <stdio.h>
+
 #include "cmsis_os.h"
 #include "string.h"
 #include "error_handler.h"
+
+// 引入 USB 头文件
+#ifdef USE_VISION_USB
+#include "bsp_usb.h"
+#else
+#include "bsp_usart.h"
+#include "usart.h"
+#endif
 
 extern uint16_t Get_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength, uint16_t wCRC);
 extern uint32_t Verify_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
@@ -15,25 +24,40 @@ static uint16_t rx_tail = 0;
 
 static Vision_Ctrl_Data_t latest_vision_ctrl_data;
 static uint32_t last_valid_time = 0; 
-static Uart_instance_t *vision_uart = NULL; 
 
+#ifndef USE_VISION_USB
+static Uart_instance_t *vision_uart = NULL; 
 static void Vision_Rx_Callback(void);
+#else
+static void Vision_Rx_Callback(uint8_t* buf, uint32_t len);
+#endif
+
 static uint16_t Get_FIFO_Data_Len(void);
 static void Read_FIFO_Data(uint8_t* dest, uint16_t len, uint16_t offset);
 
 void Vision_Comm_Init(void) {
+    ERROR_INFO("VISION", "Initializing USB communication");
     memset(&latest_vision_ctrl_data, 0, sizeof(Vision_Ctrl_Data_t));
     
-    // 注册串口 1 (根据你的代码维持不变)
-    vision_uart = Uart_register(&huart6, Vision_Rx_Callback);
-    
-    if (vision_uart != NULL) {
-        ERROR_INFO("VISION", "Init OK, UART1 registered");
-    } else {
-        ERROR_CRITICAL("VISION", "Init FAILED, UART1 register error");
-    }
+
+    // 注册 USB 接收回调2
+    Usb_Init(Vision_Rx_Callback);
+    ERROR_INFO("VISION", "Init OK, USB CDC registered");
 }
 
+#ifdef USE_VISION_USB
+// USB 接收回调
+static void Vision_Rx_Callback(uint8_t* buf, uint32_t len) {
+    if (buf == NULL || len == 0) return;
+    
+    for (uint32_t i = 0; i < len; i++) {
+        rx_fifo[rx_head] = buf[i];
+        rx_head++;
+        if (rx_head >= VISION_RX_FIFO_SIZE) rx_head = 0;
+    }
+}
+#else
+// UART 接收回调
 static void Vision_Rx_Callback(void) {
     if (vision_uart == NULL) return;
     
@@ -48,6 +72,7 @@ static void Vision_Rx_Callback(void) {
         if (rx_head >= VISION_RX_FIFO_SIZE) rx_head = 0;
     }
 }
+#endif
 
 static uint16_t Get_FIFO_Data_Len(void) {
     if (rx_head >= rx_tail) return rx_head - rx_tail;
@@ -97,7 +122,7 @@ void Vision_Comm_Parse_Task(void) {
             if (cmd_id == CMD_ID_CTRL_RX && data_len == sizeof(Vision_Rx_Payload_t)) {
                 
                 Vision_Rx_Payload_t *rx_payload = (Vision_Rx_Payload_t *)&frame_buf[4];
-                
+                //ERROR_INFO("VISION", "Received Ctrl: flags=0x%02X, pitch=%.2f, yaw=%.2f", rx_payload->flags, rx_payload->angular_y, rx_payload->angular_z);
                 taskENTER_CRITICAL();
                 
                 // 1. 组合状态机映射
@@ -126,7 +151,8 @@ void Vision_Comm_Parse_Task(void) {
                 latest_vision_ctrl_data.linear_z = rx_payload->linear_z;
                 latest_vision_ctrl_data.angular_x = rx_payload->angular_x;
 
-                last_valid_time = osKernelSysTick(); 
+                latest_vision_ctrl_data.frame_id++;
+                last_valid_time = osKernelSysTick();
                 taskEXIT_CRITICAL();
             }
             rx_tail = (rx_tail + frame_total_len) % VISION_RX_FIFO_SIZE;
@@ -136,29 +162,27 @@ void Vision_Comm_Parse_Task(void) {
     }
 }
 
-// 高频发送姿态包 
-// 修改了函数签名，去掉了废弃的 roll，加入了血量参数，方便你在 NUC 端直接监控
+// 高频发送姿态包
+// 注意：未传入的导航量默认为 0，后续哨兵联调时，如果需要发底盘期望，可在此扩展入参
 void Vision_Send_Pose(uint32_t time_us, float pitch, float yaw, float pitch_v, float yaw_v, uint16_t current_hp, uint16_t max_hp) {
-    if (vision_uart == NULL) return;
-    
     EC2Vision_Pose_t tx_frame;
     
-    // 【极其关键】必须将整个帧清零！否则 NUC 收到的 HP、进度等预留字段全是内存垃圾数据
+    // 【极其关键】必须将整个帧清零！保证裁判系统预留字段和导航量默认为 0
     memset(&tx_frame, 0, sizeof(EC2Vision_Pose_t)); 
     
     // 1. 填充协议头
     tx_frame.sof = VISION_SOF_TX;
-    tx_frame.data_length = sizeof(Vision_Tx_Payload_t); // 直接填入 Payload 的准确大小
+    tx_frame.data_length = sizeof(Vision_Tx_Payload_t); // 确保等于 73
     tx_frame.cmd_id = CMD_ID_POSE_TX;
     
-    // 2. 填充核心位姿数据 (注意要带上 .data.)
+    // 2. 填充核心位姿数据
     tx_frame.data.timestamp_us = time_us;
-    tx_frame.data.angular_y = pitch;         // 对应 Python 中的 state.angular_y
-    tx_frame.data.angular_z = yaw;           // 对应 Python 中的 state.angular_z
+    tx_frame.data.angular_y = pitch;         
+    tx_frame.data.angular_z = yaw;           
     tx_frame.data.angular_y_speed = pitch_v;
     tx_frame.data.angular_z_speed = yaw_v;
     
-    // 3. 填充裁判系统血量数据 (供 NUC 端显示)
+    // 3. 填充裁判系统血量数据
     tx_frame.data.current_HP = current_hp;
     tx_frame.data.maximum_HP = max_hp;
     
@@ -166,7 +190,13 @@ void Vision_Send_Pose(uint32_t time_us, float pitch, float yaw, float pitch_v, f
     Append_CRC16_Check_Sum((uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t) - 2);
     
     // 5. 调用底层非阻塞发送
-    Uart_sendData(vision_uart, (uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t));
+#ifdef USE_VISION_USB
+    Usb_Send((uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t));
+#else
+    if (vision_uart != NULL) {
+        Uart_sendData(vision_uart, (uint8_t*)&tx_frame, sizeof(EC2Vision_Pose_t));
+    }
+#endif
 }
 
 const Vision_Ctrl_Data_t* Get_Vision_Ctrl_Data(void) {
