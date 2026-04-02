@@ -281,7 +281,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_target(yaw_motor,   v_cmd->target_yaw);
                 Djimotor_set_target(pitch_motor, v_cmd->target_pitch);
                 ERROR_INFO("GIMBAL", "target: yaw=%.2f pitch=%.2f",
-                    v_cmd->target_yaw, v_cmd->target_yaw);
+                    v_cmd->target_yaw, v_cmd->target_pitch);
             }
                 // else {
                 //         // 视觉未就绪或掉线，回退到遥控目标
