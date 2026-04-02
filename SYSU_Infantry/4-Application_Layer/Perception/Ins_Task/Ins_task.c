@@ -18,9 +18,9 @@ void Ins_task(void const *argument)
     extern I2C_HandleTypeDef hi2c2;
     extern SPI_HandleTypeDef hspi2;
     // 目前兼容三个IMU驱动：BMI088、HWT101、HWT606
-    const Ins_driver_interface_t *driver = BMI088_Get_Driver();
+    // const Ins_driver_interface_t *driver = BMI088_Get_Driver();
     // const Ins_driver_interface_t *driver = HWT101_IIC_Get_Driver(&hi2c2);
-    // const Ins_driver_interface_t *driver = HWT606_IIC_Get_Driver(&hi2c2); // 获取 HWT606 IIC 驱动接口
+    const Ins_driver_interface_t *driver = HWT606_IIC_Get_Driver(&hi2c2); // 获取 HWT606 IIC 驱动接口
     // const Ins_data_t *data;
     // 初始化 INS 层 
     Ins_init(driver);
@@ -33,11 +33,19 @@ void Ins_task(void const *argument)
 
         // 如果需要数据，直接 Ins_get_data()
         data = Ins_get_data();
-        Uart_printf(test_uart, "Yaw:%.2f, Pitch:%.2f, pitch_speed:%.2f, State:%d\r\n", 
-                    data->euler.yaw, 
-                    data->euler.pitch, 
-                    data->gyro_body.x, 
-                    data->state);
+        // 限速 10Hz 打印，方便观察轴映射
+        static uint32_t ins_print_tick = 0;
+        uint32_t now = xTaskGetTickCount();
+        if (now - ins_print_tick >= 100) {
+            ins_print_tick = now;
+            ERROR_INFO("INS", "roll=%.2f pitch=%.2f yaw=%.2f gx=%.2f gy=%.2f gz=%.2f",
+                        data->euler.roll,
+                        data->euler.pitch,
+                        data->euler.yaw,
+                        data->gyro_body.x,
+                        data->gyro_body.y,
+                        data->gyro_body.z);
+        }
         // 反馈数据
         // Uart_printf(test_uart,"yaw_speed:%.2f,%.2f\r\n",data->gyro_body.z,data->gyro_body.x);
          // 将当前的 INS 数据发布给决策层，用于下一帧的闭环控制或逻辑判断 

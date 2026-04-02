@@ -158,7 +158,7 @@ static void Gimbal_pitch_rtt_vofa_print(float pitch_target_deg) {
         return;
     }
 
-    const float pitch_measure_deg = gimbal_imu_data->euler.roll;
+    const float pitch_measure_deg = gimbal_imu_data->euler.pitch;
 
     Gimbal_pitch_rtt_init();
 
@@ -246,8 +246,8 @@ static void Gimbal_motor_init(void) {
             .close_loop = ANGLE_AND_SPEED_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
-            //使用ins模块姿态数据作为反馈
-            .other_angle_feedback_ptr = &(gimbal_imu_data->euler.roll),
+            //使用ins模块姿态数据作为反馈（HWT606: pitch轴对应euler.pitch和gyro_body.x）
+            .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.x),
             .angle_pid = {
                 .kp = 40.0f,
@@ -325,6 +325,7 @@ Gimbal_state_e Gimbal_get_state(void)
 /**
  * @brief 处理云台控制指令
  */
+                    static uint32_t diag_last_tick = 0;
 void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         //只有当IMU就绪时才可以控制云台
         //安全保护

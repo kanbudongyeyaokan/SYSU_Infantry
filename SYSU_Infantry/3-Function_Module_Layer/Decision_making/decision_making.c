@@ -79,7 +79,7 @@ static Shoot_feedback_info_t   shoot_feedback_recv;     //存储发射应用层�
 // 定义灵敏度系数
 // 之前是 0.0018 (200Hz)，现在是 1000Hz，理论上应该除以 5
 // 建议改小到 0.0003 ~ 0.0005 之间，手感会比较细腻
-#define GIMBAL_RC_MOVE_RATIO_YAW   0.0003f
+#define GIMBAL_RC_MOVE_RATIO_YAW   0.0005f
 #define GIMBAL_RC_MOVE_RATIO_PITCH 0.0005f
 // 定义死区大小 (根据你的遥控器老化程度，建议设大一点，比如 10 到 20)
 #define RC_DEADBAND 1
@@ -338,10 +338,10 @@ void RC_ctrl_set()
     Decision_sync_gimbal_manual_target();
 
     if (fabsf((float)vrc_data[CURRENT].rc.Lrocker_y) > RC_DEADBAND)
-        chassis_cmd_send.vy = -2.0f * (float)vrc_data[CURRENT].rc.Lrocker_y;
+        chassis_cmd_send.vy = -3.0f * (float)vrc_data[CURRENT].rc.Lrocker_y;
     else
         chassis_cmd_send.vy = 0;
-    chassis_cmd_send.vx = -2.0f * (float)vrc_data[CURRENT].rc.Lrocker_x;
+    chassis_cmd_send.vx = -3.0f * (float)vrc_data[CURRENT].rc.Lrocker_x;
     // YAW 轴处理 (死区 + 降速)
     if (gimbal_cmd_send.gimbal_mode == GIMBAL_ZERO_FORCE)
     {
@@ -583,10 +583,10 @@ void Keyboard_ctrl_set()
     if (vrc_data[CURRENT].mouse.press_l) {
         shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
         shoot_cmd_send.shoot_mode = SHOOT_ON;
-        shoot_cmd_send.shoot_rate = 8;
+        shoot_cmd_send.shoot_rate = 15;
     } else {
         shoot_cmd_send.loader_mode = LOAD_STOP;
-        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+        shoot_cmd_send.shoot_mode = SHOOT_ON;
     }
 #else
     chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;

@@ -80,13 +80,27 @@ static bool HWT606_Init(void)
         HWT606_Reset_I2C();
     }
 
+    // I2C 总线扫描：打印所有有响应的设备地址（仅用于调试）
+    ERROR_INFO("HWT606", "Init: scanning I2C bus...");
+    for (uint8_t addr = 0x08; addr <= 0xEE; addr += 2) {
+        if (HAL_I2C_IsDeviceReady(hwt606_dev.hi2c, addr, 1, 5) == HAL_OK) {
+            ERROR_INFO("HWT606", "Init: found device at 0x%02X (7-bit: 0x%02X)", addr, addr >> 1);
+        }
+    }
+    ERROR_INFO("HWT606", "Init: scan done");
+
     uint8_t retry_count = 0;
     while (HAL_I2C_IsDeviceReady(hwt606_dev.hi2c, hwt606_dev.dev_addr, 3, 100) != HAL_OK)
     {
         retry_count++;
-        if (retry_count > 5) return false;
-        HAL_Delay(50); 
+        ERROR_WARN("HWT606", "Init: device not ACK, addr=0x%02X retry=%d", hwt606_dev.dev_addr, retry_count);
+        if (retry_count > 5) {
+            ERROR_CRITICAL("HWT606", "Init: device not found after %d retries, addr=0x%02X", retry_count, hwt606_dev.dev_addr);
+            return false;
+        }
+        HAL_Delay(50);
     }
+    ERROR_INFO("HWT606", "Init: device found at addr=0x%02X", hwt606_dev.dev_addr);
 
     Watchdog_init_t wdg_config = {
         .owner_id = NULL, .reload_count = 30,
@@ -102,12 +116,23 @@ static bool HWT606_Init(void)
 
 static void HWT606_Start_Read(void)
 {
-    if (!hwt606_dev.is_ready) return;
+    if (!hwt606_dev.is_ready) {
+        ERROR_WARN("HWT606", "Start_Read: device not ready");
+        return;
+    }
     hwt606_dev.read_success = false;
-    if (HAL_I2C_GetState(hwt606_dev.hi2c) != HAL_I2C_STATE_READY) return;
 
-    HAL_I2C_Mem_Read_DMA(hwt606_dev.hi2c, hwt606_dev.dev_addr, REG_READ_START,
+    HAL_I2C_StateTypeDef i2c_state = HAL_I2C_GetState(hwt606_dev.hi2c);
+    if (i2c_state != HAL_I2C_STATE_READY) {
+        ERROR_WARN("HWT606", "Start_Read: I2C not ready, state=0x%02X", (uint8_t)i2c_state);
+        return;
+    }
+
+    HAL_StatusTypeDef ret = HAL_I2C_Mem_Read_DMA(hwt606_dev.hi2c, hwt606_dev.dev_addr, REG_READ_START,
         I2C_MEMADD_SIZE_8BIT, hwt606_dma_buf, READ_LEN);
+    if (ret != HAL_OK) {
+        ERROR_WARN("HWT606", "Start_Read: HAL_I2C_Mem_Read_DMA failed, ret=%d", (int)ret);
+    }
 }
 
 void HWT606_RxCpltCallback(I2C_HandleTypeDef *hi2c)
@@ -126,7 +151,10 @@ void HWT606_RxCpltCallback(I2C_HandleTypeDef *hi2c)
 
 static bool HWT606_Wait_Data(void)
 {
-   if (hwt606_dma_sem == NULL) return false;
+    if (hwt606_dma_sem == NULL) {
+        ERROR_WARN("HWT606", "Wait_Data: semaphore is NULL");
+        return false;
+    }
 
     // 死等信号量！
     // 任务在这里挂起，完全不消耗 CPU。最多等 10 毫秒（pdMS_TO_TICKS(10)）。
@@ -137,6 +165,8 @@ static bool HWT606_Wait_Data(void)
     } else {
         // 等了 10ms 还没拿到，说明 I2C 死了或者线断了
         hwt606_dev.read_success = false;
+        HAL_I2C_StateTypeDef i2c_state = HAL_I2C_GetState(hwt606_dev.hi2c);
+        ERROR_WARN("HWT606", "Wait_Data: semaphore timeout, I2C state=0x%02X", (uint8_t)i2c_state);
         return false;
     }
 }
