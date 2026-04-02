@@ -83,7 +83,7 @@ static void Gimbal_motor_init(void) {
             .angle_pid = {
                 .kp = 30,
                 .ki = 0,
-                .kd = 0.8f,   // 加 D 项：角度环接近目标时减速，抑制过冲
+                .kd = 2.5f,   // 加 D 项：角度环接近目标时减速，抑制过冲
                 .deadband = 0.2f,
                 .max_out = 650,   // 限制最大速度指令，防止电机惯性甩过目标
                 .max_iout = 100,
@@ -223,17 +223,17 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
     // 单位转换：Degree -> Radian，提供给 NUC
     // 注意：你的代码中使用 euler.roll 代指 pitch
-    float pitch_rad = gimbal_imu_data->euler.roll * ANGLE_TO_RAD; 
+    float pitch_rad = gimbal_imu_data->euler.roll * ANGLE_TO_RAD;
     float yaw_rad   = gimbal_imu_data->total_yaw * ANGLE_TO_RAD;
     float pitch_v_rad = gimbal_imu_data->gyro_body.x * ANGLE_TO_RAD;
     float yaw_v_rad   = gimbal_imu_data->gyro_body.z * ANGLE_TO_RAD;
 
     // 疯狂发报：送出绝对时间戳、连续 Yaw/Pitch 弧度、弧度角速度
-    Vision_Send_Pose(current_us, 
-                     pitch_rad, 
-                     yaw_rad, 
-                     pitch_v_rad, 
-                     yaw_v_rad, 
+    Vision_Send_Pose(current_us,
+                     pitch_rad,
+                     yaw_rad,
+                     pitch_v_rad,
+                     yaw_v_rad,
                      600,  // 此处需替换为裁判系统当前血量
                      600); // 此处需替换为裁判系统最大血量
 
@@ -266,10 +266,18 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
                 Djimotor_set_target(yaw_motor, cmd->yaw);
                 Djimotor_set_target(pitch_motor, cmd->pitch);
-               
+
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
 
+                // ERROR_INFO("GIMBAL_YAW",
+                //     "target=%.2f imu=%.2f ecd=%.2f err=%.2f",
+                //     cmd->yaw,
+                //     gimbal_imu_data->total_yaw,
+                //     yaw_motor->motor_measure.current_angle,
+                //     cmd->yaw - gimbal_imu_data->total_yaw);
+                // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
+               // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",pitch_target_deg,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
              //云台视觉模式
             case GIMBAL_VISION_MODE:
