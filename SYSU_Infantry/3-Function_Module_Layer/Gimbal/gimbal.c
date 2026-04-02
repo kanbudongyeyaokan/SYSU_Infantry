@@ -388,13 +388,12 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
 
-                ERROR_INFO("GIMBAL_YAW",
-                    "target=%.2f imu=%.2f ecd=%.2f err=%.2f",
-                    cmd->yaw,
-                    gimbal_imu_data->total_yaw,
-                    yaw_motor->motor_measure.current_angle,
-                    cmd->yaw - gimbal_imu_data->total_yaw);
-
+                // ERROR_INFO("GIMBAL_YAW",
+                //     "target=%.2f imu=%.2f ecd=%.2f err=%.2f",
+                //     cmd->yaw,
+                //     gimbal_imu_data->total_yaw,
+                //     yaw_motor->motor_measure.current_angle,
+                //     cmd->yaw - gimbal_imu_data->total_yaw);
                 // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
                // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",pitch_target_deg,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
                 break;
