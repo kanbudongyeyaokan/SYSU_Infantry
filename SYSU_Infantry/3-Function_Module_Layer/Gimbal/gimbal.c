@@ -204,7 +204,7 @@ static void Gimbal_motor_init(void) {
             .angle_pid = {
                 .kp = 30,
                 .ki = 0,
-                .kd = 0.8f,   // 加 D 项：角度环接近目标时减速，抑制过冲
+                .kd = 2.5f,   // 加 D 项：角度环接近目标时减速，抑制过冲
                 .deadband = 0.2f,
                 .max_out = 650,   // 限制最大速度指令，防止电机惯性甩过目标
                 .max_iout = 100,
@@ -384,9 +384,16 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
                 Djimotor_set_target(yaw_motor, cmd->yaw);
                 Djimotor_set_target(pitch_motor, cmd->pitch);
-               
+
                 Djimotor_Calc_Output(yaw_motor);
                 Djimotor_Calc_Output(pitch_motor);
+
+                ERROR_INFO("GIMBAL_YAW",
+                    "target=%.2f imu=%.2f ecd=%.2f err=%.2f",
+                    cmd->yaw,
+                    gimbal_imu_data->total_yaw,
+                    yaw_motor->motor_measure.current_angle,
+                    cmd->yaw - gimbal_imu_data->total_yaw);
 
                 // Gimbal_pitch_rtt_vofa_print(cmd->pitch);
                // Uart_printf(test_uart,"pitch_target:%.2f,%.2f,.%2f\r\n",pitch_target_deg,gimbal_imu_data->euler.pitch,pitch_motor->motor_pid.speed_pid.Iout);
