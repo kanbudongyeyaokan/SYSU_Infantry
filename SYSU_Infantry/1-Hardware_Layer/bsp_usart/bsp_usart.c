@@ -336,3 +336,38 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
                    (uint32_t)(uintptr_t)huart, huart->ErrorCode, Size);
     }
 }
+
+// UART 错误回调 (帧错误/溢出等导致 DMA 中止时触发)
+// 必须在此重启 DMA，否则接收将永久停止
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == NULL) return;
+
+    for (uint8_t i = 0; i < uart_cnt; ++i)
+    {
+        if (uart_instances[i] != NULL && huart == uart_instances[i]->uart_handle)
+        {
+            ERROR_WARN("USART", "UART error, restarting DMA RX uart_err=%lu huart_ptr=0x%lx",
+                       huart->ErrorCode,
+                       (uint32_t)(uintptr_t)huart);
+
+            // 重新启动 DMA 接收，恢复数据流
+            if (HAL_UARTEx_ReceiveToIdle_DMA(uart_instances[i]->uart_handle,
+                uart_instances[i]->rx_buffer, uart_instances[i]->rx_buf_length) != HAL_OK)
+            {
+                if (Uart_Should_Report(&uart_last_rx_dma_restart_fail_tick, UART_ERROR_REPORT_INTERVAL_MS))
+                {
+                    ERROR_RAISE("USART", "UART RX DMA restart failed in ErrorCallback uart_err=%lu huart_ptr=0x%lx",
+                                uart_instances[i]->uart_handle->ErrorCode,
+                                (uint32_t)(uintptr_t)uart_instances[i]->uart_handle);
+                }
+            }
+            else if (uart_instances[i]->uart_handle->hdmarx != NULL)
+            {
+                __HAL_DMA_DISABLE_IT(uart_instances[i]->uart_handle->hdmarx, DMA_IT_HT);
+            }
+
+            return;
+        }
+    }
+}
