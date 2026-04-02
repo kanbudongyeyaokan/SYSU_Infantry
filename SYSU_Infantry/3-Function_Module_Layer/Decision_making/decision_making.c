@@ -50,7 +50,9 @@ static Robot_status_e robot_state = ROBOT_OFF;
 #define PITCH_UP_MAX 20.0f
 #define PITCH_DOWN_MAX -40.0f
 #define KEY_SENSITIVITY 0.05f // 键盘控制灵敏度，数值越大响应越快，但可能不够平滑，建议从0.1开始调试
-#define KEYCTL__SPEED 3000.0f // 键盘控制的最大速度，单位可以根据实际情况调整
+#define KEYCTL__SPEED 2000.0f // 键盘控制的最大速度，单位可以根据实际情况调整
+#define KEY_RESTART_HOLD_TICKS 2000U
+#define KEY_RESTART_FLUSH_TICKS 10U
 /************************************************************/
 
 /**********************接收反馈信息***************************/
@@ -467,6 +469,7 @@ void RC_ctrl_set()
  * @brief 控制输入为键鼠时的模式和控制量设置
  *
  */
+static chassis_mode_e chassis_mode = CHASSIS_FOLLOW_GIMBAL;
 void Keyboard_ctrl_set()
 {
     // 键鼠控制固定回到手动 IMU 模式，并先同步手动目标。
@@ -517,73 +520,73 @@ void Keyboard_ctrl_set()
     Decision_sync_gimbal_manual_target();
 #elif USE_SBUS_RECEIVER == 2
     Key_t kb  = {.keys = vrc_data[CURRENT].keyboard};
-    Key_t kbl = {.keys = vrc_data[LAST].keyboard};
-    // Uart_printf(test_uart, "kb: w%d s%d a%d d%d shift%d ctrl%d q%d e%d r%d f%d g%d z%d x%d c%d v%d b%d\r\n",
-    //     kb.w, kb.s, kb.a, kb.d, kb.shift, kb.ctrl,
-    //     kb.q, kb.e, kb.r, kb.f, kb.g,
-    //     kb.z, kb.x, kb.c, kb.v, kb.b);
+    static uint16_t restart_hold_ticks = 0U;
+    static uint16_t restart_flush_ticks = 0U;
+    static bool restart_pending = false;
+
+    if (!restart_pending)
+    {
+        restart_hold_ticks = kb.g ? (uint16_t)(restart_hold_ticks + 1U) : 0U;
+        if (restart_hold_ticks >= KEY_RESTART_HOLD_TICKS)
+        {
+            restart_pending = true;
+            restart_flush_ticks = 0U;
+        }
+    }
+
+    if (restart_pending)
+    {
+        robot_state = ROBOT_OFF;
+        chassis_cmd_send.vx = 0.0f;
+        chassis_cmd_send.vy = 0.0f;
+        chassis_cmd_send.wz = 0.0f;
+        chassis_cmd_send.cmd_yaw = 0.0f;
+        chassis_cmd_send.chassis_mode = CHASSIS_ZERO_FORCE;
+        gimbal_cmd_send.chassis_wz = 0.0f;
+        gimbal_cmd_send.gimbal_mode = GIMBAL_ZERO_FORCE;
+        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+        shoot_cmd_send.loader_mode = LOAD_STOP;
+
+        // 先让安全态连续发几个控制周期，再触发 MCU 复位。
+        if (restart_flush_ticks++ >= KEY_RESTART_FLUSH_TICKS)
+        {
+            NVIC_SystemReset();
+        }
+        return;
+    }
 
 
-    //三种底盘模式，用于 C 键循环切换
-    static const chassis_mode_e vrc_modes[] = {CHASSIS_FOLLOW_GIMBAL, CHASSIS_NO_FOLLOW, CHASSIS_ROTATE};
-    
-    static uint8_t 
-    vrc_mode_idx = 0,   //底盘模式索引
-    vrc_friction = 0,   //摩擦轮开关状态（0=关/1=开）
-    vrc_burst = 0;      //射击模式
-
-    if (kb.c && !kbl.c) vrc_mode_idx = (vrc_mode_idx + 1) % 3;//C键边沿检测 ，底盘模式循环切换
-    if (kb.f && !kbl.f) vrc_friction ^= 1;//F键边沿检测 ，摩擦轮状态翻转
-    if (kb.e && !kbl.e) vrc_burst ^= 1;//E键边沿检测 ，射击模式切换翻转
-    
-    chassis_cmd_send.chassis_mode = vrc_modes[vrc_mode_idx];//取出对应的底盘模式并赋值
-    chassis_cmd_send.vy = kb.w ? -KEYCTL__SPEED: kb.s ? KEYCTL__SPEED: 0;//W=前进(vy负), S=后退，与RC摇杆符号约定一致
-    chassis_cmd_send.vx = kb.d ? -KEYCTL__SPEED : kb.a ? KEYCTL__SPEED: 0;//D=右移(vx负), A=左移
-/***
- * 鼠标水平移动量累加到云台 Yaw 目标角度
- * mouse.x — 鼠标本帧水平位移（向右为正）
- * 0.005f — 灵敏度系数，控制转动速率
- * -= — 鼠标右移时Yaw 目标值减小（云台向右转）
-***/
-
+    if (kb.c) {
+        chassis_mode = CHASSIS_FOLLOW_GIMBAL;
+    }
+    if (kb.v) {
+        chassis_mode = CHASSIS_ROTATE;
+    }
+    chassis_cmd_send.chassis_mode = chassis_mode;
+    if (kb.shift) {
+        chassis_cmd_send.vy = kb.w ? -KEYCTL__SPEED * 2: kb.s ? KEYCTL__SPEED * 2: 0;//W=前进(vy负), S=后退，与RC摇杆符号约定一致
+        chassis_cmd_send.vx = kb.d ? -KEYCTL__SPEED * 2 : kb.a ? KEYCTL__SPEED * 2: 0;//D=右移(vx负), A=左移
+    } else {
+        chassis_cmd_send.vy = kb.w ? -KEYCTL__SPEED: kb.s ? KEYCTL__SPEED: 0;//W=前进(vy负), S=后退，与RC摇杆符号约定一致
+        chassis_cmd_send.vx = kb.d ? -KEYCTL__SPEED : kb.a ? KEYCTL__SPEED: 0;//D=右移(vx负), A=左移
+    }
     if (gimbal_cmd_send.gimbal_mode != GIMBAL_ZERO_FORCE)
     {
         gimbal_cmd_send.yaw   -= KEY_SENSITIVITY * vrc_data[CURRENT].mouse.x;
         gimbal_cmd_send.pitch += KEY_SENSITIVITY * vrc_data[CURRENT].mouse.y;
         vrc_data[CURRENT].mouse.x = 0;
         vrc_data[CURRENT].mouse.y = 0;
- /***
-  * 对Pitch 目标角度做限幅
-  * -超过 30° → 强制钳位到 30°（最大仰角）
-  * 低于 -30° → 强制钳位到 -30°（最大俯角
-****/
         if (gimbal_cmd_send.pitch > PITCH_UP_MAX)       gimbal_cmd_send.pitch = PITCH_UP_MAX;
         else if (gimbal_cmd_send.pitch < PITCH_DOWN_MAX) gimbal_cmd_send.pitch = PITCH_DOWN_MAX;
     }
-
-
-    /***
-     * 根据摩擦轮状态变量设置发射模式,由 F 键 toggle 控制
-     * vrc_friction == 1 → SHOOT_ON（开启摩擦轮）
-     * vrc_friction == 0 → SHOOT_OFF（关闭摩擦轮)
-     ***/
-    shoot_cmd_send.shoot_mode  = vrc_friction ? SHOOT_ON : SHOOT_OFF;
-
-    /*
-    *根据鼠标左键状态设置子弹发射模式
-    *mouse.press_l == 1（左键按下）→根据 vrc_burst 决定单发还是连发
-    *mouse.press_l == 0（左键未按）→ LOAD_STOP（停止发射）
-    */
-    shoot_cmd_send.loader_mode = vrc_data[CURRENT].mouse.press_l ?
-        (vrc_burst ? LOAD_BURSTFIRE : LOAD_1_BULLET) : LOAD_STOP;
-    if (vrc_burst) shoot_cmd_send.shoot_rate = 8;
-
-    // Uart_printf(test_uart, "Vx:%.2f,Vy:%.2f,Wz:%.2f,offset,chassis:%d\r\n",
-    // chassis_cmd_send.vx,
-    // chassis_cmd_send.vy,
-    // chassis_cmd_send.wz,
-    //
-    // chassis_cmd_send.chassis_mode);
+    if (vrc_data[CURRENT].mouse.press_l) {
+        shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
+        shoot_cmd_send.shoot_mode = SHOOT_ON;
+        shoot_cmd_send.shoot_rate = 8;
+    } else {
+        shoot_cmd_send.loader_mode = LOAD_STOP;
+        shoot_cmd_send.shoot_mode = SHOOT_OFF;
+    }
 #else
     chassis_cmd_send.chassis_mode = CHASSIS_FOLLOW_GIMBAL;
     gimbal_cmd_send.gimbal_mode = GIMBAL_GYRO_MODE;
