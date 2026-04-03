@@ -18,8 +18,8 @@
 #define CHASSIS_POWER_K_T_DEFAULT        2.0e-6f
 #define CHASSIS_POWER_STATIC_DEFAULT     2.0f
 #define CHASSIS_POWER_DANGER_LINE_DEFAULT 30.0f
-#define CHASSIS_POWER_BUFFER_KP_DEFAULT  1.0f
-#define CHASSIS_POWER_MIN_ALLOW_DEFAULT  1.0f
+#define CHASSIS_POWER_BUFFER_KP_DEFAULT  1.5f
+#define CHASSIS_POWER_MIN_ALLOW_DEFAULT  1.0f//卧槽
 
 static chassis_power_ctrl_param_t g_chassis_power_param =
 {
@@ -38,6 +38,7 @@ static uint16_t g_ref_limit_err_cd = 0U;
 static uint16_t g_ref_buffer_err_cd = 0U;
 static uint16_t g_param_pmin_err_cd = 0U;
 static uint16_t g_pmax_floor_warn_cd = 0U;
+static uint16_t g_dbg_print_cd = 0U;
 
 static uint16_t g_motor_null_warn_cd[CHASSIS_POWER_WHEEL_NUM] = {0U};
 static bool g_motor_null_active[CHASSIS_POWER_WHEEL_NUM] = {false};
@@ -260,6 +261,12 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
                    e_buffer);
         g_pmax_floor_active = false;
     }
+    /* 硬保底：缓冲能量极低时暴力限功，绕过估算误差 */
+    if (e_buffer < 10.0f)
+    {
+        p_max_allow = 10;
+    }
+
     output->p_max_allow = p_max_allow;
 
     /* 步骤4：超功率时做等比例电流缩放 */
@@ -350,9 +357,12 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
 
     Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output, p_measured);
 
-    // ERROR_INFO(CHASSIS_PWR_MODULE,
-    //            "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",
-    //            input.p_limit, input.e_buffer, output.p_measured, output.p_estimated, output.alpha);
+    if (chassis_power_should_report(&g_dbg_print_cd))
+    {
+        ERROR_INFO(CHASSIS_PWR_MODULE,
+                   "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",
+                   input.p_limit, input.e_buffer, output.p_measured, output.p_estimated, output.alpha);
+    }
 
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
     {

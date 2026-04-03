@@ -36,16 +36,16 @@ void Ins_task(void const *argument)
         // 限速 10Hz 打印，方便观察轴映射
         static uint32_t ins_print_tick = 0;
         uint32_t now = xTaskGetTickCount();
-        if (now - ins_print_tick >= 100) {
-            ins_print_tick = now;
-            ERROR_INFO("INS", "roll=%.2f pitch=%.2f yaw=%.2f gx=%.2f gy=%.2f gz=%.2f",
-                        data->euler.roll,
-                        data->euler.pitch,
-                        data->euler.yaw,
-                        data->gyro_body.x,
-                        data->gyro_body.y,
-                        data->gyro_body.z);
-        }
+        // if (now - ins_print_tick >= 100) {
+        //     ins_print_tick = now;
+        //     ERROR_INFO("INS", "roll=%.2f pitch=%.2f yaw=%.2f gx=%.2f gy=%.2f gz=%.2f",
+        //                 data->euler.roll,
+        //                 data->euler.pitch,
+        //                 data->euler.yaw,
+        //                 data->gyro_body.x,
+        //                 data->gyro_body.y,
+        //                 data->gyro_body.z);
+        // }
         // 反馈数据
         // Uart_printf(test_uart,"yaw_speed:%.2f,%.2f\r\n",data->gyro_body.z,data->gyro_body.x);
          // 将当前的 INS 数据发布给决策层，用于下一帧的闭环控制或逻辑判断 

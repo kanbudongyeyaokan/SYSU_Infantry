@@ -563,8 +563,8 @@ void Keyboard_ctrl_set()
     }
     chassis_cmd_send.chassis_mode = chassis_mode;
     if (kb.shift) {
-        chassis_cmd_send.vy = kb.w ? -KEYCTL__SPEED * 2: kb.s ? KEYCTL__SPEED * 2: 0;//W=前进(vy负), S=后退，与RC摇杆符号约定一致
-        chassis_cmd_send.vx = kb.d ? -KEYCTL__SPEED * 2 : kb.a ? KEYCTL__SPEED * 2: 0;//D=右移(vx负), A=左移
+        chassis_cmd_send.vy = kb.w ? -KEYCTL__SPEED * 1.6: kb.s ? KEYCTL__SPEED * 1.6: 0;//W=前进(vy负), S=后退，与RC摇杆符号约定一致
+        chassis_cmd_send.vx = kb.d ? -KEYCTL__SPEED * 1.6: kb.a ? KEYCTL__SPEED * 1.6: 0;//D=右移(vx负), A=左移
     } else {
         chassis_cmd_send.vy = kb.w ? -KEYCTL__SPEED: kb.s ? KEYCTL__SPEED: 0;//W=前进(vy负), S=后退，与RC摇杆符号约定一致
         chassis_cmd_send.vx = kb.d ? -KEYCTL__SPEED : kb.a ? KEYCTL__SPEED: 0;//D=右移(vx负), A=左移

@@ -57,10 +57,10 @@ void Chassis_SCurve_Init(Chassis_SCurve_t *scurve_inst) {
     // 初始化 X 轴参数
     scurve_inst->vx_axis.current_v = 0.0f;
     scurve_inst->vx_axis.current_a = 0.0f;
-    scurve_inst->vx_axis.kp_acc = 150.0f;  // 加速系数：决定起步冲力
-    scurve_inst->vx_axis.kp_brk = 400.0f;  // 刹车系数：比加速大，确保松摇杆即停
-    scurve_inst->vx_axis.kd     = 30.0f;   // 阻尼系数：防止冲过头，通常调在 2*sqrt(kp_acc) 到 3*sqrt(kp_acc) 之间
-    scurve_inst->vx_axis.max_a  = 8000.0f; // 最大加速度限制：防止超功率侧翻
+    scurve_inst->vx_axis.kp_acc = 800.0f;  // 加速系数：决定起步冲力
+    scurve_inst->vx_axis.kp_brk = 900.0f;  // 刹车系数：比加速大，确保松摇杆即停
+    scurve_inst->vx_axis.kd     = 80.0f;   // 阻尼系数：防止冲过头，通常调在 2*sqrt(kp_acc) 到 3*sqrt(kp_acc) 之间
+    scurve_inst->vx_axis.max_a  = 20000.0f; // 最大加速度限制：防止超功率侧翻
     scurve_inst->vx_axis.dt     = 0.001f;  // 1ms 控制周期
 
     // 初始化 Y 轴参数 (可以与 X 轴相同)

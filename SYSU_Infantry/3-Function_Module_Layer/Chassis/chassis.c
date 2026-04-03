@@ -236,13 +236,15 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
     if (cmd->chassis_mode == CHASSIS_ZERO_FORCE) {
         // 失能时复位斜坡控制器，防止重使能时车子突然窜出去
         // Chassis_Ramp_Reset(&chassis_ramp);
-        Chassis_SCurve_Reset(&chassis_scurve); // 更换为 S 曲线复位
+        //Chassis_SCurve_Reset(&chassis_scurve); // 更换为 S 曲线复位
         cmd_solved.vx = 0.0f;
         cmd_solved.vy = 0.0f;
     } else {
         // 调用库函数进行平滑处理，直接将结果写入 cmd_solved 的 vx 和 vy
         // Chassis_Ramp_Update(&chassis_ramp, cmd->vx, cmd->vy, &cmd_solved.vx, &cmd_solved.vy);
         Chassis_SCurve_Update(&chassis_scurve, cmd->vx, cmd->vy, &cmd_solved.vx, &cmd_solved.vy);
+        // cmd_solved.vx = cmd->vx;
+        // cmd_solved.vy = cmd->vy;
     }
 
     switch (cmd_solved.chassis_mode)
