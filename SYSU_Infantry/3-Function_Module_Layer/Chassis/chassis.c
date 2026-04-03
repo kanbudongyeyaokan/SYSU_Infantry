@@ -281,17 +281,17 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             float pid_out = -Pid_calculate(&chassis_follow_pid, cmd_solved.offset_angle, 0.0f);
             float K_ff = 1200.0f;
             cmd_solved.wz = (cmd_solved.cmd_yaw * K_ff) + pid_out;
-            static uint32_t chassis_log_tick = 0;
-            if (xTaskGetTickCount() - chassis_log_tick >= 100) {
-                chassis_log_tick = xTaskGetTickCount();
-                ERROR_INFO("CHASSIS_FOLLOW",
-                    "offset=%.2f P=%.1f D=%.1f pid=%.1f wz=%.1f",
-                    cmd_solved.offset_angle,
-                    chassis_follow_pid.Pout,
-                    chassis_follow_pid.Dout,
-                    pid_out,
-                    cmd_solved.wz);
-            }
+            // static uint32_t chassis_log_tick = 0;
+            // if (xTaskGetTickCount() - chassis_log_tick >= 100) {
+            //     chassis_log_tick = xTaskGetTickCount();
+            //     ERROR_INFO("CHASSIS_FOLLOW",
+            //         "offset=%.2f P=%.1f D=%.1f pid=%.1f wz=%.1f",
+            //         cmd_solved.offset_angle,
+            //         chassis_follow_pid.Pout,
+            //         chassis_follow_pid.Dout,
+            //         pid_out,
+            //         cmd_solved.wz);
+            // }
             
             // 矢量变换：将遥控器速度指令从云台坐标系转换到底盘坐标系
             // -offset_angle: 补偿云台当前偏转角
