@@ -171,7 +171,7 @@ void Robot_set_command()
         }   
         RC_ctrl_set();
     }else{
-        if(vrc_data[CURRENT].keyboard & 0x0020){
+        if ((vrc_data[CURRENT].keyboard & 0x0020) || (vrc_data[CURRENT].rc.btn_right)){
             ctrl_mode = 0;
             return;
         }
@@ -351,7 +351,6 @@ void RC_ctrl_set()
     {
         // 提取出这一帧的旋转增量 (也就是目标速度)
         float yaw_step = -GIMBAL_RC_MOVE_RATIO_YAW * (float)vrc_data[CURRENT].rc.Rrocker_x; 
-        
         gimbal_cmd_send.yaw += yaw_step;         // 云台目标角度累加
         chassis_cmd_send.cmd_yaw = yaw_step;     // 抄送给底盘作为前馈速度！
     }
@@ -369,7 +368,6 @@ void RC_ctrl_set()
         if (gimbal_cmd_send.pitch > PITCH_UP_MAX) gimbal_cmd_send.pitch = PITCH_UP_MAX;
         else if (gimbal_cmd_send.pitch < PITCH_DOWN_MAX) gimbal_cmd_send.pitch = PITCH_DOWN_MAX;
     }
-    
 
 #else
     /**根据遥控器开关状态设定模式**/

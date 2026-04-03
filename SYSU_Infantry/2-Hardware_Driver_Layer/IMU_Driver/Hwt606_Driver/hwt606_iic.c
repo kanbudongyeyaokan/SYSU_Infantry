@@ -278,8 +278,14 @@ static void HWT606_Process(Ins_data_t *out_data, float dt_s)
     
     // ==========================================================
     // 【终极闭环】必须将纯净的数据喂给云台 PID 速度环！
+    // gyro_body.z 加低通滤波，抑制 yaw 轴零漂噪声导致底盘抖动
+    // alpha=0.3：截止频率约 48Hz（1kHz采样），滤掉高频噪声保留真实角速度
     // ==========================================================
-    out_data->gyro_body.x = pure_gx * RAD2DEG; 
+    static float gz_filtered = 0.0f;
+    #define GZ_LPF_ALPHA 0.3f
+    gz_filtered = GZ_LPF_ALPHA * (pure_gz * RAD2DEG) + (1.0f - GZ_LPF_ALPHA) * gz_filtered;
+
+    out_data->gyro_body.x = pure_gx * RAD2DEG;
     out_data->gyro_body.y = pure_gy * RAD2DEG;
     out_data->gyro_body.z = pure_gz * RAD2DEG;
 

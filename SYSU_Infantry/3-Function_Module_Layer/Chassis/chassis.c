@@ -105,12 +105,12 @@ void Chassis_init() {
 
     // 跟随云台速度 PID
     Pid_init_t follow_pid_config = {
-        .kp = 14.0f,      // 比例系数，如果跟车太慢就加大，太快发抖就减小
+        .kp = 13.0f,      // 比例系数，如果跟车太慢就加大，太快发抖就减小
         .ki = 0.0f,     // 通常底盘跟随不需要积分，给 0 即可
         .kd = 0.5f,     // 微分系数，极其重要！给一点 D 项可以提供阻尼，防止底盘到位时来回摆动
         .max_out = 1200.0f,  // 对应原来的 CHASSIS_FOLLOW_WZ_LIMIT
         .max_iout = 200.0f,   // 没用到 I 就不管
-        .deadband = 0.7f,   // 死区，误差绝对值小于这个值时不输出，防止底盘一直微调
+        .deadband = 4.0f,   // 死区，误差绝对值小于这个值时不输出，防止底盘一直微调
         .optimization = PID_OUTPUT_LIMIT | PID_DIFFERENTIAL_GO_FIRST, // 微分先行：对 measure 微分，避免死区边界 D 暴冲
     };
     Pid_init(&chassis_follow_pid, &follow_pid_config);
@@ -281,14 +281,17 @@ void Chassis_Update_Control(const Chassis_cmd_send_t *cmd)
             float pid_out = -Pid_calculate(&chassis_follow_pid, cmd_solved.offset_angle, 0.0f);
             float K_ff = 1200.0f;
             cmd_solved.wz = (cmd_solved.cmd_yaw * K_ff) + pid_out;
-            // ERROR_INFO("CHASSIS_FOLLOW",
-            //     "err=%.2f yaw=%.2f P=%.1f D=%.1f pid=%.1f wz=%.1f",
-            //     cmd_solved.offset_angle,
-            //     cmd_solved.gimbal_yaw_total_angle,
-            //     chassis_follow_pid.Pout,
-            //     chassis_follow_pid.Dout,
-            //     pid_out,
-            //     cmd_solved.wz);
+            static uint32_t chassis_log_tick = 0;
+            if (xTaskGetTickCount() - chassis_log_tick >= 100) {
+                chassis_log_tick = xTaskGetTickCount();
+                ERROR_INFO("CHASSIS_FOLLOW",
+                    "offset=%.2f P=%.1f D=%.1f pid=%.1f wz=%.1f",
+                    cmd_solved.offset_angle,
+                    chassis_follow_pid.Pout,
+                    chassis_follow_pid.Dout,
+                    pid_out,
+                    cmd_solved.wz);
+            }
             
             // 矢量变换：将遥控器速度指令从云台坐标系转换到底盘坐标系
             // -offset_angle: 补偿云台当前偏转角

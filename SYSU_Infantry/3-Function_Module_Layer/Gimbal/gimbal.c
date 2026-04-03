@@ -83,16 +83,16 @@ static void Gimbal_motor_init(void) {
             .angle_pid = {
                 .kp = 30,
                 .ki = 0,
-                .kd = 2.5f,   // 加 D 项：角度环接近目标时减速，抑制过冲
+                .kd = 1.8f,   // 加 D 项：角度环接近目标时减速，抑制过冲
                 .deadband = 0.2f,
                 .max_out = 650,   // 限制最大速度指令，防止电机惯性甩过目标
                 .max_iout = 100,
                 .optimization = PID_OUTPUT_LIMIT|PID_TRAPEZOID_INTERGRAL|PID_DIFFERENTIAL_GO_FIRST,
             },
             .speed_pid = {
-                .kp = 90,//60
+                .kp = 60,//60
                 .ki = 1.0,
-                .kd = 0.01,
+                .kd = 0.05,
                 .deadband = 0.2f,
                 .max_out = 20000,
                 .max_iout = 2000,
@@ -125,7 +125,7 @@ static void Gimbal_motor_init(void) {
             .close_loop = ANGLE_AND_SPEED_LOOP,
             .angle_source = OTHER_FEEDBACK,
             .speed_source = OTHER_FEEDBACK,
-            //使用ins模块姿态数据作为反馈（HWT606: pitch轴对应euler.pitch和gyro_body.x）
+            //使用ins模块姿态数据作为反馈（HWT606: pitch俯仰对应euler.pitch和gyro_body.x）
             .other_angle_feedback_ptr = &(gimbal_imu_data->euler.pitch),
             .other_speed_feedback_ptr = &(gimbal_imu_data->gyro_body.x),
             .angle_pid = {
@@ -184,7 +184,6 @@ void Gimbal_task_init(void) {
 
     //视觉初始化
 
-
     Vision_Comm_Init();
 }
 
@@ -205,6 +204,7 @@ Gimbal_state_e Gimbal_get_state(void)
 /**
  * @brief 处理云台控制指令
  */
+                    static uint32_t diag_last_tick = 0;
 void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
         //只有当IMU就绪时才可以控制云台
         //安全保护
@@ -212,8 +212,7 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
             return;
         }
         // =========================================================
-   // =========================================================
-    // 1. 视觉通信层：无脑收发 (在物理控制前执行，确保目标最新)
+    // 视觉通信层：无脑收发 (在物理控制前执行，确保目标最新)
     // =========================================================
     
     // 极速解析 NUC 发来的最新预测指令 (非阻塞提取 FIFO)
@@ -221,13 +220,14 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
 
     uint32_t current_us = (uint32_t)(DWT_GetTimeline_s() * 1000000.0f);
 
-    // 单位转换：Degree -> Radian，提供给 NUC
+    // 单位转换：Degree -> Radian，提供给 NUC（HWT606: pitch对应euler.pitch）
     float pitch_rad = gimbal_imu_data->euler.pitch * ANGLE_TO_RAD;
     float yaw_rad   = gimbal_imu_data->total_yaw * ANGLE_TO_RAD;
     float pitch_v_rad = gimbal_imu_data->gyro_body.x * ANGLE_TO_RAD;
     float yaw_v_rad   = gimbal_imu_data->gyro_body.z * ANGLE_TO_RAD;
 
-    // 疯狂发报：送出绝对时间戳、连续 Yaw/Pitch 弧度、弧度角速度
+
+    // 发报：送出绝对时间戳、连续 Yaw/Pitch 弧度、弧度角速度
     Vision_Send_Pose(current_us,
                      pitch_rad,
                      yaw_rad,
@@ -262,6 +262,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 Djimotor_set_status(yaw_motor, MOTOR_ENABLED);
                 Djimotor_set_status(pitch_motor, MOTOR_ENABLED);
 
+                //设置电机目标值
+                // Uart_printf(test_uart,"<yaw_target>:%.2f,%.2f\r\n",cmd->yaw,gimbal_imu_data->total_yaw);
 
                 Djimotor_set_target(yaw_motor, cmd->yaw);
                 Djimotor_set_target(pitch_motor, cmd->pitch);
@@ -287,8 +289,8 @@ void Gimbal_handle_command(Gimbal_cmd_send_t *cmd) {
                 const Vision_Ctrl_Data_t* v_cmd = Get_Vision_Ctrl_Data();
                 Djimotor_set_target(yaw_motor,   v_cmd->target_yaw);
                 Djimotor_set_target(pitch_motor, v_cmd->target_pitch);
-                ERROR_INFO("GIMBAL", "target: yaw=%.2f pitch=%.2f",
-                    v_cmd->target_yaw, v_cmd->target_pitch);
+                // ERROR_INFO("GIMBAL", "target: yaw=%.2f pitch=%.2f",
+                //     v_cmd->target_yaw, v_cmd->target_pitch);
             }
                 // else {
                 //         // 视觉未就绪或掉线，回退到遥控目标
