@@ -161,6 +161,8 @@ add_executable(${CMAKE_PROJECT_NAME}
 
         3-Function_Module_Layer/Shoot/shoot.c
         3-Function_Module_Layer/Shoot/shoot.h
+        3-Function_Module_Layer/Shoot/shoot_heat_control.c
+        3-Function_Module_Layer/Shoot/shoot_heat_control.h
         3-Function_Module_Layer/Super_Capacitor/supercap_comm.c
         3-Function_Module_Layer/Super_Capacitor/supercap_comm.h
         3-Function_Module_Layer/Power_Meter/power_meter.c
