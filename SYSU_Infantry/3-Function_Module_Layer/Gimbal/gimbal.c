@@ -91,7 +91,7 @@ static void Gimbal_motor_init(void) {
             },
             .speed_pid = {
                 .kp = 60,//60
-                .ki = 1.0,
+                .ki = 0.0,
                 .kd = 0.05,
                 .deadband = 0.2f,
                 .max_out = 20000,

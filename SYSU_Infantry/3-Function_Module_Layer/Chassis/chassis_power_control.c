@@ -16,14 +16,16 @@
 #define CHASSIS_POWER_BUFFER_DEFAULT     60.0f
 
 #define CHASSIS_POWER_K_T_DEFAULT        2.0e-6f
+#define CHASSIS_POWER_K_R_DEFAULT        3.0e-8f   /* 铜损系数（命令电流非实际相电流，需保守） */
 #define CHASSIS_POWER_STATIC_DEFAULT     2.0f
-#define CHASSIS_POWER_DANGER_LINE_DEFAULT 30.0f
-#define CHASSIS_POWER_BUFFER_KP_DEFAULT  1.5f
+#define CHASSIS_POWER_DANGER_LINE_DEFAULT 40.0f
+#define CHASSIS_POWER_BUFFER_KP_DEFAULT  2.0f
 #define CHASSIS_POWER_MIN_ALLOW_DEFAULT  1.0f//卧槽
 
 static chassis_power_ctrl_param_t g_chassis_power_param =
 {
     .k_t = CHASSIS_POWER_K_T_DEFAULT,
+    .k_r = CHASSIS_POWER_K_R_DEFAULT,
     .p_static = CHASSIS_POWER_STATIC_DEFAULT,
     .danger_energy_line = CHASSIS_POWER_DANGER_LINE_DEFAULT,
     .k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT,
@@ -94,6 +96,7 @@ static int16_t chassis_float_to_i16_clamped(float x)
 void Chassis_Power_Control_Init(void)
 {
     g_chassis_power_param.k_t = CHASSIS_POWER_K_T_DEFAULT;
+    g_chassis_power_param.k_r = CHASSIS_POWER_K_R_DEFAULT;
     g_chassis_power_param.p_static = CHASSIS_POWER_STATIC_DEFAULT;
     g_chassis_power_param.danger_energy_line = CHASSIS_POWER_DANGER_LINE_DEFAULT;
     g_chassis_power_param.k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT;
@@ -101,8 +104,9 @@ void Chassis_Power_Control_Init(void)
     g_chassis_power_param.fb_ratio = CHASSIS_POWER_FB_RATIO_DEFAULT;
 
     ERROR_INFO(CHASSIS_PWR_MODULE,
-               "init k_t=%.6f p_static=%.2f danger=%.2f kp=%.2f pmin=%.2f fb=%.2f",
+               "init k_t=%.6f k_r=%.2e p_static=%.2f danger=%.2f kp=%.2f pmin=%.2f fb=%.2f",
                g_chassis_power_param.k_t,
+               g_chassis_power_param.k_r,
                g_chassis_power_param.p_static,
                g_chassis_power_param.danger_energy_line,
                g_chassis_power_param.k_p_buffer,
@@ -191,11 +195,16 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
         g_ref_buffer_abnormal_active = false;
     }
 
-    /* 步骤1：前馈估算 - 单轮功率估算 P_esti = K_t * abs(I_cmd * w_fdb) + P_static */
+    /* 步骤1：前馈估算 - 单轮功率估算
+     * P_esti = k_r * I² + k_t * |I * ω| + P_static
+     * k_r * I² 项捕获铜损（电阻热耗散），在大电流低转速时贡献显著 */
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
     {
-        float i_mul_w = input->i_cmd[i] * input->w_fdb[i];
-        float p_wheel = param->k_t * chassis_absf(i_mul_w) + param->p_static;
+        float i_cmd = input->i_cmd[i];
+        float i_mul_w = i_cmd * input->w_fdb[i];
+        float p_wheel = param->k_r * i_cmd * i_cmd
+                      + param->k_t * chassis_absf(i_mul_w)
+                      + param->p_static;
         output->p_wheel_esti[i] = p_wheel;
         p_estimated += p_wheel;
     }
@@ -262,7 +271,7 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
         g_pmax_floor_active = false;
     }
     /* 硬保底：缓冲能量极低时暴力限功，绕过估算误差 */
-    if (e_buffer < 10.0f)
+    if (e_buffer < 15.0f)
     {
         p_max_allow = 10;
     }

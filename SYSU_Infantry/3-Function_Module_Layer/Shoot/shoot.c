@@ -189,6 +189,14 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
                 last_single_shoot_time = current_time;
             }
 
+            // 防止目标角度超前实际角度超过1颗子弹，避免阻力消除后暴射
+            {
+                float max_backlog = ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER * 1.2f;
+                float actual_angle = shoot_motors[2]->motor_measure.total_angle;
+                if ((actual_angle - loader_target_angle) > max_backlog) {
+                    loader_target_angle = actual_angle - max_backlog;
+                }
+            }
             Djimotor_set_target(shoot_motors[2], loader_target_angle);
             break;
 
@@ -204,8 +212,8 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
                 is_reversing = false;
             }
             if (is_reversing) {
-                ERROR_INFO("SHOOT", "reversing... target=%.1f, total=%.1f",
-                    loader_target_angle, shoot_motors[2]->motor_measure.total_angle);
+                // ERROR_INFO("SHOOT", "reversing... target=%.1f, total=%.1f",
+                //     loader_target_angle, shoot_motors[2]->motor_measure.total_angle);
                 // 反转完成检测：使用多圈角度比较
                 float reverse_error = loader_target_angle - shoot_motors[2]->motor_measure.total_angle;
                 if (reverse_error < 0) reverse_error = -reverse_error;
@@ -253,6 +261,15 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
                     }
                 } else {
                     jam_detect_start_time = current_time;
+                }
+            }
+
+            // 防止目标角度超前实际角度超过1颗子弹，避免阻力消除后暴射
+            if (!is_reversing) {
+                float max_backlog = ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER * 1.2f;
+                float actual_angle = shoot_motors[2]->motor_measure.total_angle;
+                if ((actual_angle - loader_target_angle) > max_backlog) {
+                    loader_target_angle = actual_angle - max_backlog;
                 }
             }
 

@@ -7,7 +7,7 @@
 #include "dji_motor.h"
 
 /* 功率闭环反馈混合系数 (0~1)，越大越信任实测功率 */
-#define CHASSIS_POWER_FB_RATIO_DEFAULT   0.7f
+#define CHASSIS_POWER_FB_RATIO_DEFAULT   0.85f
 
 /* 4 轮麦轮底盘功率控制结构体定义 */
 typedef struct
@@ -20,7 +20,8 @@ typedef struct
 
 typedef struct
 {
-	float k_t;                /* 功率估算系数 K_t */
+	float k_t;                /* 反电动势功率系数 K_t，对应 k_t * |I * ω| */
+	float k_r;                /* 铜损系数 K_r，对应 k_r * I²（电阻热耗散） */
 	float p_static;           /* 单轮静态功耗补偿 */
 	float danger_energy_line; /* 缓冲能量防线，默认 30J */
 	float k_p_buffer;         /* 危险区功率衰减系数 */
