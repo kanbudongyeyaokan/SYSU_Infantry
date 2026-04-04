@@ -144,6 +144,16 @@ uint16_t ChassisPower_GetBuffer(void)
     return referee_data.power_heat_data.buffer_energy;
 }
 
+uint16_t Shooter_GetHeat17mm(void)
+{
+    return referee_data.power_heat_data.shooter_17mm_1_barrel_heat;
+}
+
+uint16_t Shooter_GetHeatLimit(void)
+{
+    return referee_data.robot_status.shooter_barrel_heat_limit;
+}
+
 // 修改 referee.c 末尾
 uint8_t Get_Robot_ID(void)
 {

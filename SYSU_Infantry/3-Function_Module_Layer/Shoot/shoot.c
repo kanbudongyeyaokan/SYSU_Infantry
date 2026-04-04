@@ -17,7 +17,8 @@
 #include "error_handler.h"
 #include "FreeRTOS.h"
 #include "task.h"
-
+#include "referee.h"
+#include "shoot_heat_control.h"
 #define ONE_BULLET_DELTA_ANGLE    36.0f  // 单发子弹拨弹盘转动角度 (10孔盘为36度)
 #define REDUCTION_RATIO_LOADER    36.0f  // M2006电机减速比
 #define SINGLE_SHOOT_INTERVAL_MS  200    // 单发连续触发的时间间隔(ms)，200ms = 5Hz点射
@@ -142,6 +143,7 @@ void Shoot_motors_init(void)
 //发射任务初始化
 void Shoot_task_init(void) {
     Shoot_motors_init();
+    Shooter_Heat_Control_Init();
 }
 
 //发射任务处理控制命令
@@ -149,6 +151,8 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
     shoot_test_cmd = *cmd;
     uint32_t current_time;
     uint32_t burst_interval_ms;
+    shooter_heat_ctrl_output_t heat_ctrl;
+    Shooter_Heat_Control(&heat_ctrl);
 
     // 处理摩擦轮 (SHOOT_MODE)
     if (cmd->shoot_mode == SHOOT_OFF) {
@@ -184,7 +188,8 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
             }
 
             current_time = xTaskGetTickCount();
-            if (current_time - last_single_shoot_time >= SINGLE_SHOOT_INTERVAL_MS) {
+            if (heat_ctrl.allow_shoot &&
+                current_time - last_single_shoot_time >= SINGLE_SHOOT_INTERVAL_MS) {
                 loader_target_angle -= ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER;
                 last_single_shoot_time = current_time;
             }
@@ -212,8 +217,6 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
                 is_reversing = false;
             }
             if (is_reversing) {
-                // ERROR_INFO("SHOOT", "reversing... target=%.1f, total=%.1f",
-                //     loader_target_angle, shoot_motors[2]->motor_measure.total_angle);
                 // 反转完成检测：使用多圈角度比较
                 float reverse_error = loader_target_angle - shoot_motors[2]->motor_measure.total_angle;
                 if (reverse_error < 0) reverse_error = -reverse_error;
@@ -225,10 +228,14 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
                     last_single_shoot_time = xTaskGetTickCount() + 100;  // 延迟100ms再继续供弹
                 }
             } else {
-                // 正常供弹逻辑
+                // 正常供弹逻辑，热量控制动态调整射速
                 burst_interval_ms = (cmd->shoot_rate > 0) ? (1000 / cmd->shoot_rate) : 125;
+                if (heat_ctrl.rate_scale > 0.01f) {
+                    burst_interval_ms = (uint32_t)((float)burst_interval_ms / heat_ctrl.rate_scale);
+                }
                 current_time = xTaskGetTickCount();
-                if (current_time - last_single_shoot_time >= burst_interval_ms) {
+                if (heat_ctrl.allow_shoot &&
+                    current_time - last_single_shoot_time >= burst_interval_ms) {
                     loader_target_angle -= ONE_BULLET_DELTA_ANGLE * REDUCTION_RATIO_LOADER;
                     last_single_shoot_time = current_time;
                 }
@@ -248,12 +255,12 @@ void Shoot_handle_command(Shoot_cmd_send_t *cmd) {
                 }
                 int16_t current_avg = current_sum / JAM_CURRENT_SAMPLES;
 
-                ERROR_INFO("SHOOT", "avg=%d, thresh=%d, time_diff=%d, detect_time=%d",
-                    current_avg, JAM_CURRENT_THRESHOLD,
-                    (int)(current_time - jam_detect_start_time), JAM_DETECT_TIME_MS);
+
 
                 if (current_avg > JAM_CURRENT_THRESHOLD) {
-                    ERROR_INFO("SHOOT", "current over threshold!");
+     // ERROR_INFO("SHOOT", "avg=%d, thresh=%d, time_diff=%d, detect_time=%d",
+                //     current_avg, JAM_CURRENT_THRESHOLD,
+                //     (int)(current_time - jam_detect_start_time), JAM_DETECT_TIME_MS);               ERROR_INFO("SHOOT", "current over threshold!");
                     if (current_time - jam_detect_start_time >= JAM_DETECT_TIME_MS) {
                         ERROR_INFO("SHOOT","jam detected! avg_current=%d", current_avg);
                         is_reversing = true;
