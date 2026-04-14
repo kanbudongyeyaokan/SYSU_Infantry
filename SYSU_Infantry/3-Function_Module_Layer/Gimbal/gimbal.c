@@ -94,7 +94,7 @@ static void Gimbal_motor_init(void) {
                 .ki = 0.0,
                 .kd = 0.05,
                 .deadband = 0.2f,
-                .max_out = 20000,
+                .max_out = 23000,
                 .max_iout = 2000,
                 // .feedfoward_coefficient = 0.05f,
                 .target_ff_coef = 0.0f, // 目标值前馈系数 (实测调整)

@@ -368,9 +368,9 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
 
     if (chassis_power_should_report(&g_dbg_print_cd))
     {
-        ERROR_INFO(CHASSIS_PWR_MODULE,
-                   "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",
-                   input.p_limit, input.e_buffer, output.p_measured, output.p_estimated, output.alpha);
+        // ERROR_INFO(CHASSIS_PWR_MODULE,
+        //            "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",
+        //            input.p_limit, input.e_buffer, output.p_measured, output.p_estimated, output.alpha);
     }
 
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)

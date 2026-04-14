@@ -581,7 +581,7 @@ void Keyboard_ctrl_set()
     if (vrc_data[CURRENT].mouse.press_l) {
         shoot_cmd_send.loader_mode = LOAD_BURSTFIRE;
         shoot_cmd_send.shoot_mode = SHOOT_ON;
-        shoot_cmd_send.shoot_rate = 15;
+        shoot_cmd_send.shoot_rate = 8;
     } else {
         shoot_cmd_send.loader_mode = LOAD_STOP;
         shoot_cmd_send.shoot_mode = SHOOT_ON;
