@@ -7,7 +7,6 @@
 #include "robot_task.h"
 #include "hwt606_iic.h" // 引用 HWT606 IIC 驱动头文件
 #include "i2c.h" // 引用 IIC 底层驱动头文件
-#include "vofa.h"
 #include "bsp_usart.h" // 用于调试输出
 #include "error_handler.h"
 

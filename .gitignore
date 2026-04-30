@@ -4,7 +4,7 @@
 .vscode/ipch
 .vscode
 .idea
-
+.cache
 SYSU_Infantry/ref
 SYSU_Infantry/build
 build

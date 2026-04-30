@@ -8,7 +8,6 @@
  * @note    看门狗控制
  */
 
-#include "watchdog_task.h"
 #include "bsp_wdg.h"
 
 void Watchdog_control_task(void const *argument)

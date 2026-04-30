@@ -10,6 +10,14 @@
 static Can_controller_t *can1_rx_lut[CAN_FAST_LUT_SIZE] = {NULL};
 static Can_controller_t *can2_rx_lut[CAN_FAST_LUT_SIZE] = {NULL};
 
+// 全局 sniffer 回调（ISR 上下文调用，为 NULL 时不触发）
+static Can_SnifferCallback_t can_sniffer_cb = NULL;
+
+void Can_Register_Sniffer(Can_SnifferCallback_t cb)
+{
+    can_sniffer_cb = cb;
+}
+
 // 原有的线性列表保留，用于管理内存防止泄露，或者处理超出 LUT 范围的 ID
 static Can_controller_t *can_controller[CAN_MAX_COUNT] = {NULL};
 static uint8_t can_ix = 0; // 全局CAN实例索引
@@ -284,6 +292,12 @@ static inline void Can_fifo_process(CAN_HandleTypeDef *hcan, uint32_t fifox)
             }
             // 重置指针，防止污染下一次循环
             target_dev = NULL;
+
+            // 3. Sniffer：无论设备是否注册，都通知全局 sniffer（如 bridge_link）
+            if (can_sniffer_cb != NULL)
+            {
+                can_sniffer_cb(hcan, rxconf.StdId, (uint8_t)rxconf.DLC, can_rx_buff);
+            }
         }
         else
         {
@@ -314,4 +328,27 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
     Can_fifo_process(hcan, CAN_RX_FIFO1);
+}
+
+/* ── Can_send_raw ────────────────────────────────────────────────────────────── */
+
+uint8_t Can_send_raw(CAN_HandleTypeDef *hcan, uint32_t std_id, uint8_t dlc, const uint8_t *data)
+{
+    if (hcan == NULL || data == NULL || dlc > 8u) return 0u;
+
+    if (HAL_CAN_GetTxMailboxesFreeLevel(hcan) == 0u) return 0u;
+
+    CAN_TxHeaderTypeDef hdr;
+    hdr.StdId              = std_id & 0x7FFu;
+    hdr.ExtId              = 0u;
+    hdr.IDE                = CAN_ID_STD;
+    hdr.RTR                = CAN_RTR_DATA;
+    hdr.DLC                = dlc;
+    hdr.TransmitGlobalTime = DISABLE;
+
+    uint8_t buf[8] = {0};
+    for (uint8_t i = 0; i < dlc; i++) buf[i] = data[i];
+
+    uint32_t mailbox;
+    return (HAL_CAN_AddTxMessage(hcan, &hdr, buf, &mailbox) == HAL_OK) ? 1u : 0u;
 }

@@ -58,4 +58,34 @@ uint8_t Can_send_data(Can_controller_t* Can_dev, uint8_t* tx_buff);
 /** CAN初始化 **/
 void Can_init();
 
+/* ── Sniffer API（供 bridge_link 使用）─────────────────────────────────────── */
+
+/**
+ * @brief Sniffer 回调类型，在 CAN RX ISR 中被调用，必须极短且非阻塞
+ * @param hcan    触发的 CAN 控制器句柄
+ * @param std_id  标准帧 ID（11 位）
+ * @param dlc     数据长度 0-8
+ * @param data    8 字节接收缓冲（仅在回调期间有效，需立即拷贝）
+ */
+typedef void (*Can_SnifferCallback_t)(CAN_HandleTypeDef *hcan,
+                                      uint32_t std_id,
+                                      uint8_t dlc,
+                                      const uint8_t *data);
+
+/** 注册全局 sniffer（每次调用覆盖上一个，传 NULL 取消） */
+void Can_Register_Sniffer(Can_SnifferCallback_t cb);
+
+/**
+ * @brief 直接在指定 CAN 总线上发送一帧（不需要已注册的 Can_controller_t）
+ * @param hcan   目标 CAN 句柄（&hcan1 / &hcan2）
+ * @param std_id 标准帧 ID（仅低 11 位有效）
+ * @param dlc    数据长度 0-8
+ * @param data   数据指针（取前 dlc 字节，其余填 0）
+ * @return 1=成功，0=邮箱满/参数非法
+ */
+uint8_t Can_send_raw(CAN_HandleTypeDef *hcan,
+                     uint32_t std_id,
+                     uint8_t dlc,
+                     const uint8_t *data);
+
 #endif //_BSP_CAN_H
