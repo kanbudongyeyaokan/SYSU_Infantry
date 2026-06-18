@@ -7,12 +7,13 @@
 #include "dji_motor.h"
 
 /* 功率闭环反馈混合系数 (0~1)，越大越信任实测功率 */
-#define CHASSIS_POWER_FB_RATIO_DEFAULT   0.7f
+#define CHASSIS_POWER_FB_RATIO_DEFAULT   0.85f
 
 /* 4 轮麦轮底盘功率控制结构体定义 */
 typedef struct
 {
-	float i_cmd[4];      /* PID 输出原始目标电流 */
+	float i_cmd[4];      /* PID 输出原始目标电流（用于缩放输出） */
+	float i_fdb[4];      /* 电机实测电流（用于功率估算） */
 	float w_fdb[4];      /* 电机反馈转速 */
 	float p_limit;       /* 裁判系统动态功率上限(W) */
 	float e_buffer;      /* 当前缓冲能量(J) */
@@ -46,10 +47,12 @@ typedef struct
  * 3) 缓冲能量防线动态限功
  * 4) 四轮等比例电流缩放
  */
+/* ema_state: 调用方持有的 EMA 滤波器状态，首次调用前初始化为 0.0f */
 void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
                                 const chassis_power_ctrl_param_t *param,
                                 chassis_power_ctrl_output_t *output,
-                                float p_measured);
+                                float p_measured,
+                                float *ema_state);
 
 /* 与现有电机驱动对接的包装函数，直接修改 motors[i]->out_current */
 void Chassis_Power_Control_Init(void);

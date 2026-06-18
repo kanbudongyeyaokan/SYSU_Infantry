@@ -15,8 +15,8 @@
 #define CHASSIS_POWER_LIMIT_DEFAULT      40.0f
 #define CHASSIS_POWER_BUFFER_DEFAULT     60.0f
 
-#define CHASSIS_POWER_K_T_DEFAULT        2.0e-6f
-#define CHASSIS_POWER_STATIC_DEFAULT     2.0f
+#define CHASSIS_POWER_K_T_DEFAULT        2.6e-6f
+#define CHASSIS_POWER_STATIC_DEFAULT     1.0f
 #define CHASSIS_POWER_DANGER_LINE_DEFAULT 30.0f
 #define CHASSIS_POWER_BUFFER_KP_DEFAULT  1.0f
 #define CHASSIS_POWER_MIN_ALLOW_DEFAULT  1.0f
@@ -44,6 +44,11 @@ static bool g_motor_null_active[CHASSIS_POWER_WHEEL_NUM] = {false};
 static bool g_ref_limit_abnormal_active = false;
 static bool g_ref_buffer_abnormal_active = false;
 static bool g_pmax_floor_active = false;
+
+
+/* p_estimated EMA 低通滤波，时间常数 ~10ms @1kHz */
+#define CHASSIS_POWER_EST_EMA_ALPHA  0.1f
+static float g_p_estimated_ema = -1.0f; /* 哨兵值：未初始化 */
 
 static bool chassis_power_should_report(uint16_t *cooldown)
 {
@@ -98,6 +103,7 @@ void Chassis_Power_Control_Init(void)
     g_chassis_power_param.k_p_buffer = CHASSIS_POWER_BUFFER_KP_DEFAULT;
     g_chassis_power_param.p_min_allow = CHASSIS_POWER_MIN_ALLOW_DEFAULT;
     g_chassis_power_param.fb_ratio = CHASSIS_POWER_FB_RATIO_DEFAULT;
+    g_p_estimated_ema = -1.0f; /* 哨兵值：首次 CalcAndScale 调用时 warm-start */
 
     ERROR_INFO(CHASSIS_PWR_MODULE,
                "init k_t=%.6f p_static=%.2f danger=%.2f kp=%.2f pmin=%.2f fb=%.2f",
@@ -112,7 +118,8 @@ void Chassis_Power_Control_Init(void)
 void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
                                 const chassis_power_ctrl_param_t *param,
                                 chassis_power_ctrl_output_t *output,
-                                float p_measured)
+                                float p_measured,
+                                float *ema_state)
 {
     uint8_t i;
     float p_estimated = 0.0f;
@@ -126,7 +133,7 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
     float fb_ratio;
     bool p_meter_valid = (p_measured >= 0.0f);
 
-    if ((input == NULL) || (param == NULL) || (output == NULL))
+    if ((input == NULL) || (param == NULL) || (output == NULL) || (ema_state == NULL))
     {
         if (chassis_power_should_report(&g_null_input_err_cd))
         {
@@ -190,15 +197,30 @@ void Chassis_Power_CalcAndScale(const chassis_power_ctrl_input_t *input,
         g_ref_buffer_abnormal_active = false;
     }
 
-    /* 步骤1：前馈估算 - 单轮功率估算 P_esti = K_t * abs(I_cmd * w_fdb) + P_static */
+    /* 步骤1：前馈估算 - 单轮功率估算 P_esti = K_t * abs(i_fdb * w_fdb) + P_static
+     * i_fdb: C620 CAN 反馈的转矩电流（raw，与 out_current 同量纲，正负表示方向）
+     * w_fdb: 电机转速，单位 rpm
+     * 取绝对值：制动与驱动均消耗能量（不含再生回收） */
     for (i = 0U; i < CHASSIS_POWER_WHEEL_NUM; i++)
     {
-        float i_mul_w = input->i_cmd[i] * input->w_fdb[i];
+        float i_mul_w = input->i_fdb[i] * input->w_fdb[i];
         float p_wheel = param->k_t * chassis_absf(i_mul_w) + param->p_static;
         output->p_wheel_esti[i] = p_wheel;
         p_estimated += p_wheel;
     }
 
+    /* EMA 低通滤波：消除单周期 i_fdb 抖动噪声
+     * *ema_state < 0 为哨兵值，表示首次调用，直接 warm-start 避免从 0 收敛的启动瞬态 */
+    if (*ema_state < 0.0f)
+    {
+        *ema_state = p_estimated;
+    }
+    else
+    {
+        *ema_state = CHASSIS_POWER_EST_EMA_ALPHA * p_estimated +
+                     (1.0f - CHASSIS_POWER_EST_EMA_ALPHA) * (*ema_state);
+    }
+    p_estimated = *ema_state;
     output->p_estimated = p_estimated;
 
     /* 步骤2：闭环反馈 - 混合实测功率与估算功率 */
@@ -308,6 +330,7 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
         if ((motors[i] == NULL) || (motors[i]->motor_status == MOTOR_STOP))
         {
             input.i_cmd[i] = 0.0f;
+            input.i_fdb[i] = 0.0f;
             input.w_fdb[i] = 0.0f;
 
             if (motors[i] == NULL)
@@ -328,6 +351,7 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
         }
 
         input.i_cmd[i] = (float)motors[i]->out_current;
+        input.i_fdb[i] = (float)motors[i]->motor_measure.real_current;
         input.w_fdb[i] = motors[i]->motor_measure.angular_velocity;
     }
 
@@ -348,7 +372,7 @@ void Chassis_Power_Control(Djimotor_device_t *motors[4], float p_measured)
         input.e_buffer = CHASSIS_POWER_BUFFER_DEFAULT;
     }
 
-    Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output, p_measured);
+    Chassis_Power_CalcAndScale(&input, &g_chassis_power_param, &output, p_measured, &g_p_estimated_ema);
 
     // ERROR_INFO(CHASSIS_PWR_MODULE,
     //            "limit=%.1fW buf=%.1fJ p_meas=%.1fW p_est=%.1fW alpha=%.2f",
